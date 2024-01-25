@@ -20,7 +20,7 @@ Back-end:
 1. [Rust](https://www.rust-lang.org/) (recommended version >= 1.75.0)
 2. [cargo-deb](https://crates.io/crates/cargo-deb)
 3. Cross-compiler (if not on Linux)
-([here][https://github.com/SergioBenitez/homebrew-osxct/tree/master] is a good
+([here](https://github.com/SergioBenitez/homebrew-osxct/tree/master) is a good
 cross-compiler for macOS)
 
 Front-end:
@@ -60,8 +60,16 @@ sudo apt install -f
 
 ## Running Nebula Metrics
 Nebula Metrics comes as a Systemd service that can be used with Systemctl.
-The below commands document how to work with Nebula metrics.
-* Start Nebula Metrics: `sudo systemctl start nebula-metrics.service`
-* Stop Nebula Metrics: `sudo systemctl stop nebula-metrics.service`
+The below commands document how to work with Nebula metrics. *You will likely
+need sudo access for starting, stopping, and enabling the service.*
+* Start Nebula Metrics: `systemctl start nebula-metrics.service`
+* Stop Nebula Metrics: `systemctl stop nebula-metrics.service`
 * Get the status: `systemctl status nebula-metrics.service`
-* Set Nebula Metrics to start at OS boot: `sudo systemctl enable nebula-metrics.service`
+* Set Nebula Metrics to start at OS boot: `systemctl enable nebula-metrics.service`
+
+# Contributing
+## Linting
+* Rust: [Clippy](https://github.com/rust-lang/rust-clippy)
+
+## Formatting
+* Rust: [Rustfmt](https://github.com/rust-lang/rustfmt)
