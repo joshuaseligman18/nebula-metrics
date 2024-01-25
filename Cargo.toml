@@ -6,3 +6,9 @@ resolver = "2"
 version = "0.1.0"
 authors = ["Josh Seligman", "Trent Green"]
 description = "A system metrics monitor for Linux operating systems."
+
+[workspace.dependencies]
+env_logger = "0.11.0"
+log = "0.4.20"
+tokio = { version = "1.35.1", features = ["full"] }
+uuid = { version = "1.7.0", features = ["v4"] }

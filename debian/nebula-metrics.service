@@ -3,6 +3,7 @@ Description=nebula-monitor
 
 [Service]
 ExecStart=/usr/bin/nebula-monitor
+Environment="RUST_LOG=nebula_monitor"
 
 [Install]
 WantedBy=multi-user.target
