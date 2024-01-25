@@ -6,10 +6,6 @@ overall status. All data are stored on-device through an SQLite database, which
 is then exposed via a REST API that a web front-end is able to call and display
 the information in a user-friendly format.
 
-# Documentation
-Complete documentation can be found online at
-https://github.com/joshuaseligman18/nebula-metrics/wiki.
-
 # Getting Started
 ## Binary downloads
 Pre-compiled binaries with official release versions will come at a later date.
