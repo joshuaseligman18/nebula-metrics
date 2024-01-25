@@ -1,0 +1,8 @@
+[Unit]
+Description=nebula-monitor
+
+[Service]
+ExecStart=/usr/bin/nebula-monitor
+
+[Install]
+WantedBy=multi-user.target
