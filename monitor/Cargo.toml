@@ -1,0 +1,22 @@
+[package]
+name = "monitor"
+version.workspace = true
+authors.workspace = true
+description = "The monitor component that polls and aggregates system metrics."
+
+[dependencies]
+
+[[bin]]
+name = "nebula-monitor"
+path = "src/main.rs"
+
+[package.metadata.deb]
+name = "nebula-metrics"
+assets = [
+    ["target/release/nebula-monitor", "usr/bin/", "755"]
+]
+depends = "$auto, sqlite3"
+maintainer-scripts = "../debian/"
+systemd-units = [
+    { unit-name = "nebula-metrics", enable = false }
+]
