@@ -6,10 +6,9 @@ description = "The monitor component that polls and aggregates system metrics."
 edition = "2021"
 
 [dependencies]
-env_logger.workspace = true
-log.workspace = true
 tokio.workspace = true
-uuid.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 [[bin]]
 name = "nebula-monitor"
