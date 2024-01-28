@@ -21,6 +21,8 @@ cross-compiler for macOS)
 
 Front-end:
 1. [Node.js](https://nodejs.org/en)
+In order to build the front end, navigate to nebula-metrics/dashboard and run the 
+command "npm run build"
 
 ### Setting up the Rust compiler
 The only configuration that is needed for the Rust compiler is to add support
@@ -66,6 +68,8 @@ need sudo access for starting, stopping, and enabling the service.*
 # Contributing
 ## Linting
 * Rust: [Clippy](https://github.com/rust-lang/rust-clippy)
+* TypeScript: [Eslint](https://github.com/eslint/eslint)
 
 ## Formatting
 * Rust: [Rustfmt](https://github.com/rust-lang/rustfmt)
+* TypeScript [Prettier](https://github.com/prettier/eslint-config-prettier)
