@@ -3,8 +3,12 @@ name = "monitor"
 version.workspace = true
 authors.workspace = true
 description = "The monitor component that polls and aggregates system metrics."
+edition = "2021"
 
 [dependencies]
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 [[bin]]
 name = "nebula-monitor"
