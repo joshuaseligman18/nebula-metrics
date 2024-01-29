@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+DB_DIR="/var/nebula/db/"
+
+if [ -f "${DB_DIR}nebulaMetrics.db" ]; then
+    rm "${DB_DIR}nebulaMetrics*"
+fi
+
+sqlite3 "${DB_DIR}nebulaMetrics.db" < "${DB_DIR}metrics.sql"
+
+#DEBHELPER#
