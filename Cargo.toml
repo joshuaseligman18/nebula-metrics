@@ -6,3 +6,8 @@ resolver = "2"
 version = "0.1.0"
 authors = ["Josh Seligman", "Trent Green"]
 description = "A system metrics monitor for Linux operating systems."
+
+[workspace.dependencies]
+tokio = { version = "1.35.1", features = ["full"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["fmt", "std"] }
