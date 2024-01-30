@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+echo $@
+
+NEBULA_DIR="/var/nebula/"
+
+if [ "$1" = "upgrade" ]; then
+    echo "Upgrading Nebula Metrics. Wiping previous files for clean install."
+    rm -rf $NEBULA_DIR
+else
+    echo "Nebula metrics is not on the machine. Starting clean install."
+fi
+
+#DEBHELPER#
