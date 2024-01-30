@@ -6,7 +6,7 @@ use tokio::task;
 use tokio::time::{interval, Duration};
 
 extern crate tracing;
-use tracing::{span, Level, Span};
+use tracing::{event, span, Level, Span};
 
 extern crate tracing_subscriber;
 
@@ -23,6 +23,16 @@ async fn main() {
         let mut interval = interval(Duration::from_secs(10));
 
         let monitor: Monitor = Monitor::new().await;
+        let init_res: Result<(), sqlx::Error> = monitor.setup_init_data().await;
+
+        if init_res.is_err() {
+            event!(
+                Level::ERROR,
+                "Failed to initialize the data: {:?}",
+                init_res.unwrap_err()
+            );
+            panic!()
+        }
 
         loop {
             interval.tick().await;
