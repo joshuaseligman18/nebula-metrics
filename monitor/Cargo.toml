@@ -9,6 +9,7 @@ edition = "2021"
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+sqlx.workspace = true
 
 [[bin]]
 name = "nebula-monitor"
