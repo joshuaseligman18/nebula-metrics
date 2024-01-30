@@ -1,3 +1,6 @@
+mod disk;
+use disk::Disk;
+
 use procfs::{CpuInfo, Current, ProcError};
 use sqlx::{
     sqlite::{SqliteQueryResult, SqliteRow},
@@ -70,7 +73,8 @@ impl Monitor {
             event!(Level::DEBUG, "Finished initializing CPU data");
 
             event!(Level::DEBUG, "Starting to initialize disk data");
-
+            let disks: Vec<Disk> = Disk::get_all_disk_data();
+            Disk::insert_disk_info(&disks, &self.conn).await?;
             event!(Level::DEBUG, "Finished initializing disk data");
         } else {
             // We need to have the CPU info initialized for the processes to store properly
