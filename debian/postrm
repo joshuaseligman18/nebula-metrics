@@ -2,6 +2,12 @@
 set -e
 
 NEBULA_DIR="/var/nebula/"
-rm -rf $NEBULA_DIR
+
+if [ "$1" != "upgrade" ]; then
+    echo "Removing all Nebula Metrics files."
+    rm -rf $NEBULA_DIR
+else
+    echo "Upgrading Nebula Metrics. Skipping postrm file cleanup."
+fi
 
 #DEBHELPER#
