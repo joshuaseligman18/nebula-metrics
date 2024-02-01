@@ -1,12 +1,11 @@
 mod disk;
-use disk::Disk;
 
-use procfs::{CpuInfo, Current, ProcError};
-use sqlx::{
-    sqlite::{SqliteQueryResult, SqliteRow},
-    Row, SqlitePool,
-};
-use std::collections::HashMap;
+mod cpu;
+
+pub mod error;
+use error::NebulaError;
+
+use sqlx::SqlitePool;
 use tracing::{event, instrument, span::Id, Level};
 
 /// Absolute path to the database file
@@ -22,70 +21,19 @@ pub struct Monitor {
 impl Monitor {
     /// Constructor for the monitor and establishes a connection to the db
     #[instrument]
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self, NebulaError> {
         event!(Level::INFO, "Creating monitor");
-
-        let pool_res: Result<SqlitePool, sqlx::Error> = SqlitePool::connect(DB_FILE).await;
-        if let Ok(pool) = pool_res {
-            event!(Level::INFO, "Successfully connected to database");
-            Monitor { conn: pool }
-        } else {
-            // Log the error and crash because unable to connect to db
-            // and monitor cannot function otherwise
-            event!(
-                Level::ERROR,
-                "Failed to connect to database: {:?}",
-                pool_res.unwrap_err()
-            );
-            panic!();
-        }
+        let new_monitor: Monitor = Monitor {
+            conn: SqlitePool::connect(DB_FILE).await?,
+        };
+        Ok(new_monitor)
     }
 
     #[instrument(skip(self))]
-    pub async fn setup_init_data(&self) -> Result<(), sqlx::Error> {
+    pub async fn setup_init_data(&self) -> Result<(), NebulaError> {
         event!(Level::INFO, "Setting up initial data");
 
-        let cpu_info_res: Result<CpuInfo, ProcError> = CpuInfo::current();
-        if let Ok(cpu_info) = cpu_info_res {
-            event!(Level::DEBUG, "Starting to initialize CPU data");
-            let count_row: SqliteRow = sqlx::query("SELECT COUNT(*) FROM CPU;")
-                .fetch_one(&self.conn)
-                .await?;
-
-            let count: u32 = count_row.get::<u32, usize>(0);
-
-            if count == 0 {
-                // Insert the data because we do not have anything in the db
-                for i in 0..cpu_info.num_cores() {
-                    let the_cpu: HashMap<&str, &str> = cpu_info.get_info(i).unwrap();
-                    event!(Level::DEBUG, "Inserting CPU {:?}", i);
-                    let _cpu_query: SqliteQueryResult =
-                        sqlx::query("INSERT INTO CPU VALUES (?, ?, ?)")
-                            .bind(i as u32)
-                            .bind(the_cpu.get("cpu MHz").unwrap())
-                            .bind(the_cpu.get("cache size").unwrap().split(' ').next())
-                            .execute(&self.conn)
-                            .await?;
-                    event!(Level::DEBUG, "Successfully inserted data for CPU {:?}", i);
-                }
-            }
-
-            event!(Level::DEBUG, "Finished initializing CPU data");
-
-            event!(Level::DEBUG, "Starting to initialize disk data");
-            let disks: Vec<Disk> = Disk::get_all_disk_data();
-            Disk::insert_disk_info(&disks, &self.conn).await?;
-            event!(Level::DEBUG, "Finished initializing disk data");
-        } else {
-            // We need to have the CPU info initialized for the processes to store properly
-            // So crash the program here
-            event!(
-                Level::ERROR,
-                "Failed to obtain existing info: {:?}",
-                cpu_info_res.unwrap_err()
-            );
-            panic!();
-        }
+        cpu::init_cpu_data(&self.conn).await?;
 
         event!(Level::INFO, "Successfully set up initial data");
         Ok(())
