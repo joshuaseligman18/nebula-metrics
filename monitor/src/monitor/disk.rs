@@ -1,4 +1,4 @@
-use sqlx::SqlitePool;
+use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use std::process::{Command, Output};
 use tracing::{event, instrument, Level};
 
@@ -22,9 +22,10 @@ pub struct Disk {
 /// Initializes the database with up-to-date disk info at monitor start up
 #[instrument(skip(conn))]
 pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
+    event!(Level::INFO, "Starting to initialize disk data");
     let disks: Vec<Disk> = get_all_disk_data();
 
-    for disk in disks {
+    for disk in disks.iter() {
         event!(Level::DEBUG, "Inserting disk {:?} into DISK", &disk.name);
         sqlx::query("INSERT OR REPLACE INTO DISK VALUES (?, ?, ?)")
             .bind(&disk.name)
@@ -39,6 +40,41 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         );
     }
 
+    clean_up_old_disk_data(conn, &disks).await?;
+
+    event!(Level::INFO, "Successfully initialized disk info");
+    Ok(())
+}
+
+/// Removes all data of disks that no longer exist within the system
+#[instrument(skip(conn))]
+pub async fn clean_up_old_disk_data(
+    conn: &SqlitePool,
+    cur_disks: &Vec<Disk>,
+) -> Result<(), NebulaError> {
+    event!(Level::DEBUG, "Starting to clean up old disk data");
+
+    // Start by clearing the DISKSTAT table
+    let mut disk_stat_delete: QueryBuilder<Sqlite> =
+        QueryBuilder::new("DELETE FROM DISKSTAT WHERE DEVICENAME NOT IN (");
+    let mut disk_stat_separated = disk_stat_delete.separated(", ");
+    for disk in cur_disks.iter() {
+        disk_stat_separated.push_bind(&disk.name);
+    }
+    disk_stat_separated.push_unseparated(");");
+    disk_stat_delete.build().execute(conn).await?;
+
+    // Next clear out the DISK table now that the foreign keys are taken care of
+    let mut disk_delete: QueryBuilder<Sqlite> =
+        QueryBuilder::new("DELETE FROM DISK WHERE DEVICENAME NOT IN (");
+    let mut disk_separated = disk_delete.separated(", ");
+    for disk in cur_disks.iter() {
+        disk_separated.push_bind(&disk.name);
+    }
+    disk_separated.push_unseparated(");");
+    disk_delete.build().execute(conn).await?;
+
+    event!(Level::DEBUG, "Finished cleaning up old disk data");
     Ok(())
 }
 
@@ -69,7 +105,7 @@ pub fn get_all_disk_data() -> Vec<Disk> {
             continue;
         }
 
-        // Order: Filesystem, Size, Used, Avail, Use%, Mounted on
+        // Order: Filesystem, Type, Size, Used, Avail, Use%, Mounted on
         let disk: Disk = Disk {
             name: row_vec[0].to_string(),
             mount: row_vec[6].to_string(),
