@@ -34,6 +34,7 @@ impl Monitor {
         event!(Level::INFO, "Setting up initial data");
 
         cpu::init_cpu_data(&self.conn).await?;
+        disk::init_disk_data(&self.conn).await?;
 
         event!(Level::INFO, "Successfully set up initial data");
         Ok(())
