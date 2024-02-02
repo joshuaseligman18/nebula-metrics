@@ -67,12 +67,9 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
                         .execute(conn)
                         .await?;
 
-                    sqlx::query("DELETE FROM PROCESS WHERE PID = ?;")
-                        .bind(db_proc.pid)
-                        .execute(conn)
-                        .await?;
-
-                    sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?)")
+                    // This will delete the old process and write the new one
+                    // with only 1 query
+                    sqlx::query("INSERT OR REPLACE INTO PROCESS VALUES (?, ?, ?, ?, ?)")
                         .bind(cur_proc.pid)
                         .bind(&cur_proc.exec)
                         .bind(cur_proc.start_time)
