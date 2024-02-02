@@ -1,6 +1,6 @@
-mod disk;
-
 mod cpu;
+mod disk;
+mod process;
 
 pub mod error;
 use error::NebulaError;
@@ -29,12 +29,14 @@ impl Monitor {
         Ok(new_monitor)
     }
 
+    /// Initializes the database and verifies/cleans the pre-existing data
     #[instrument(skip(self))]
     pub async fn setup_init_data(&self) -> Result<(), NebulaError> {
         event!(Level::INFO, "Setting up initial data");
 
         cpu::init_cpu_data(&self.conn).await?;
         disk::init_disk_data(&self.conn).await?;
+        process::init_process_data(&self.conn).await?;
 
         event!(Level::INFO, "Successfully set up initial data");
         Ok(())
