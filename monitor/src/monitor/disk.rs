@@ -125,10 +125,15 @@ pub fn get_all_disk_data() -> Vec<Disk> {
 mod tests {
     use super::*;
     use sqlx::sqlite::SqliteRow;
-    use tracing_test::traced_test;
+    use std::io;
 
-    #[traced_test]
+    #[test]
     fn test_get_disk_data() {
+        tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .init();
+
         let output: Vec<Disk> = get_all_disk_data();
 
         assert!(output.len() > 0);
@@ -137,9 +142,13 @@ mod tests {
         }
     }
 
-    #[traced_test]
     #[sqlx::test(fixtures("diskTest"))]
     async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
+        tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .init();
+
         let cur_disks: Vec<Disk> = vec![Disk {
             name: "/test/disk".to_string(),
             file_system_type: "ext4".to_string(),
@@ -164,9 +173,13 @@ mod tests {
         Ok(())
     }
 
-    #[traced_test]
     #[sqlx::test(fixtures("diskTest"))]
     async fn test_init_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .init();
+
         // Get the system's current disks for the example
         let cur_disks: Vec<Disk> = get_all_disk_data();
 
