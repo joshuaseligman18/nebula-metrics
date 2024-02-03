@@ -120,3 +120,18 @@ pub fn get_all_disk_data() -> Vec<Disk> {
     event!(Level::DEBUG, "Finished fetching disk data");
     disk_vec
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_disk_data() {
+        let output: Vec<Disk> = get_all_disk_data();
+        
+        assert!(output.len() > 0);
+        for disk in output.iter() {
+            assert_eq!(&disk.name[0..1], "/");
+        }
+    }
+}
