@@ -151,9 +151,13 @@ mod tests {
         // The current disk is already in the db plus an old disk
         clean_up_old_disk_data(&pool, &cur_disks).await?;
 
-        let row_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        let disk_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISK;").fetch_all(&pool).await?;
         // There should only be the current disk left
-        assert_eq!(row_vec.len(), 1);
+        assert_eq!(disk_vec.len(), 1);
+
+        // The stats for the old disk should be removed, leaving nothing left
+        let disk_stat_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISKSTAT;").fetch_all(&pool).await?;
+        assert_eq!(disk_stat_vec.len(), 0);
 
         Ok(())
     }
