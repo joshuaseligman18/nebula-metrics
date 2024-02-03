@@ -1,5 +1,9 @@
+use mockall::automock;
 use sqlx::{QueryBuilder, Sqlite, SqlitePool};
-use std::process::{Command, Output};
+use std::{
+    error::Error,
+    process::{Command, Output},
+};
 use tracing::{event, instrument, Level};
 
 use super::error::NebulaError;
@@ -121,11 +125,17 @@ pub fn get_all_disk_data() -> Vec<Disk> {
     disk_vec
 }
 
+#[automock]
+trait CommandOutputTrait {
+    fn output(&mut self) -> std::io::Result<Output>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use sqlx::sqlite::SqliteRow;
     use std::io;
+    use std::process::{ExitStatus, Output};
 
     #[test]
     fn test_get_disk_data() {
@@ -134,12 +144,35 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
+        let std_output: Vec<u8> = "
+Filesystem     Type    1M-blocks   Used Available Use% Mounted on
+tmpfs          tmpfs        388M     3M      385M   1% /run
+/dev/sda3      ext4       19479M 16424M     2042M  89% /
+tmpfs          tmpfs       1936M     0M     1936M   0% /dev/shm
+tmpfs          tmpfs          5M     1M        5M   1% /run/lock
+/dev/sda2      vfat         512M     7M      506M   2% /boot/efi
+tmpfs          tmpfs        388M     1M      387M   1% /run/user/1000
+/dev/sr1       iso9660     4805M  4805M        0M 100% /media/joshuaseligman/Ubuntu 22.04.3 LTS amd64
+/dev/sr0       iso9660      156M   156M        0M 100% /media/joshuaseligman/CDROM
+".to_string().into_bytes();
+
+        let output: io::Result<Output> = io::Result::Ok(Output {
+            status: ExitStatus::default(),
+            stdout: std_output,
+            stderr: vec![]
+        });
+
+        let mut my_mock: MockCommandOutputTrait = MockCommandOutputTrait::new();
+        
+        my_mock.expect_output().return_const(output);
+
         let output: Vec<Disk> = get_all_disk_data();
 
         assert!(output.len() > 0);
         for disk in output.iter() {
             assert_eq!(&disk.name[0..1], "/");
         }
+        println!("{:?}", output);
     }
 
     #[sqlx::test(fixtures("diskTest"))]

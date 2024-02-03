@@ -11,6 +11,7 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 sqlx.workspace = true
 procfs = "0.16.0"
+mockall.workspace = true
 
 [[bin]]
 name = "nebula-monitor"
