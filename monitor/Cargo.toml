@@ -10,7 +10,7 @@ tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 sqlx.workspace = true
-mockall.workspace = true
+test-log.workspace = true
 procfs = "0.16.0"
 
 [[bin]]

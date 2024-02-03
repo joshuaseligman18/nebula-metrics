@@ -126,7 +126,7 @@ mod tests {
     use super::*;
     use sqlx::sqlite::SqliteRow;
 
-    #[test]
+    #[test_log::test]
     fn test_get_disk_data() {
         let output: Vec<Disk> = get_all_disk_data();
 
@@ -136,7 +136,7 @@ mod tests {
         }
     }
 
-    #[sqlx::test(fixtures("diskTest"))]
+    #[test_log::test(sqlx::test(fixtures("diskTest")))]
     async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
         let cur_disks: Vec<Disk> = vec![Disk {
             name: "/test/disk".to_string(),
@@ -162,7 +162,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test(fixtures("diskTest"))]
+    #[test_log::test(sqlx::test(fixtures("diskTest")))]
     async fn test_init_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
         // Get the system's current disks for the example
         let cur_disks: Vec<Disk> = get_all_disk_data();
