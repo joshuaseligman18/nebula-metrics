@@ -124,6 +124,7 @@ pub fn get_all_disk_data() -> Vec<Disk> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sqlx::sqlite::SqliteRow;
 
     #[test]
     fn test_get_disk_data() {
@@ -133,5 +134,27 @@ mod tests {
         for disk in output.iter() {
             assert_eq!(&disk.name[0..1], "/");
         }
+    }
+
+    #[sqlx::test(fixtures("diskTest"))]
+    async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
+        let cur_disks: Vec<Disk> = vec![
+            Disk {
+                name: "/test/disk".to_string(),
+                file_system_type: "ext4".to_string(),
+                mount: "/test/folder".to_string(),
+                available: 42,
+                used: 21
+            }
+        ];
+         
+        // The current disk is already in the db plus an old disk
+        clean_up_old_disk_data(&pool, &cur_disks).await?;
+
+        let row_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        // There should only be the current disk left
+        assert_eq!(row_vec.len(), 1);
+
+        Ok(())
     }
 }
