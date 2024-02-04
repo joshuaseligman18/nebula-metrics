@@ -308,7 +308,7 @@ mod tests {
             .await?;
         // This process still exists, so make sure that nothing has changed
         let my_proc_time: i64 = my_proc_row.get("STARTTIME");
-        assert_ne!(my_proc_time, cur_process.start_time);
+        assert_eq!(my_proc_time, cur_process.start_time);
         let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
             .bind(cur_process.pid)
             .fetch_all(&pool)
