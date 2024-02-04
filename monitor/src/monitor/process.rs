@@ -231,7 +231,7 @@ mod tests {
     }
 
     #[sqlx::test(fixtures("processTest"))]
-    async fn test_init_process_data(pool: SqlitePool) -> Result<(), NebulaError> {
+    async fn test_init_process_data_simple(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
             .with_max_level(Level::TRACE)
@@ -263,6 +263,64 @@ mod tests {
 
         // Make sure the not found process is marked as not being alive anymore
         let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 9999999;")
+            .fetch_one(&pool)
+            .await?;
+        let old_process_alive: bool = old_process.get("ISALIVE");
+        assert_eq!(old_process_alive, false);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("processTest"))]
+    async fn test_init_process_data_additional_checks(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // This will be an existing process that is already running
+        let cur_process: ProcInfo = procfs::process::Process::myself()?.into();
+        sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+            .bind(cur_process.pid)
+            .bind(cur_process.exec)
+            .bind(cur_process.start_time)
+            .bind(cur_process.is_alive)
+            .bind(cur_process.init_total_cpu)
+            .execute(&pool)
+            .await?;
+        sqlx::query("INSERT INTO PROCSTAT VALUES(?, ?, ?, ?, ?, ?, ?);")
+            .bind(cur_process.pid)
+            .bind(123456789)
+            .bind(999)
+            .bind(0)
+            .bind(42)
+            .bind(42)
+            .bind(0)
+            .execute(&pool)
+            .await?;
+
+        sqlx::query("UPDATE PROCSTAT SET PID = ? WHERE PID = 9999999;")
+            .bind(cur_process.pid - 1)
+            .execute(&pool)
+            .await?;
+
+        init_process_data(&pool).await?;
+
+        let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
+            .bind(cur_process.pid)
+            .fetch_one(&pool)
+            .await?;
+        // This process still exists, so make sure that nothing has changed
+        let my_proc_time: i64 = my_proc_row.get("STARTTIME");
+        assert_ne!(my_proc_time, cur_process.start_time);
+        let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
+            .bind(cur_process.pid)
+            .fetch_all(&pool).await?;
+        assert_eq!(my_proc_stats.len(), 1);
+
+        // Make sure the not found process is marked as not being alive anymore
+        let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?;")
+            .bind(cur_process.pid - 1)
             .fetch_one(&pool)
             .await?;
         let old_process_alive: bool = old_process.get("ISALIVE");
