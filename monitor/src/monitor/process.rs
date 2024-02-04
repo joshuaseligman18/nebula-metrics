@@ -237,19 +237,31 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
+        let cur_process: ProcInfo = procfs::process::Process::myself()?.into();
+        sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+            .bind(cur_process.pid)
+            .bind(cur_process.exec)
+            .bind(123456789)
+            .bind(true)
+            .bind(10)
+            .execute(&pool)
+            .await?;
+
         init_process_data(&pool).await?;
 
-        let systemd_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 1")
+        let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
+            .bind(cur_process.pid)
             .fetch_one(&pool)
             .await?;
         // Make sure the old process is overwritten and its old stats are gone
-        let systemd_time: i64 = systemd_row.get("STARTTIME");
-        assert_ne!(systemd_time, 123456789);
-        let systemd_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = 1;")
+        let my_proc_time: i64 = my_proc_row.get("STARTTIME");
+        assert_ne!(my_proc_time, 123456789);
+        let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
+            .bind(cur_process.pid)
             .fetch_all(&pool).await?;
-        assert_eq!(systemd_stats.len(), 0);
+        assert_eq!(my_proc_stats.len(), 0);
 
-        // Make sure the old process is marked as not being alive anymore
+        // Make sure the not found process is marked as not being alive anymore
         let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 9999999;")
             .fetch_one(&pool)
             .await?;
