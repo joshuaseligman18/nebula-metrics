@@ -50,6 +50,9 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
 #[cfg(test)]
 mod tests {
+    use sqlx::Row;
+    use sqlx::sqlite::SqliteRow;
+
     use super::*;
     use std::io;
 
@@ -60,6 +63,35 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
+        init_cpu_data(&pool).await?;
+        let real_cpu_data: CpuInfo = CpuInfo::current()?;
+
+        let cur_cpus: Vec<SqliteRow> = sqlx::query("SELECT * FROM CPU;").fetch_all(&pool).await?;
+        assert_eq!(cur_cpus.len(), real_cpu_data.num_cores());
+        // Make sure our "old" cpu is no longer in the CPU table
+        for cpu in cur_cpus.iter() {
+            let core: u32 = cpu.get("CPUCORE");
+            assert_ne!(core, 99);
+        }
+
+        let proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT;").fetch_all(&pool).await?;
+        // The length should not have changed
+        assert_eq!(proc_stats.len(), 2);
+        for proc_stat in proc_stats.iter() {
+            let cpu: Option<u32> = proc_stat.get("CPUCORE");
+            // If the core is still not null, make sure it is in the valid cpu range
+            if cpu.is_some() {
+                assert!(cpu.unwrap() < real_cpu_data.num_cores() as u32);
+            }
+        }
+
+        let cpu_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM CPUSTAT;").fetch_all(&pool).await?;
+        // Make sure our "old" cpu is no longer in the CPUSTAT table
+        assert_eq!(cpu_stats.len(), 1);
+        for cpu_stat in cpu_stats.iter() {
+            let core: u32 = cpu_stat.get("CPUCORE");
+            assert!(core < real_cpu_data.num_cores() as u32);
+        }
 
         Ok(())
     }
