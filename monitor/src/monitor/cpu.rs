@@ -57,7 +57,7 @@ mod tests {
     use std::io;
 
     #[sqlx::test(fixtures("cpuTest"))]
-    async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
+    async fn test_init_cpu_data(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
             .with_max_level(Level::TRACE)
