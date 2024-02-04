@@ -18,9 +18,10 @@ jobs:
     - name: Install cargo-llvm-cov
       run: cargo install cargo-llvm-cov
     - name: Run tests
-      run: cargo llvm-cov --html --no-cfg-coverage --fail-under-lines 60 --all-features
+      run: cargo llvm-cov --html --no-cfg-coverage --fail-under-lines 70 --all-features
     - name: Upload Results
       uses: actions/upload-artifact@v4
       with:
         name: rust-code-coverage
         path: target/llvm-cov/html/
+        if-no-files-found: error
