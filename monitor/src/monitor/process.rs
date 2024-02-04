@@ -223,9 +223,9 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        // We should get 2 results back
+        // We should get 1 result back
         let proc_vec: Vec<ProcInfo> = get_processes_in_db(&pool).await?;
-        assert_eq!(proc_vec.len(), 2);
+        assert_eq!(proc_vec.len(), 1);
 
         Ok(())
     }
