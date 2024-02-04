@@ -31,12 +31,17 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         .execute(conn)
         .await?;
 
+    // Old CPU aggregated stats can be wiped
+    sqlx::query("DELETE FROM CPUSTAT WHERE CPUCORE >= ?;")
+        .bind(cpu_info.num_cores() as u32)
+        .execute(conn)
+        .await?;
+
     // Delete extraneous rows from the cpu table
     sqlx::query("DELETE FROM CPU WHERE CPUCORE >= ?;")
         .bind(cpu_info.num_cores() as u32)
         .execute(conn)
-        .await?
-        .rows_affected();
+        .await?;
     event!(Level::DEBUG, "Finished cleaning up old CPU data");
 
     event!(Level::INFO, "Successfully initialized CPU data");
