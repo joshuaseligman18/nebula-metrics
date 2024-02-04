@@ -272,7 +272,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test(fixtures("processTest"))]
+    #[sqlx::test(fixtures("processTest2"))]
     async fn test_init_process_data_additional_checks(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
@@ -300,12 +300,6 @@ mod tests {
             .execute(&pool)
             .await?;
 
-        sqlx::query("UPDATE PROCESS, PROCSTAT SET PROCESS.PID = ?, PROCSTAT.PID = ? WHERE PROCESS.PID = 9999999 AND PROCSTAT.PID = 9999999;")
-            .bind(cur_process.pid - 1)
-            .bind(cur_process.pid - 1)
-            .execute(&pool)
-            .await?;
-
         init_process_data(&pool).await?;
 
         let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
@@ -323,7 +317,7 @@ mod tests {
 
         // Make sure the not found process is marked as not being alive anymore
         let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?;")
-            .bind(cur_process.pid - 1)
+            .bind(42)
             .fetch_one(&pool)
             .await?;
         let old_process_alive: bool = old_process.get("ISALIVE");
