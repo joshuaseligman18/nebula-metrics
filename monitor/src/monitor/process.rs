@@ -272,7 +272,7 @@ mod tests {
         Ok(())
     }
 
-    #[sqlx::test(fixtures("processTest2"))]
+    #[sqlx::test(fixtures("processTestEmpty"))]
     async fn test_init_process_data_additional_checks(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
@@ -300,6 +300,14 @@ mod tests {
             .execute(&pool)
             .await?;
 
+        // This is an old process that should be marked as dead
+        sqlx::query("INSERT INTO PROCESS VALUES(42, \"test-exe\", 123456790, 1, 2048);")
+            .execute(&pool)
+            .await?;
+        sqlx::query("INSERT INTO PROCSTAT VALUES(42, 987654321, 5000, 0, 42, 42, 0);")
+            .execute(&pool)
+            .await?;
+
         init_process_data(&pool).await?;
 
         let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
@@ -322,6 +330,26 @@ mod tests {
             .await?;
         let old_process_alive: bool = old_process.get("ISALIVE");
         assert_eq!(old_process_alive, false);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("processTestEmpty"))]
+    async fn test_init_process_data_empty_db(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let processes: Vec<ProcInfo> = get_all_processes()?;
+
+        init_process_data(&pool).await?;
+
+        let rows: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCESS;")
+            .fetch_all(&pool)
+            .await?;
+        // All processes should have just been inserted without question
+        assert_eq!(rows.len(), processes.len());
 
         Ok(())
     }
