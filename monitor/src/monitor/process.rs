@@ -258,7 +258,8 @@ mod tests {
         assert_ne!(my_proc_time, 123456789);
         let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
             .bind(cur_process.pid)
-            .fetch_all(&pool).await?;
+            .fetch_all(&pool)
+            .await?;
         assert_eq!(my_proc_stats.len(), 0);
 
         // Make sure the not found process is marked as not being alive anymore
@@ -299,12 +300,8 @@ mod tests {
             .execute(&pool)
             .await?;
 
-        sqlx::query("UPDATE PROCESS SET PID = ? WHERE PID = 9999999;")
+        sqlx::query("UPDATE PROCESS, PROCSTAT SET PROCESS.PID = ?, PROCSTAT.PID = ? WHERE PROCESS.PID = 9999999 AND PROCSTAT.PID = 9999999;")
             .bind(cur_process.pid - 1)
-            .execute(&pool)
-            .await?;
-
-        sqlx::query("UPDATE PROCSTAT SET PID = ? WHERE PID = 9999999;")
             .bind(cur_process.pid - 1)
             .execute(&pool)
             .await?;
@@ -320,7 +317,8 @@ mod tests {
         assert_ne!(my_proc_time, cur_process.start_time);
         let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
             .bind(cur_process.pid)
-            .fetch_all(&pool).await?;
+            .fetch_all(&pool)
+            .await?;
         assert_eq!(my_proc_stats.len(), 1);
 
         // Make sure the not found process is marked as not being alive anymore
