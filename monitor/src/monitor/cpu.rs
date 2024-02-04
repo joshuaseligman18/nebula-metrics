@@ -42,3 +42,20 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Successfully initialized CPU data");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+
+    #[sqlx::test(fixtures("cpuTest"))]
+    async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+
+        Ok(())
+    }
+}
