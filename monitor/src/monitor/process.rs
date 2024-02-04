@@ -299,6 +299,11 @@ mod tests {
             .execute(&pool)
             .await?;
 
+        sqlx::query("UPDATE PROCESS SET PID = ? WHERE PID = 9999999;")
+            .bind(cur_process.pid - 1)
+            .execute(&pool)
+            .await?;
+
         sqlx::query("UPDATE PROCSTAT SET PID = ? WHERE PID = 9999999;")
             .bind(cur_process.pid - 1)
             .execute(&pool)
