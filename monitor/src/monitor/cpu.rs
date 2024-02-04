@@ -50,8 +50,8 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
 #[cfg(test)]
 mod tests {
-    use sqlx::Row;
     use sqlx::sqlite::SqliteRow;
+    use sqlx::Row;
 
     use super::*;
     use std::io;
@@ -74,7 +74,9 @@ mod tests {
             assert_ne!(core, 99);
         }
 
-        let proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT;").fetch_all(&pool).await?;
+        let proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT;")
+            .fetch_all(&pool)
+            .await?;
         // The length should not have changed
         assert_eq!(proc_stats.len(), 2);
         for proc_stat in proc_stats.iter() {
@@ -85,7 +87,9 @@ mod tests {
             }
         }
 
-        let cpu_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM CPUSTAT;").fetch_all(&pool).await?;
+        let cpu_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM CPUSTAT;")
+            .fetch_all(&pool)
+            .await?;
         // Make sure our "old" cpu is no longer in the CPUSTAT table
         assert_eq!(cpu_stats.len(), 1);
         for cpu_stat in cpu_stats.iter() {

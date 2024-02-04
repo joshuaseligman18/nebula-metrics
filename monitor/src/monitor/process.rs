@@ -199,3 +199,63 @@ pub async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<ProcInfo>, Neb
     event!(Level::DEBUG, "Done getting all processes from the db");
     Ok(proc_vec)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io;
+
+    #[test]
+    fn test_get_all_processes() -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        assert!(get_all_processes().is_ok());
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("processTest"))]
+    async fn test_get_db_processes(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // We should get 2 results back
+        let proc_vec: Vec<ProcInfo> = get_processes_in_db(&pool).await?;
+        assert_eq!(proc_vec.len(), 2);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("processTest"))]
+    async fn test_init_process_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        init_process_data(&pool).await?;
+
+        let systemd_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 1")
+            .fetch_one(&pool)
+            .await?;
+        // Make sure the old process is overwritten and its old stats are gone
+        let systemd_time: i64 = systemd_row.get("STARTTIME");
+        assert_ne!(systemd_time, 123456789);
+        let systemd_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = 1;")
+            .fetch_all(&pool).await?;
+        assert_eq!(systemd_stats.len(), 0);
+
+        // Make sure the old process is marked as not being alive anymore
+        let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 9999999;")
+            .fetch_one(&pool)
+            .await?;
+        let old_process_alive: bool = old_process.get("ISALIVE");
+        assert_eq!(old_process_alive, false);
+
+        Ok(())
+    }
+}
