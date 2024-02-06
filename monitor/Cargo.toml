@@ -20,7 +20,7 @@ name = "nebula-metrics"
 assets = [
     ["target/release/nebula-monitor", "usr/bin/", "755"],
     ["target/release/nebula-server", "usr/bin/", "755"],
-    ["../assets/metrics.sql", "var/nebula/db/", "444"]
+    ["../assets/**/*", "var/nebula/", "444"]
 ]
 depends = "$auto, sqlite3"
 maintainer-scripts = "../debian/"

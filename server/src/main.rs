@@ -10,7 +10,8 @@ async fn main() {
         .with_max_level(Level::TRACE)
         .init();
 
-    let app: Router = Router::new().route("/", get(|| async { "Hello world" }))
+    let app: Router = Router::new()
+        .route("/", get(|| async { "Hello world" }))
         .layer(TraceLayer::new_for_http());
     let listener: TcpListener = tokio::net::TcpListener::bind("0.0.0.0:4242").await.unwrap();
     axum::serve(listener, app).await.unwrap();
