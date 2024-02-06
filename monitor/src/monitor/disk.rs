@@ -5,7 +5,7 @@ use tracing::{event, instrument, Level};
 use super::error::NebulaError;
 
 /// Struct to represent disk data
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Disk {
     /// Name of the disk device
     name: String,
@@ -25,20 +25,24 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Starting to initialize disk data");
     let disks: Vec<Disk> = get_all_disk_data();
 
-    for disk in disks.iter() {
-        event!(Level::DEBUG, "Inserting disk {:?} into DISK", &disk.name);
-        sqlx::query("INSERT OR REPLACE INTO DISK VALUES (?, ?, ?)")
-            .bind(&disk.name)
-            .bind(&disk.mount)
-            .bind(&disk.file_system_type)
-            .execute(conn)
-            .await?;
+    event!(Level::DEBUG, "Starting to insert updated disk information");
+    let mut disk_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT OR REPLACE INTO DISK ");
+
+    disk_insert.push_values(disks.clone().into_iter(), |mut builder, disk| {
         event!(
             Level::DEBUG,
-            "Successfully inserted disk {:?} into DISK",
-            &disk.name
+            "Inserting disk information for device: {:?}",
+            disk.name
         );
-    }
+        builder
+            .push_bind(disk.name)
+            .push_bind(disk.mount)
+            .push_bind(disk.file_system_type);
+    });
+
+    disk_insert.push(";");
+    disk_insert.build().execute(conn).await?;
+    event!(Level::DEBUG, "Finished inserting updated disk information");
 
     clean_up_old_disk_data(conn, &disks).await?;
 
