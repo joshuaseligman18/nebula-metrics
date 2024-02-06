@@ -1,6 +1,7 @@
-use procfs::{CpuInfo, Current};
-use sqlx::SqlitePool;
 use std::collections::HashMap;
+
+use procfs::{CpuInfo, Current};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use tracing::{event, instrument, Level};
 
 use super::error::NebulaError;
@@ -11,18 +12,37 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Starting to initialize CPU data");
     let cpu_info: CpuInfo = CpuInfo::current()?;
 
+    event!(Level::DEBUG, "Inserting the current CPUs");
     // Update the CPU table by replacing the existing data with updated info
-    for i in 0..cpu_info.num_cores() {
-        let the_cpu: HashMap<&str, &str> = cpu_info.get_info(i).unwrap();
-        event!(Level::DEBUG, "Inserting CPU {:?}", i);
-        sqlx::query("INSERT OR REPLACE INTO CPU VALUES (?, ?, ?);")
-            .bind(i as u32)
-            .bind(the_cpu.get("cpu MHz").unwrap())
-            .bind(the_cpu.get("cache size").unwrap().split(' ').next())
-            .execute(conn)
-            .await?;
-        event!(Level::DEBUG, "Successfully inserted data for CPU {:?}", i);
-    }
+    let mut cpu_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT OR REPLACE INTO CPU ");
+
+    cpu_insert.push_values(cpu_info.cpus.clone().into_iter(), |mut builder, cpu| {
+        let core_number: i32 = cpu.get("processor").unwrap().parse::<i32>().unwrap();
+        let core_info: HashMap<&str, &str> = cpu_info
+            .get_info(core_number as usize)
+            .expect("Should be able to get the core's specific info");
+        event!(
+            Level::DEBUG,
+            "Adding CPU {:?} to the insert query",
+            core_number
+        );
+        builder
+            .push_bind(core_number)
+            .push_bind(core_info.get("cpu MHz").unwrap().parse::<f32>().unwrap())
+            .push_bind(
+                core_info
+                    .get("cache size")
+                    .unwrap()
+                    .split(' ')
+                    .next()
+                    .unwrap()
+                    .parse::<i32>()
+                    .unwrap(),
+            );
+    });
+    cpu_insert.push(";");
+    cpu_insert.build().execute(conn).await?;
+    event!(Level::DEBUG, "Successfully inserted current CPU info");
 
     event!(Level::DEBUG, "Cleaning up old CPU data");
     // Old process statistics should be set to NULL as the cpu core
