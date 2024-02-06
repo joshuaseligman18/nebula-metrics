@@ -1,0 +1,16 @@
+[package]
+name = "server"
+version.workspace = true
+authors.workspace = true
+description = "The server component that hosts an API and website for accessing system metrics."
+edition = "2021"
+
+[dependencies]
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+sqlx.workspace = true
+
+[[bin]]
+name = "nebula-server"
+path = "src/main.rs"

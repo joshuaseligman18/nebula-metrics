@@ -1,5 +1,5 @@
 [workspace]
-members = ["monitor"]
+members = ["monitor", "server"]
 resolver = "2"
 
 [workspace.package]

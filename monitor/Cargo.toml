@@ -19,10 +19,12 @@ path = "src/main.rs"
 name = "nebula-metrics"
 assets = [
     ["target/release/nebula-monitor", "usr/bin/", "755"],
+    ["target/release/nebula-server", "usr/bin/", "755"],
     ["../assets/metrics.sql", "var/nebula/db/", "444"]
 ]
 depends = "$auto, sqlite3"
 maintainer-scripts = "../debian/"
 systemd-units = [
-    { unit-name = "nebula-metrics", enable = false }
+    { unit-name = "nebula-metrics", enable = false },
+    { unit-name = "nebula-server", enable = false }
 ]
