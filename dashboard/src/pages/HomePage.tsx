@@ -5,7 +5,9 @@ import Container from 'react-bootstrap/Container';
 const HomePage: React.FC = () => {
   useEffect(() => {
     // Will modularize and unit test for gonna add another committ
-    document.documentElement.classList.toggle('dark-mode', /* condition */);
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark-mode', /* condition */);
+    }
   }, []);
 
   return (
