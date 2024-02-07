@@ -1,5 +1,7 @@
-use axum::{extract::State, Router, routing::get, http::StatusCode};
+use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use sqlx::SqlitePool;
+use models::tables::Process;
+use tracing::{event, Level};
 
 /// Absolute path to the database file
 const DB_FILE: &str = "sqlite:///var/nebula/db/nebulaMetrics.db?mode=ro";
@@ -22,6 +24,16 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
 }
 
 /// Returns all processes in the database
-async fn get_processes(State(state): State<AppState>) -> Result<(), StatusCode> {
-    Ok(())
+async fn get_processes(State(state): State<AppState>) -> Result<Json<Vec<Process>>, StatusCode> {
+    let res: Result<Vec<Process>, sqlx::Error> = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS;")
+        .fetch_all(&state.conn)
+        .await;
+
+    event!(Level::TRACE, "{:?}", res);
+
+    if res.is_err() {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    } else {
+        Ok(Json::from(res.unwrap()))
+    }
 }
