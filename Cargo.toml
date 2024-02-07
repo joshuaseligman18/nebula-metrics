@@ -1,5 +1,5 @@
 [workspace]
-members = [ "models","monitor", "server"]
+members = ["models", "monitor", "server"]
 resolver = "2"
 
 [workspace.package]
