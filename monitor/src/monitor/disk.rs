@@ -129,7 +129,6 @@ pub fn get_all_disk_data() -> Vec<DiskMetrics> {
 mod tests {
     use super::*;
     use models::tables::{Disk, DiskStat};
-    use sqlx::sqlite::SqliteRow;
     use std::io;
 
     #[test]
