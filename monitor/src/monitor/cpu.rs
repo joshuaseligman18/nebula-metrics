@@ -85,7 +85,9 @@ mod tests {
         init_cpu_data(&pool).await?;
         let real_cpu_data: CpuInfo = CpuInfo::current()?;
 
-        let cur_cpus: Vec<Cpu> = sqlx::query_as::<_, Cpu>("SELECT * FROM CPU;").fetch_all(&pool).await?;
+        let cur_cpus: Vec<Cpu> = sqlx::query_as::<_, Cpu>("SELECT * FROM CPU;")
+            .fetch_all(&pool)
+            .await?;
         assert_eq!(cur_cpus.len(), real_cpu_data.num_cores());
         // Make sure our "old" cpu is no longer in the CPU table
         for cpu in cur_cpus.iter() {

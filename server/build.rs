@@ -8,6 +8,7 @@ fn main() {
         fs::canonicalize("../")
             .expect("Parent directory should exist")
             .to_str()
+            .unwrap()
     );
     let dashboard_dir: PathBuf = fs::canonicalize("../dashboard/").expect("Dashboard should exist");
     let assets_dir: PathBuf = fs::canonicalize("../assets/").expect("Assets should exist");

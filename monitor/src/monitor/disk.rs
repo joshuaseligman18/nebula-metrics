@@ -165,7 +165,9 @@ mod tests {
         // The current disk is already in the db plus an old disk
         clean_up_old_disk_data(&pool, &cur_disks).await?;
 
-        let disk_vec: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        let disk_vec: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;")
+            .fetch_all(&pool)
+            .await?;
         // There should only be the current disk left
         assert_eq!(disk_vec.len(), 1);
 
@@ -192,7 +194,9 @@ mod tests {
         // and replaced with the current disks
         init_disk_data(&pool).await?;
 
-        let disk_vec: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        let disk_vec: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;")
+            .fetch_all(&pool)
+            .await?;
         // There should only be the current disks left
         assert_eq!(disk_vec.len(), cur_disks.len());
 
