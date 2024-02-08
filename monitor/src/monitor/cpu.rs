@@ -46,19 +46,19 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
     event!(Level::DEBUG, "Cleaning up old CPU data");
     // Old process statistics should be set to NULL as the cpu core
-    sqlx::query("UPDATE PROCSTAT SET CPUCORE = NULL WHERE CPUCORE >= ?;")
+    sqlx::query("UPDATE PROCSTAT SET CPU_CORE = NULL WHERE CPU_CORE >= ?;")
         .bind(cpu_info.num_cores() as u32)
         .execute(conn)
         .await?;
 
     // Old CPU aggregated stats can be wiped
-    sqlx::query("DELETE FROM CPUSTAT WHERE CPUCORE >= ?;")
+    sqlx::query("DELETE FROM CPUSTAT WHERE CPU_CORE >= ?;")
         .bind(cpu_info.num_cores() as u32)
         .execute(conn)
         .await?;
 
     // Delete extraneous rows from the cpu table
-    sqlx::query("DELETE FROM CPU WHERE CPUCORE >= ?;")
+    sqlx::query("DELETE FROM CPU WHERE CPU_CORE >= ?;")
         .bind(cpu_info.num_cores() as u32)
         .execute(conn)
         .await?;

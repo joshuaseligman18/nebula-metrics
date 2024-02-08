@@ -60,7 +60,7 @@ pub async fn clean_up_old_disk_data(
 
     // Start by clearing the DISKSTAT table
     let mut disk_stat_delete: QueryBuilder<Sqlite> =
-        QueryBuilder::new("DELETE FROM DISKSTAT WHERE DEVICENAME NOT IN (");
+        QueryBuilder::new("DELETE FROM DISKSTAT WHERE DEVICE_NAME NOT IN (");
     let mut disk_stat_separated = disk_stat_delete.separated(", ");
     for disk in cur_disks.iter() {
         disk_stat_separated.push_bind(&disk.name);
@@ -70,7 +70,7 @@ pub async fn clean_up_old_disk_data(
 
     // Next clear out the DISK table now that the foreign keys are taken care of
     let mut disk_delete: QueryBuilder<Sqlite> =
-        QueryBuilder::new("DELETE FROM DISK WHERE DEVICENAME NOT IN (");
+        QueryBuilder::new("DELETE FROM DISK WHERE DEVICE_NAME NOT IN (");
     let mut disk_separated = disk_delete.separated(", ");
     for disk in cur_disks.iter() {
         disk_separated.push_bind(&disk.name);
