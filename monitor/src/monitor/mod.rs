@@ -2,8 +2,7 @@ mod cpu;
 mod disk;
 mod process;
 
-pub mod error;
-use error::NebulaError;
+use models::error::NebulaError;
 
 use sqlx::SqlitePool;
 use tracing::{event, instrument, span::Id, Level};

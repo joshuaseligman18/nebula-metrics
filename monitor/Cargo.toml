@@ -10,7 +10,8 @@ tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 sqlx.workspace = true
-procfs = "0.16.0"
+procfs.workspace = true
+"models" = { path = "./../models" }
 
 [[bin]]
 name = "nebula-monitor"

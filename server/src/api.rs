@@ -32,9 +32,9 @@ async fn get_processes(State(state): State<AppState>) -> Result<Json<Vec<Process
 
     event!(Level::TRACE, "{:?}", res);
 
-    if res.is_err() {
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    if let Ok(proc_vec) = res {
+        Ok(Json::from(proc_vec))
     } else {
-        Ok(Json::from(res.unwrap()))
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
 }

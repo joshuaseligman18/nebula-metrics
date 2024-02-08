@@ -8,3 +8,4 @@ description = "Common models for both the monitor and server"
 [dependencies]
 serde.workspace = true
 sqlx.workspace = true
+procfs.workspace = true

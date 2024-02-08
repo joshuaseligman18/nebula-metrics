@@ -4,13 +4,10 @@ use std::process::Command;
 
 fn main() {
     println!(
-        "{}",
-        format!(
-            "cargo:rerun-if-changed={:?}",
-            fs::canonicalize("../")
-                .expect("Parent directory should exist")
-                .to_str()
-        )
+        "cargo:rerun-if-changed={:?}",
+        fs::canonicalize("../")
+            .expect("Parent directory should exist")
+            .to_str()
     );
     let dashboard_dir: PathBuf = fs::canonicalize("../dashboard/").expect("Dashboard should exist");
     let assets_dir: PathBuf = fs::canonicalize("../assets/").expect("Assets should exist");
