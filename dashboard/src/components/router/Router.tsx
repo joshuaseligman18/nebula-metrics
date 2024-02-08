@@ -9,8 +9,8 @@ const AppRouter: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/"  Component={HomePage} />
-        <Route path="/Process"  Component={ProcessPage} />
-        <Route path="/System"  Component={SystemPage} />
+        <Route path="/process"  Component={ProcessPage} />
+        <Route path="/system"  Component={SystemPage} />
       </Routes>
     </Router>
   );

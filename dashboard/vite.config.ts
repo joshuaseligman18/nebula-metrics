@@ -7,10 +7,9 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main: './src/main.tsx',
-        HomePage: './src/pages/HomePage.tsx', 
-        SystemPage: './src/pages/SystemPage.tsx',
-        ProcessPage: './src/pages/ProcessPage.tsx',
+        main: './index.html',
+        system: './system.html',
+        process: './process.html'
       }
     }
   }
