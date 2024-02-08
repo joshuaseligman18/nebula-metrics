@@ -1,3 +1,10 @@
+mod cpu;
+mod disk;
+mod process;
+
+pub mod error;
+use error::NebulaError;
+
 use sqlx::SqlitePool;
 use tracing::{event, instrument, span::Id, Level};
 
@@ -14,23 +21,25 @@ pub struct Monitor {
 impl Monitor {
     /// Constructor for the monitor and establishes a connection to the db
     #[instrument]
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self, NebulaError> {
         event!(Level::INFO, "Creating monitor");
+        let new_monitor: Monitor = Monitor {
+            conn: SqlitePool::connect(DB_FILE).await?,
+        };
+        Ok(new_monitor)
+    }
 
-        let pool_res: Result<SqlitePool, sqlx::Error> = SqlitePool::connect(DB_FILE).await;
-        if let Ok(pool) = pool_res {
-            event!(Level::INFO, "Successfully connected to database");
-            Monitor { conn: pool }
-        } else {
-            // Log the error and crash because unable to connect to db
-            // and monitor cannot function otherwise
-            event!(
-                Level::ERROR,
-                "Failed to connect to database: {:?}",
-                pool_res.unwrap_err()
-            );
-            panic!();
-        }
+    /// Initializes the database and verifies/cleans the pre-existing data
+    #[instrument(skip(self))]
+    pub async fn setup_init_data(&self) -> Result<(), NebulaError> {
+        event!(Level::INFO, "Setting up initial data");
+
+        cpu::init_cpu_data(&self.conn).await?;
+        disk::init_disk_data(&self.conn).await?;
+        process::init_process_data(&self.conn).await?;
+
+        event!(Level::INFO, "Successfully set up initial data");
+        Ok(())
     }
 
     #[instrument(skip(self))]

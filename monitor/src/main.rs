@@ -22,7 +22,11 @@ async fn main() {
     let forever = task::spawn(async {
         let mut interval = interval(Duration::from_secs(10));
 
-        let monitor: Monitor = Monitor::new().await;
+        let monitor: Monitor = Monitor::new().await.expect("Monitor should be created");
+        monitor
+            .setup_init_data()
+            .await
+            .expect("Data should be initialized");
 
         loop {
             interval.tick().await;
