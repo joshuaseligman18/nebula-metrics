@@ -11,10 +11,10 @@ const NavBar: React.FC = () => {
       </Navbar.Brand>
       <Navbar.Toggle aria-controls="basic-navbar-nav" />
       <Navbar.Collapse id="basic-navbar-nav">
-        <Nav className="ml-auto">
+        <Nav className="ml-auto mr-4">
           <Nav.Link href="/" style={{ color: 'white' }}>Home</Nav.Link>
-          <Nav.Link href="/System" style={{ color: 'white' }}>System</Nav.Link>
-          <Nav.Link href="/Process" style={{ color: 'white' }}>Process</Nav.Link>
+          <Nav.Link href="/system" style={{ color: 'white' }}>System</Nav.Link>
+          <Nav.Link href="/process" style={{ color: 'white' }}>Process</Nav.Link>
         </Nav>
       </Navbar.Collapse>
     </Navbar>
