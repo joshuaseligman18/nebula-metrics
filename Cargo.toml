@@ -11,5 +11,5 @@ description = "A system metrics monitor for Linux operating systems."
 tokio = { version = "1.35.1", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "std"] }
-sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite"] }
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite", "macros", "migrate"] }
 serde = "1.0.196"
