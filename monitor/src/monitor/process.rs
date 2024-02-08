@@ -123,22 +123,26 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     }
 
     if cur_index < cur_processes.len() {
-        let mut remaning_proc_inserts: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO PROCESS ");
+        let mut remaning_proc_inserts: QueryBuilder<Sqlite> =
+            QueryBuilder::new("INSERT INTO PROCESS ");
 
-        remaning_proc_inserts.push_values(cur_processes[cur_index..].iter(), |mut builder, new_proc| {
-            event!(
-                Level::DEBUG,
-                "Found process to insert with PID {:?}",
-                new_proc.pid
+        remaning_proc_inserts.push_values(
+            cur_processes[cur_index..].iter(),
+            |mut builder, new_proc| {
+                event!(
+                    Level::DEBUG,
+                    "Found process to insert with PID {:?}",
+                    new_proc.pid
                 );
-            // The new process has not been recorded yet, so insert its init data
-            builder
-                .push_bind(new_proc.pid)
-                .push_bind(&new_proc.exec)
-                .push_bind(new_proc.start_time)
-                .push_bind(new_proc.is_alive)
-                .push_bind(new_proc.init_total_cpu);
-        });
+                // The new process has not been recorded yet, so insert its init data
+                builder
+                    .push_bind(new_proc.pid)
+                    .push_bind(&new_proc.exec)
+                    .push_bind(new_proc.start_time)
+                    .push_bind(new_proc.is_alive)
+                    .push_bind(new_proc.init_total_cpu);
+            },
+        );
         remaning_proc_inserts.push(";");
         remaning_proc_inserts.build().execute(conn).await?;
     }
