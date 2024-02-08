@@ -81,7 +81,7 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
                     db_proc.pid
                 );
                 // The old process has died since startup, so just mark it as not alive
-                sqlx::query("UPDATE PROCESS SET ISALIVE = FALSE WHERE PID = ?")
+                sqlx::query("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID = ?")
                     .bind(db_proc.pid)
                     .execute(conn)
                     .await?;
@@ -122,7 +122,7 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
             "Setting all remaining unknown processes to be dead"
         );
         let mut update_dead_processes: QueryBuilder<Sqlite> =
-            QueryBuilder::new("UPDATE PROCESS SET ISALIVE = FALSE WHERE PID IN (");
+            QueryBuilder::new("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID IN (");
         let mut update_dead_separated = update_dead_processes.separated(", ");
         for db_proc in db_processes[db_index..].iter() {
             update_dead_separated.push_bind(db_proc.pid);
@@ -156,7 +156,7 @@ pub fn get_all_processes() -> Result<Vec<Process>, NebulaError> {
 pub async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<Process>, NebulaError> {
     event!(Level::DEBUG, "Getting all processes from the db");
     let proc_vec: Vec<Process> =
-        sqlx::query_as::<_, Process>("SELECT * FROM PROCESS ODER BY PID ASC;")
+        sqlx::query_as::<_, Process>("SELECT * FROM PROCESS ORDER BY PID ASC;")
             .fetch_all(conn)
             .await?;
 
