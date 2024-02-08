@@ -124,3 +124,83 @@ pub fn get_all_disk_data() -> Vec<Disk> {
     event!(Level::DEBUG, "Finished fetching disk data");
     disk_vec
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqliteRow;
+    use std::io;
+
+    #[test]
+    fn test_get_disk_data() {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let output: Vec<Disk> = get_all_disk_data();
+
+        assert!(output.len() > 0);
+        for disk in output.iter() {
+            assert_eq!(&disk.name[0..1], "/");
+        }
+    }
+
+    #[sqlx::test(fixtures("diskTest"))]
+    async fn test_clean_up_disks(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let cur_disks: Vec<Disk> = vec![Disk {
+            name: "/test/disk".to_string(),
+            file_system_type: "ext4".to_string(),
+            mount: "/test/folder".to_string(),
+            available: 42,
+            used: 21,
+        }];
+
+        // The current disk is already in the db plus an old disk
+        clean_up_old_disk_data(&pool, &cur_disks).await?;
+
+        let disk_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        // There should only be the current disk left
+        assert_eq!(disk_vec.len(), 1);
+
+        // The stats for the old disk should be removed, leaving nothing left
+        let disk_stat_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISKSTAT;")
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(disk_stat_vec.len(), 0);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("diskTest"))]
+    async fn test_init_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // Get the system's current disks for the example
+        let cur_disks: Vec<Disk> = get_all_disk_data();
+
+        // All of the disks in the db are test disks, which should be wiped
+        // and replaced with the current disks
+        init_disk_data(&pool).await?;
+
+        let disk_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISK;").fetch_all(&pool).await?;
+        // There should only be the current disks left
+        assert_eq!(disk_vec.len(), cur_disks.len());
+
+        // The stats for the old disks should be removed, leaving nothing left
+        let disk_stat_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM DISKSTAT;")
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(disk_stat_vec.len(), 0);
+
+        Ok(())
+    }
+}
