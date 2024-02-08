@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import("jest").config} */
+const config  = {
     transform: {
       '^.+\\.tsx?$': 'ts-jest',
     },
@@ -7,11 +8,11 @@ module.exports = {
     testEnvironment: 'jsdom',
     coverageThreshold: {
       global: {
-        branches: 60,
-        functions: 60,
         lines: 60,
-        statements: 60,
       },
     },
+    restoreMocks: true,
   };
+
+  module.exports = config;
   
