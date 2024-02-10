@@ -4,7 +4,7 @@ use serde::Serialize;
 use sqlx::FromRow;
 
 /// Struct for the PROCESS table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Process {
     /// The PID of the process
@@ -34,8 +34,23 @@ impl From<process::Process> for self::Process {
     }
 }
 
+impl From<&process::Process> for self::Process {
+    /// Converts from a procfs process for easier use
+    fn from(value: &process::Process) -> Self {
+        let stat: Stat = value.stat().unwrap();
+        self::Process {
+            pid: value.pid() as u32,
+            exec: value.exe().unwrap().to_str().unwrap().to_string(),
+            start_time: stat.starttime().get().unwrap().timestamp(),
+            is_alive: value.is_alive(),
+            // User time + system time are in Jiffies, so have to convert to seconds
+            init_total_cpu: (stat.utime + stat.stime) as f32 / procfs::ticks_per_second() as f32,
+        }
+    }
+}
+
 /// Struct for the CPU table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Cpu {
     /// The core number for the CPU
@@ -47,7 +62,7 @@ pub struct Cpu {
 }
 
 /// Struct for the PROCSTAT table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct ProcStat {
     /// PID of the process
@@ -58,16 +73,16 @@ pub struct ProcStat {
     pub total_cpu: f32,
     /// CPU core the process is running on
     pub cpu_core: Option<u32>,
-    /// Amount of virtual memory for the process
+    /// Amount of virtual memory for the process in KB
     pub virtual_memory: u32,
-    /// Amount of space the process actively has in memory
+    /// Amount of space the process actively has in memory in KB
     pub resident_memory: u32,
-    /// Amount of memoryt the process is sharing with other processes
+    /// Amount of memoryt the process is sharing with other processes in KB
     pub shared_memory: u32,
 }
 
 /// Struct for the CPUSTAT table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct CpuStat {
     /// Id of the CPU
@@ -79,7 +94,7 @@ pub struct CpuStat {
 }
 
 /// Struct for the MEMORY table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Memory {
     /// Unix epoch timestamp at which the entry was recorded
@@ -95,7 +110,7 @@ pub struct Memory {
 }
 
 /// Struct for the DISK table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Disk {
     /// Name of the device
@@ -107,7 +122,7 @@ pub struct Disk {
 }
 
 /// Struct for the DISKSTAT table
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct DiskStat {
     /// Name of the device
