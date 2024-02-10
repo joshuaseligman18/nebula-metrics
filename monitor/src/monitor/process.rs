@@ -277,6 +277,8 @@ mod tests {
     use super::*;
     use models::tables::ProcStat;
     use std::io;
+    use crate::monitor::cpu;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn test_get_all_processes() -> Result<(), NebulaError> {
@@ -418,10 +420,7 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let processes: Vec<Process> = get_all_processes()?
-            .into_iter()
-            .map(Process::from)
-            .collect();
+        let processes: Vec<process::Process> = get_all_processes()?;
 
         init_process_data(&pool).await?;
 
@@ -430,6 +429,85 @@ mod tests {
             .await?;
         // All processes should have just been inserted without question
         assert_eq!(rows.len(), processes.len());
+
+        Ok(())
+    }
+    
+    #[sqlx::test(fixtures("processTest"))]
+    async fn test_update_process_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // Init the cpu data to make sure there are no foreign key issues
+        cpu::init_cpu_data(&pool).await?;
+
+        // Insert some junk data
+        let my_pid: i32 = process::Process::myself()?.pid;
+        sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+            .bind(my_pid)
+            .bind("the-exe")
+            .bind(123456789)
+            .bind(0)
+            .bind(4242)
+            .execute(&pool)
+            .await?;
+        sqlx::query("INSERT INTO PROCSTAT VALUES (?, ?, ?, ?, ?, ?, ?);")
+            .bind(my_pid)
+            .bind(987654321)
+            .bind(424242)
+            .bind(0)
+            .bind(99)
+            .bind(89)
+            .bind(20)
+            .execute(&pool)
+            .await?;
+
+        let processes: Vec<process::Process> = get_all_processes()?;
+
+        let cur_time: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        update_process_data(cur_time, &pool).await?;
+
+        // Make sure the garbage process is overwritten
+        let my_pid_res: Process = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+            .bind(my_pid)
+            .fetch_one(&pool)
+            .await?;
+        assert_ne!(my_pid_res.start_time, 123456789);
+        let my_pid_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ? AND TIMESTAMP = ?;")
+            .bind(my_pid)
+            .bind(987654321)
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(my_pid_stats.len(), 0);
+
+        // Check for the dead process
+        let dead_proc: Process = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+            .bind(9999999)
+            .fetch_one(&pool)
+            .await?;
+        assert_eq!(dead_proc.is_alive, false);
+        let dead_proc_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
+            .bind(9999999)
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(dead_proc_stats.len(), 1);
+
+        // Check to make sure all processes have been inserted
+        let all_processes: Vec<Process> = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS;")
+            .fetch_all(&pool)
+            .await?;
+        // + 1 because of the dead process
+        assert_eq!(all_processes.len(), processes.len() + 1);
+        let all_process_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT;")
+            .fetch_all(&pool)
+            .await?;
+        // + 1 because of the dead process
+        assert_eq!(all_process_stats.len(), processes.len() + 1);
 
         Ok(())
     }
