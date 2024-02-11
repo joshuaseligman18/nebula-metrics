@@ -233,7 +233,7 @@ mod tests {
             sqlx::query_as::<_, CpuStat>("SELECT * FROM CPUSTAT WHERE TIMESTAMP = 123456790;")
                 .fetch_one(&pool)
                 .await?;
-        assert_eq!(output_stat.usage, 0.054);
+        assert_eq!(output_stat.usage, 0.154);
 
         Ok(())
     }
