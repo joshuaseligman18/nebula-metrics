@@ -55,6 +55,9 @@ impl Monitor {
         process::update_process_data(cur_time, &self.conn)
             .await
             .expect("Should update process data without error");
+        cpu::update_cpu_data(cur_time, &self.conn)
+            .await
+            .expect("Should update cpu usage data without error");
         memory::update_memory_data(cur_time, &self.conn)
             .await
             .expect("Should update memory data without error");

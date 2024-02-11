@@ -271,7 +271,7 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
-        
+
         update_disk_data(cur_time, &pool).await?;
 
         // All old data should be removed and replaced with the current disk data
