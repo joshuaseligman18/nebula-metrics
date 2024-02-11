@@ -1,5 +1,6 @@
 import React from 'react';
 import Card from 'react-bootstrap/Card';
+import MemoryLineGraph from '../components/graphs/MemLineGraph';
 import CpuLineGraph from '../components/graphs/CpuLineGraph';
 
 const SystemPage: React.FC = () => {
@@ -8,6 +9,14 @@ const SystemPage: React.FC = () => {
     { time: new Date('2024-02-10T10:00:00Z'), usage: 20 },
     { time: new Date('2024-02-10T10:10:00Z'), usage: 30 },
     { time: new Date('2024-02-10T10:20:00Z'), usage: 40 },
+    // Add more data points as needed
+  ];
+
+  // Sample data for Memory usage
+  const memoryData = [
+    { time: new Date('2024-02-10T10:00:00Z'), ram: 40, swapped: 10 },
+    { time: new Date('2024-02-10T10:10:00Z'), ram: 50, swapped: 20 },
+    { time: new Date('2024-02-10T10:20:00Z'), ram: 60, swapped: 30 },
     // Add more data points as needed
   ];
 
@@ -28,6 +37,8 @@ const SystemPage: React.FC = () => {
           <Card className="bg-light-dark-mode h-100">
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4">Memory Usage Over Time</Card.Title>
+              {/* Step 3 and 4: Add MemoryLineGraph component and pass memoryData */}
+              <MemoryLineGraph data={memoryData} />
             </Card.Body>
           </Card>
         </div>
