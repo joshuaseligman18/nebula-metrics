@@ -2,7 +2,7 @@ use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 use std::process::{Command, Output};
 use tracing::{event, instrument, Level};
 
-use models::error::NebulaError;
+use models::{error::NebulaError, tables::Disk};
 
 /// Struct to represent disk data
 #[derive(Debug, Clone)]
@@ -28,16 +28,16 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::DEBUG, "Starting to insert updated disk information");
     let mut disk_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT OR REPLACE INTO DISK ");
 
-    disk_insert.push_values(disks.clone().into_iter(), |mut builder, disk| {
+    disk_insert.push_values(disks.iter(), |mut builder, disk| {
         event!(
             Level::DEBUG,
             "Inserting disk information for device: {:?}",
             disk.name
         );
         builder
-            .push_bind(disk.name)
-            .push_bind(disk.mount)
-            .push_bind(disk.file_system_type);
+            .push_bind(&disk.name)
+            .push_bind(&disk.mount)
+            .push_bind(&disk.file_system_type);
     });
 
     disk_insert.push(";");
@@ -47,6 +47,54 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     clean_up_old_disk_data(conn, &disks).await?;
 
     event!(Level::INFO, "Successfully initialized disk info");
+    Ok(())
+}
+
+/// Updates the disk information in the database
+#[instrument(skip(conn))]
+pub async fn update_disk_data(cur_time: u64, conn: &SqlitePool) -> Result<(), NebulaError> {
+    event!(Level::INFO, "Starting to update disk information");
+    // Get the current disk information and the db disks for comparisons
+    let cur_disks: Vec<DiskMetrics> = get_all_disk_data();
+    let db_disks: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;")
+        .fetch_all(conn)
+        .await?;
+
+    for disk in cur_disks.iter() {
+        let matching_db_disk: Vec<Disk> = db_disks
+            .clone()
+            .into_iter()
+            .filter(|db_disk| db_disk.device_name == disk.name)
+            .collect();
+        if matching_db_disk.is_empty() {
+            // This is a new disk, so have to insert its information
+            event!(Level::DEBUG, "Found new disk to insert: {:?}", disk.name);
+            sqlx::query("INSERT INTO DISK VALUES (?, ?, ?);")
+                .bind(&disk.name)
+                .bind(&disk.mount)
+                .bind(&disk.file_system_type)
+                .execute(conn)
+                .await?;
+        }
+    }
+
+    let mut insert_disk_stats_query: QueryBuilder<Sqlite> =
+        QueryBuilder::new("INSERT INTO DISKSTAT ");
+    insert_disk_stats_query.push_values(cur_disks.iter(), |mut builder, disk| {
+        builder
+            .push_bind(&disk.name)
+            .push_bind(cur_time as i64)
+            .push_bind(disk.used)
+            .push_bind(disk.available);
+    });
+
+    insert_disk_stats_query.push(";");
+    insert_disk_stats_query.build().execute(conn).await?;
+
+    // Any removed disks have to be removed from the db
+    clean_up_old_disk_data(conn, &cur_disks).await?;
+
+    event!(Level::INFO, "Finished updating disk information");
     Ok(())
 }
 
@@ -130,6 +178,7 @@ mod tests {
     use super::*;
     use models::tables::{Disk, DiskStat};
     use std::io;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn test_get_disk_data() {
@@ -204,6 +253,37 @@ mod tests {
             .fetch_all(&pool)
             .await?;
         assert_eq!(disk_stat_vec.len(), 0);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("diskTest"))]
+    async fn test_update_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // Get the system's current disks for the example
+        let cur_disks: Vec<DiskMetrics> = get_all_disk_data();
+
+        let cur_time: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        
+        update_disk_data(cur_time, &pool).await?;
+
+        // All old data should be removed and replaced with the current disk data
+        let disk_db: Vec<Disk> = sqlx::query_as::<_, Disk>("SELECT * FROM DISK;")
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(disk_db.len(), cur_disks.len());
+
+        let disk_stat_db: Vec<DiskStat> = sqlx::query_as::<_, DiskStat>("SELECT * FROM DISKSTAT;")
+            .fetch_all(&pool)
+            .await?;
+        assert_eq!(disk_stat_db.len(), cur_disks.len());
 
         Ok(())
     }
