@@ -12,7 +12,7 @@ export default {
     extend: {
       darkSelector: '.dark-mode',
       backgroundColor: {
-        dark: '#111314',
+        dark: '#212521',
         'light-dark-mode': '#807D7D', 
       },
     },
