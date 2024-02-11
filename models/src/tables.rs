@@ -99,13 +99,13 @@ pub struct CpuStat {
 pub struct Memory {
     /// Unix epoch timestamp at which the entry was recorded
     pub timestamp: i64,
-    /// Total amount of memory
+    /// Total amount of memory in KB
     pub total: u32,
-    /// Amount of memory that is free
+    /// Amount of memory that is free in KB
     pub free: u32,
-    /// Total amount of swap space
+    /// Total amount of swap space in KB
     pub swap_total: u32,
-    /// Amount of swap space that is free
+    /// Amount of swap space that is free in KB
     pub swap_free: u32,
 }
 

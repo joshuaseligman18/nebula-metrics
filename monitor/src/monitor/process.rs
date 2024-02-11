@@ -275,9 +275,9 @@ async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<Process>, NebulaEr
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::monitor::cpu;
     use models::tables::ProcStat;
     use std::io;
-    use crate::monitor::cpu;
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -432,7 +432,7 @@ mod tests {
 
         Ok(())
     }
-    
+
     #[sqlx::test(fixtures("processTest"))]
     async fn test_update_process_data(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
@@ -473,28 +473,33 @@ mod tests {
         update_process_data(cur_time, &pool).await?;
 
         // Make sure the garbage process is overwritten
-        let my_pid_res: Process = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
-            .bind(my_pid)
-            .fetch_one(&pool)
-            .await?;
+        let my_pid_res: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+                .bind(my_pid)
+                .fetch_one(&pool)
+                .await?;
         assert_ne!(my_pid_res.start_time, 123456789);
-        let my_pid_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ? AND TIMESTAMP = ?;")
-            .bind(my_pid)
-            .bind(987654321)
-            .fetch_all(&pool)
-            .await?;
+        let my_pid_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>(
+            "SELECT * FROM PROCSTAT WHERE PID = ? AND TIMESTAMP = ?;",
+        )
+        .bind(my_pid)
+        .bind(987654321)
+        .fetch_all(&pool)
+        .await?;
         assert_eq!(my_pid_stats.len(), 0);
 
         // Check for the dead process
-        let dead_proc: Process = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
-            .bind(9999999)
-            .fetch_one(&pool)
-            .await?;
+        let dead_proc: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+                .bind(9999999)
+                .fetch_one(&pool)
+                .await?;
         assert_eq!(dead_proc.is_alive, false);
-        let dead_proc_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
-            .bind(9999999)
-            .fetch_all(&pool)
-            .await?;
+        let dead_proc_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
+                .bind(9999999)
+                .fetch_all(&pool)
+                .await?;
         assert_eq!(dead_proc_stats.len(), 1);
 
         // Check to make sure all processes have been inserted
@@ -503,9 +508,10 @@ mod tests {
             .await?;
         // + 1 because of the dead process
         assert_eq!(all_processes.len(), processes.len() + 1);
-        let all_process_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT;")
-            .fetch_all(&pool)
-            .await?;
+        let all_process_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT;")
+                .fetch_all(&pool)
+                .await?;
         // + 1 because of the dead process
         assert_eq!(all_process_stats.len(), processes.len() + 1);
 

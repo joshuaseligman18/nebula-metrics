@@ -1,5 +1,6 @@
 mod cpu;
 mod disk;
+mod memory;
 mod process;
 
 use models::error::NebulaError;
@@ -50,7 +51,11 @@ impl Monitor {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_secs();
+
         process::update_process_data(cur_time, &self.conn)
+            .await
+            .expect("Should update without error");
+        memory::update_memory_data(cur_time, &self.conn)
             .await
             .expect("Should update without error");
 
