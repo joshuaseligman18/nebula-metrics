@@ -37,8 +37,19 @@ const SystemPage: React.FC = () => {
           <Card className="bg-light-dark-mode h-100">
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4">Memory Usage Over Time</Card.Title>
-              {/* Step 3 and 4: Add MemoryLineGraph component and pass memoryData */}
               <MemoryLineGraph data={memoryData} />
+            </Card.Body>
+          </Card>
+        </div>
+      </div>
+      <div className="row mx-0">
+        <div className="col px-0">
+          <Card className="bg-light-dark-mode h-100">
+            <Card.Body>
+              <Card.Title className="text-xl font-semibold mb-4">DISK Usage Over Time</Card.Title>
+              <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                <p>DISK Usage Graph Placeholder</p>
+              </div>
             </Card.Body>
           </Card>
         </div>
