@@ -237,4 +237,21 @@ mod tests {
 
         Ok(())
     }
+
+    #[sqlx::test(fixtures("cpuUpdateTestEmpty"))]
+    async fn test_update_cpu_data_empty(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        update_cpu_data(123456790, &pool).await?;
+        let output_stat: CpuStat =
+            sqlx::query_as::<_, CpuStat>("SELECT * FROM CPUSTAT WHERE TIMESTAMP = 123456790;")
+                .fetch_one(&pool)
+                .await?;
+        assert_eq!(output_stat.usage, 0);
+
+        Ok(())
+    }
 }
