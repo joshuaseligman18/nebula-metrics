@@ -1,3 +1,4 @@
+use crate::error::NebulaError;
 use procfs::process::{self, Stat};
 use procfs::WithCurrentSystemInfo;
 use serde::Serialize;
@@ -19,18 +20,21 @@ pub struct Process {
     pub init_total_cpu: f32,
 }
 
-impl From<process::Process> for self::Process {
+impl TryFrom<process::Process> for self::Process {
+    type Error = NebulaError;
+
     /// Converts from a procfs process for easier use
-    fn from(value: process::Process) -> Self {
-        let stat: Stat = value.stat().unwrap();
-        self::Process {
+    fn try_from(value: process::Process) -> Result<Self, Self::Error> {
+        let stat: Stat = value.stat()?;
+        let out_proc: Self = Self {
             pid: value.pid() as u32,
-            exec: value.exe().unwrap().to_str().unwrap().to_string(),
+            exec: value.exe()?.to_str().unwrap().to_string(),
             start_time: stat.starttime().get().unwrap().timestamp(),
             is_alive: value.is_alive(),
             // User time + system time are in Jiffies, so have to convert to seconds
             init_total_cpu: (stat.utime + stat.stime) as f32 / procfs::ticks_per_second() as f32,
-        }
+        };
+        Ok(out_proc)
     }
 }
 

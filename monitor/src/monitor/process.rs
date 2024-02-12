@@ -12,7 +12,8 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
     let cur_processes: Vec<Process> = get_all_processes()?
         .into_iter()
-        .map(Process::from)
+        .map(Process::try_from)
+        .filter_map(|p| p.ok())
         .collect();
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
@@ -141,13 +142,24 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 /// Adds updated process information to the database, while cleaning up any old
 /// data it finds along the way
 #[instrument(skip(conn))]
+#[allow(clippy::unnecessary_fallible_conversions)]
 pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Starting to update process data");
     let cur_processes: Vec<process::Process> = get_all_processes()?;
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
     for proc in cur_processes.iter() {
-        let proc_metadata: Process = Process::from(proc);
+        let proc_metadata_res: Result<Process, _> = Process::try_from(proc);
+        if proc_metadata_res.is_err() {
+            event!(
+                Level::ERROR,
+                "Found a process that may have died since obtaining its info with PID: {:?}",
+                proc.pid
+            );
+            continue;
+        }
+        let proc_metadata: Process = proc_metadata_res.unwrap();
+
         let old_process_vec: Vec<Process> = db_processes
             .clone()
             .into_iter()
@@ -203,7 +215,16 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
     event!(Level::DEBUG, "Starting to insert process metrics data");
     let mut proc_stat_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO PROCSTAT ");
     proc_stat_insert.push_values(cur_processes.iter(), |mut builder, proc| {
-        let proc_metadata: Process = Process::from(proc);
+        let proc_metadata_res: Result<Process, _> = Process::try_from(proc);
+        if proc_metadata_res.is_err() {
+            event!(
+                Level::ERROR,
+                "Found a process that may have died since obtaining its info with PID: {:?}",
+                proc.pid
+            );
+            return;
+        }
+        let proc_metadata: Process = proc_metadata_res.unwrap();
         let proc_stat = proc.stat().expect("Should be able to access the stats");
         let proc_statm = proc.statm().expect("Should be able to access memory stats");
         builder
