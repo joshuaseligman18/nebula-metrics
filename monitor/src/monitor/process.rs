@@ -333,7 +333,7 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let cur_process: Process = procfs::process::Process::myself()?.into();
+        let cur_process: Process = (&procfs::process::Process::myself()?).into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
@@ -378,7 +378,7 @@ mod tests {
             .try_init();
 
         // This will be an existing process that is already running
-        let cur_process: Process = procfs::process::Process::myself()?.into();
+        let cur_process: Process = (&procfs::process::Process::myself()?).into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
