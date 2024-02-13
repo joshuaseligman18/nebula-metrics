@@ -2,6 +2,8 @@ import React from 'react';
 import Card from 'react-bootstrap/Card';
 import MemoryLineGraph from '../components/graphs/MemLineGraph';
 import CpuLineGraph from '../components/graphs/CpuLineGraph';
+import DiskUsagePieChart from '../components/graphs/PieChart';
+import DonutChart from '../components/graphs/DonutChart';
 
 const SystemPage: React.FC = () => {
   // Sample data for CPU and Memory usage
@@ -20,23 +22,39 @@ const SystemPage: React.FC = () => {
     // Add more data points as needed
   ];
 
+  //Sample data for Disk usage
+  const diskUsageData = {
+    totalDiskSpace: 1000, 
+    diskUsage: [
+      { name: '1', space: 400 },
+      { name: '2', space: 300 },
+      { name: '3', space: 200 },
+      // Add more disks as needed
+    ],
+  };
+
+  // Sample variables for Disk card
+  const diskTotal = 500; // in GB
+  const diskUsed = 250; // in GB
+  const diskAvailable = diskTotal - diskUsed;
+
   return (
     <div className="container-fluid px-0 mt-4">
       <div className="row mx-0">
         <div className="col px-0 mb-4">
           <Card className="bg-light-dark-mode h-100">
             <Card.Body>
-              <Card.Title className="text-xl font-semibold mb-4">CPU Usage Over Time</Card.Title>
+              <Card.Title className="text-xl font-semibold mb-4 text-center">CPU Usage Over Time</Card.Title>
               <CpuLineGraph data={cpuData} />
             </Card.Body>
           </Card>
         </div>
       </div>
-      <div className="row mx-0">
+      <div className="row mx-0 mb-4">
         <div className="col px-0">
           <Card className="bg-light-dark-mode h-100">
             <Card.Body>
-              <Card.Title className="text-xl font-semibold mb-4">Memory Usage Over Time</Card.Title>
+              <Card.Title className="text-xl font-semibold mb-4 text-center">Memory Usage Over Time</Card.Title>
               <MemoryLineGraph data={memoryData} />
             </Card.Body>
           </Card>
@@ -45,10 +63,21 @@ const SystemPage: React.FC = () => {
       <div className="row mx-0">
         <div className="col px-0">
           <Card className="bg-light-dark-mode h-100">
-            <Card.Body>
-              <Card.Title className="text-xl font-semibold mb-4">DISK Usage Over Time</Card.Title>
-              <div style={{ textAlign: 'center', marginTop: '30px' }}>
-                <p>DISK Usage Graph Placeholder</p>
+            <Card.Body className="flex flex-col items-center">
+              <h5 className="text-xl font-semibold mb-4">DISK Usage Over Time</h5>
+              <div className="flex">
+                <div className="mr-4">
+                  <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
+                  <div className="flex justify-center">
+                    <DiskUsagePieChart data={diskUsageData} />
+                  </div>
+                </div>
+                <div>
+                  <h6 className="text-lg font-semibold mb-2">Total Disk Storage</h6>
+                  <div className="flex justify-center">
+                    <DonutChart total={100} inUse={60} />
+                  </div>
+                </div>
               </div>
             </Card.Body>
           </Card>
