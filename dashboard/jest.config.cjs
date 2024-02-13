@@ -1,7 +1,11 @@
 /** @type {import("jest").Config} */
+const { defaults: tsjPreset } = require('ts-jest/presets');
+const esModules = ['d3', 'd3-array'].join('|');
+
 module.exports = {
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    ...tsjPreset.transform,
+    '^.+\\.jsx?$': 'babel-jest', // Add babel-jest for handling ECMAScript Modules
   },
   testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
@@ -13,4 +17,5 @@ module.exports = {
     },
   },
   restoreMocks: true,
+  transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
 };

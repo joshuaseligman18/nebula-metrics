@@ -33,10 +33,6 @@ const SystemPage: React.FC = () => {
     ],
   };
 
-  // Sample variables for Disk card
-  const diskTotal = 500; // in GB
-  const diskUsed = 250; // in GB
-  const diskAvailable = diskTotal - diskUsed;
 
   return (
     <div className="container-fluid px-0 mt-4">
