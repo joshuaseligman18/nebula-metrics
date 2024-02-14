@@ -1,5 +1,3 @@
-use procfs::process::{self, Stat};
-use procfs::WithCurrentSystemInfo;
 use serde::Serialize;
 use sqlx::FromRow;
 
@@ -17,36 +15,6 @@ pub struct Process {
     pub is_alive: bool,
     /// Amount of CPU time in seconds the process has on the first encounter
     pub init_total_cpu: f32,
-}
-
-impl From<process::Process> for self::Process {
-    /// Converts from a procfs process for easier use
-    fn from(value: process::Process) -> Self {
-        let stat: Stat = value.stat().unwrap();
-        self::Process {
-            pid: value.pid() as u32,
-            exec: value.exe().unwrap().to_str().unwrap().to_string(),
-            start_time: stat.starttime().get().unwrap().timestamp(),
-            is_alive: value.is_alive(),
-            // User time + system time are in Jiffies, so have to convert to seconds
-            init_total_cpu: (stat.utime + stat.stime) as f32 / procfs::ticks_per_second() as f32,
-        }
-    }
-}
-
-impl From<&process::Process> for self::Process {
-    /// Converts from a procfs process for easier use
-    fn from(value: &process::Process) -> Self {
-        let stat: Stat = value.stat().unwrap();
-        self::Process {
-            pid: value.pid() as u32,
-            exec: value.exe().unwrap().to_str().unwrap().to_string(),
-            start_time: stat.starttime().get().unwrap().timestamp(),
-            is_alive: value.is_alive(),
-            // User time + system time are in Jiffies, so have to convert to seconds
-            init_total_cpu: (stat.utime + stat.stime) as f32 / procfs::ticks_per_second() as f32,
-        }
-    }
 }
 
 /// Struct for the CPU table

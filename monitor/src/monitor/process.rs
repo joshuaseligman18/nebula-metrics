@@ -1,9 +1,59 @@
-use procfs::process;
+use procfs::process::{self, Stat, StatM};
+use procfs::WithCurrentSystemInfo;
 use sqlx::{QueryBuilder, Sqlite, SqlitePool};
-use std::cmp::Ordering;
+use std::{cmp::Ordering, path::PathBuf};
 use tracing::{event, instrument, Level};
 
 use models::{error::NebulaError, tables::Process};
+
+#[derive(Debug)]
+struct ProcfsProcess {
+    process: process::Process,
+    stat: Stat,
+    statm: StatM,
+    exe: PathBuf,
+}
+
+impl TryFrom<process::Process> for ProcfsProcess {
+    type Error = NebulaError;
+
+    fn try_from(value: process::Process) -> Result<Self, Self::Error> {
+        Ok(Self {
+            stat: value.stat()?,
+            statm: value.statm()?,
+            exe: value.exe()?,
+            process: value,
+        })
+    }
+}
+
+impl From<ProcfsProcess> for Process {
+    fn from(value: ProcfsProcess) -> Self {
+        Process {
+            pid: value.process.pid() as u32,
+            exec: value.exe.to_str().unwrap().to_string(),
+            start_time: value.stat.starttime().get().unwrap().timestamp(),
+            is_alive: value.process.is_alive(),
+            // User time + system time are in Jiffies, so have to convert to seconds
+            init_total_cpu: (value.stat.utime + value.stat.stime) as f32
+                / procfs::ticks_per_second() as f32,
+        }
+    }
+}
+
+impl From<&ProcfsProcess> for Process {
+    fn from(value: &ProcfsProcess) -> Self {
+        Process {
+            pid: value.process.pid() as u32,
+            exec: value.exe.to_str().unwrap().to_string(),
+            start_time: value.stat.starttime().get().unwrap().timestamp(),
+            is_alive: value.process.is_alive(),
+            // User time + system time are in Jiffies, so have to convert to seconds
+            init_total_cpu: (value.stat.utime + value.stat.stime) as f32
+                / procfs::ticks_per_second() as f32,
+        }
+    }
+}
 
 /// Sets up the database with the updated process data
 #[instrument(skip(conn))]
@@ -12,7 +62,8 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
     let cur_processes: Vec<Process> = get_all_processes()?
         .into_iter()
-        .map(Process::from)
+        .map(Process::try_from)
+        .filter_map(|p| p.ok())
         .collect();
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
@@ -143,11 +194,12 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 #[instrument(skip(conn))]
 pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Starting to update process data");
-    let cur_processes: Vec<process::Process> = get_all_processes()?;
+    let cur_processes: Vec<ProcfsProcess> = get_all_processes()?;
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
     for proc in cur_processes.iter() {
-        let proc_metadata: Process = Process::from(proc);
+        let proc_metadata: Process = proc.into();
+
         let old_process_vec: Vec<Process> = db_processes
             .clone()
             .into_iter()
@@ -203,21 +255,19 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
     event!(Level::DEBUG, "Starting to insert process metrics data");
     let mut proc_stat_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO PROCSTAT ");
     proc_stat_insert.push_values(cur_processes.iter(), |mut builder, proc| {
-        let proc_metadata: Process = Process::from(proc);
-        let proc_stat = proc.stat().expect("Should be able to access the stats");
-        let proc_statm = proc.statm().expect("Should be able to access memory stats");
+        let proc_metadata: Process = proc.into();
         builder
             .push_bind(proc_metadata.pid)
             .push_bind(cur_time as i64)
             // This is just the current cpu time
             .push_bind(proc_metadata.init_total_cpu)
-            .push_bind(proc_stat.processor)
+            .push_bind(proc.stat.processor)
             // Store all memory data in KB
             // Statm stores data in pages, and page_size returns bytes,
             // so have to divide by 1000 to get KB
-            .push_bind((proc_statm.size * procfs::page_size() / 1000) as u32)
-            .push_bind((proc_statm.resident * procfs::page_size() / 1000) as u32)
-            .push_bind((proc_statm.shared * procfs::page_size() / 1000) as u32);
+            .push_bind((proc.statm.size * procfs::page_size() / 1000) as u32)
+            .push_bind((proc.statm.resident * procfs::page_size() / 1000) as u32)
+            .push_bind((proc.statm.shared * procfs::page_size() / 1000) as u32);
     });
     proc_stat_insert.push(";");
     proc_stat_insert.build().execute(conn).await?;
@@ -232,7 +282,7 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
         QueryBuilder::new("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID NOT IN (");
     let mut update_dead_separated = update_dead_processes.separated(", ");
     for proc in cur_processes.iter() {
-        update_dead_separated.push_bind(proc.pid);
+        update_dead_separated.push_bind(proc.process.pid);
     }
     update_dead_separated.push_unseparated(");");
     update_dead_processes.build().execute(conn).await?;
@@ -246,14 +296,13 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
 
 /// Gets all of the current processes from procfs
 #[instrument]
-fn get_all_processes() -> Result<Vec<process::Process>, NebulaError> {
+fn get_all_processes() -> Result<Vec<ProcfsProcess>, NebulaError> {
     event!(Level::DEBUG, "Getting all processes from procfs");
-    let proc_vec: Vec<process::Process> = process::all_processes()?
+    let proc_vec: Vec<ProcfsProcess> = process::all_processes()?
         // Only keep processes that we can fully access
         .filter_map(|proc_res| proc_res.ok())
-        .filter(|proc| proc.exe().is_ok())
-        .filter(|proc| proc.stat().is_ok())
-        .filter(|proc| proc.statm().is_ok())
+        .map(ProcfsProcess::try_from)
+        .filter_map(|p| p.ok())
         .collect();
     event!(Level::DEBUG, "Done getting all processes from procfs");
     Ok(proc_vec)
@@ -312,7 +361,8 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let cur_process: Process = procfs::process::Process::myself()?.into();
+        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
@@ -357,7 +407,8 @@ mod tests {
             .try_init();
 
         // This will be an existing process that is already running
-        let cur_process: Process = procfs::process::Process::myself()?.into();
+        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
@@ -420,7 +471,7 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let processes: Vec<process::Process> = get_all_processes()?;
+        let processes: Vec<ProcfsProcess> = get_all_processes()?;
 
         init_process_data(&pool).await?;
 
@@ -464,7 +515,7 @@ mod tests {
             .execute(&pool)
             .await?;
 
-        let processes: Vec<process::Process> = get_all_processes()?;
+        let processes: Vec<ProcfsProcess> = get_all_processes()?;
 
         let cur_time: u64 = SystemTime::now()
             .duration_since(UNIX_EPOCH)
