@@ -37,7 +37,7 @@ const DiskUsagePieChart: React.FC<{ data: DiskUsageData }> = ({ data }) => {
     arcs
       .append('path')
       .attr('d', d => arcGenerator(d)!)
-      .attr('fill', (d, i) => color(String(i)));
+      .attr('fill', (_, i) => color(String(i)));
 
     arcs
       .append('text')
