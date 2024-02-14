@@ -10,7 +10,8 @@ tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 sqlx.workspace = true
-procfs = "0.16.0"
+procfs.workspace = true
+"models" = { path = "./../models" }
 
 [[bin]]
 name = "nebula-monitor"
@@ -20,10 +21,12 @@ path = "src/main.rs"
 name = "nebula-metrics"
 assets = [
     ["target/release/nebula-monitor", "usr/bin/", "755"],
-    ["../assets/metrics.sql", "var/nebula/db/", "444"]
+    ["target/release/nebula-server", "usr/bin/", "755"],
+    ["../assets/**/*", "var/nebula/", "444"]
 ]
 depends = "$auto, sqlite3"
 maintainer-scripts = "../debian/"
 systemd-units = [
-    { unit-name = "nebula-metrics", enable = false }
+    { unit-name = "nebula-metrics", enable = false },
+    { unit-name = "nebula-server", enable = false }
 ]

@@ -1,5 +1,5 @@
 [workspace]
-members = ["monitor"]
+members = ["models", "monitor", "server"]
 resolver = "2"
 
 [workspace.package]
@@ -11,4 +11,6 @@ description = "A system metrics monitor for Linux operating systems."
 tokio = { version = "1.35.1", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["fmt", "std"] }
-sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite", "macros", "migrate"] }
+sqlx = { version = "0.7.3", features = ["runtime-tokio", "sqlite", "migrate"] }
+serde = "1.0.196"
+procfs = "0.16.0"

@@ -1,0 +1,8 @@
+[Unit]
+Description=nebula-server
+
+[Service]
+ExecStart=/usr/bin/nebula-server
+
+[Install]
+WantedBy=first-app.service

@@ -6,7 +6,7 @@ import SystemPage from '../../pages/SystemPage';
 
 const AppRouter: React.FC = () => {
   return (
-    <Router>
+    <Router basename="/web">
       <Routes>
         <Route path="/"  Component={HomePage} />
         <Route path="/process"  Component={ProcessPage} />

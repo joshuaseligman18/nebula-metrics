@@ -1,38 +1,56 @@
-use procfs::process::{self, Process, Stat};
+use procfs::process::{self, Stat, StatM};
 use procfs::WithCurrentSystemInfo;
-use sqlx::sqlite::SqliteRow;
-use sqlx::{QueryBuilder, Row, Sqlite, SqlitePool};
-use std::cmp::Ordering;
+use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use std::{cmp::Ordering, path::PathBuf};
 use tracing::{event, instrument, Level};
 
-use super::error::NebulaError;
+use models::{error::NebulaError, tables::Process};
 
-/// Struct that represents the PROCESS table
 #[derive(Debug)]
-struct ProcInfo {
-    /// PID of the process
-    pid: u32,
-    /// Executable name
-    exec: String,
-    /// Start time as a Unix epoch timestamp
-    start_time: i64,
-    /// Whether or not the process is alive
-    is_alive: bool,
-    /// Total CPU time the first time we encountered the process
-    init_total_cpu: f32,
+struct ProcfsProcess {
+    process: process::Process,
+    stat: Stat,
+    statm: StatM,
+    exe: PathBuf,
 }
 
-impl From<Process> for ProcInfo {
-    /// Converts from a procfs process for easier use
-    fn from(value: Process) -> Self {
-        let stat: Stat = value.stat().unwrap();
-        ProcInfo {
-            pid: value.pid() as u32,
-            exec: value.exe().unwrap().to_str().unwrap().to_string(),
-            start_time: stat.starttime().get().unwrap().timestamp(),
-            is_alive: value.is_alive(),
+impl TryFrom<process::Process> for ProcfsProcess {
+    type Error = NebulaError;
+
+    fn try_from(value: process::Process) -> Result<Self, Self::Error> {
+        Ok(Self {
+            stat: value.stat()?,
+            statm: value.statm()?,
+            exe: value.exe()?,
+            process: value,
+        })
+    }
+}
+
+impl From<ProcfsProcess> for Process {
+    fn from(value: ProcfsProcess) -> Self {
+        Process {
+            pid: value.process.pid() as u32,
+            exec: value.exe.to_str().unwrap().to_string(),
+            start_time: value.stat.starttime().get().unwrap().timestamp(),
+            is_alive: value.process.is_alive(),
             // User time + system time are in Jiffies, so have to convert to seconds
-            init_total_cpu: (stat.utime + stat.stime) as f32 / procfs::ticks_per_second() as f32,
+            init_total_cpu: (value.stat.utime + value.stat.stime) as f32
+                / procfs::ticks_per_second() as f32,
+        }
+    }
+}
+
+impl From<&ProcfsProcess> for Process {
+    fn from(value: &ProcfsProcess) -> Self {
+        Process {
+            pid: value.process.pid() as u32,
+            exec: value.exe.to_str().unwrap().to_string(),
+            start_time: value.stat.starttime().get().unwrap().timestamp(),
+            is_alive: value.process.is_alive(),
+            // User time + system time are in Jiffies, so have to convert to seconds
+            init_total_cpu: (value.stat.utime + value.stat.stime) as f32
+                / procfs::ticks_per_second() as f32,
         }
     }
 }
@@ -42,15 +60,19 @@ impl From<Process> for ProcInfo {
 pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     event!(Level::INFO, "Starting to initialize process data");
 
-    let cur_processes: Vec<ProcInfo> = get_all_processes()?;
-    let db_processes: Vec<ProcInfo> = get_processes_in_db(conn).await?;
+    let cur_processes: Vec<Process> = get_all_processes()?
+        .into_iter()
+        .map(Process::try_from)
+        .filter_map(|p| p.ok())
+        .collect();
+    let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
     let mut cur_index: usize = 0;
     let mut db_index: usize = 0;
 
     while cur_index < cur_processes.len() && db_index < db_processes.len() {
-        let cur_proc: &ProcInfo = &cur_processes[cur_index];
-        let db_proc: &ProcInfo = &db_processes[db_index];
+        let cur_proc: &Process = &cur_processes[cur_index];
+        let db_proc: &Process = &db_processes[db_index];
 
         match cur_proc.pid.cmp(&db_proc.pid) {
             Ordering::Equal => {
@@ -113,7 +135,7 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
                     db_proc.pid
                 );
                 // The old process has died since startup, so just mark it as not alive
-                sqlx::query("UPDATE PROCESS SET ISALIVE = FALSE WHERE PID = ?")
+                sqlx::query("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID = ?")
                     .bind(db_proc.pid)
                     .execute(conn)
                     .await?;
@@ -123,22 +145,26 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     }
 
     if cur_index < cur_processes.len() {
-        let mut remaning_proc_inserts: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO PROCESS ");
+        let mut remaning_proc_inserts: QueryBuilder<Sqlite> =
+            QueryBuilder::new("INSERT INTO PROCESS ");
 
-        remaning_proc_inserts.push_values(cur_processes[cur_index..].iter(), |mut builder, new_proc| {
-            event!(
-                Level::DEBUG,
-                "Found process to insert with PID {:?}",
-                new_proc.pid
+        remaning_proc_inserts.push_values(
+            cur_processes[cur_index..].iter(),
+            |mut builder, new_proc| {
+                event!(
+                    Level::DEBUG,
+                    "Found process to insert with PID {:?}",
+                    new_proc.pid
                 );
-            // The new process has not been recorded yet, so insert its init data
-            builder
-                .push_bind(new_proc.pid)
-                .push_bind(&new_proc.exec)
-                .push_bind(new_proc.start_time)
-                .push_bind(new_proc.is_alive)
-                .push_bind(new_proc.init_total_cpu);
-        });
+                // The new process has not been recorded yet, so insert its init data
+                builder
+                    .push_bind(new_proc.pid)
+                    .push_bind(&new_proc.exec)
+                    .push_bind(new_proc.start_time)
+                    .push_bind(new_proc.is_alive)
+                    .push_bind(new_proc.init_total_cpu);
+            },
+        );
         remaning_proc_inserts.push(";");
         remaning_proc_inserts.build().execute(conn).await?;
     }
@@ -150,7 +176,7 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
             "Setting all remaining unknown processes to be dead"
         );
         let mut update_dead_processes: QueryBuilder<Sqlite> =
-            QueryBuilder::new("UPDATE PROCESS SET ISALIVE = FALSE WHERE PID IN (");
+            QueryBuilder::new("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID IN (");
         let mut update_dead_separated = update_dead_processes.separated(", ");
         for db_proc in db_processes[db_index..].iter() {
             update_dead_separated.push_bind(db_proc.pid);
@@ -163,17 +189,120 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     Ok(())
 }
 
+/// Adds updated process information to the database, while cleaning up any old
+/// data it finds along the way
+#[instrument(skip(conn))]
+pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(), NebulaError> {
+    event!(Level::INFO, "Starting to update process data");
+    let cur_processes: Vec<ProcfsProcess> = get_all_processes()?;
+    let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
+
+    for proc in cur_processes.iter() {
+        let proc_metadata: Process = proc.into();
+
+        let old_process_vec: Vec<Process> = db_processes
+            .clone()
+            .into_iter()
+            .filter(|old_proc| {
+                old_proc.pid == proc_metadata.pid && old_proc.start_time != proc_metadata.start_time
+            })
+            .collect();
+
+        let db_process_pids: Vec<u32> = db_processes.iter().map(|db_proc| db_proc.pid).collect();
+
+        // We have some really old data that has to be cleaned up first
+        // This case is very rare and a batch process should not be needed
+        if !old_process_vec.is_empty() {
+            event!(
+                Level::DEBUG,
+                "Replacing old process in database with PID {:?}",
+                old_process_vec[0].pid
+            );
+            sqlx::query("DELETE FROM PROCSTAT WHERE PID = ?;")
+                .bind(old_process_vec[0].pid)
+                .execute(conn)
+                .await?;
+
+            // This will delete the old process and write the new one
+            // with only 1 query
+            sqlx::query("INSERT OR REPLACE INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+                .bind(proc_metadata.pid)
+                .bind(&proc_metadata.exec)
+                .bind(proc_metadata.start_time)
+                .bind(proc_metadata.is_alive)
+                .bind(proc_metadata.init_total_cpu)
+                .execute(conn)
+                .await?;
+        } else if !db_process_pids.contains(&proc_metadata.pid) {
+            event!(
+                Level::DEBUG,
+                "Found new process to insert with PID {:?}",
+                proc_metadata.pid
+            );
+            // Our process does not exist in the db yet, so have to insert it
+            sqlx::query("INSERT OR REPLACE INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+                .bind(proc_metadata.pid)
+                .bind(&proc_metadata.exec)
+                .bind(proc_metadata.start_time)
+                .bind(proc_metadata.is_alive)
+                .bind(proc_metadata.init_total_cpu)
+                .execute(conn)
+                .await?;
+        }
+    }
+
+    // Insert the current process metrics
+    event!(Level::DEBUG, "Starting to insert process metrics data");
+    let mut proc_stat_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO PROCSTAT ");
+    proc_stat_insert.push_values(cur_processes.iter(), |mut builder, proc| {
+        let proc_metadata: Process = proc.into();
+        builder
+            .push_bind(proc_metadata.pid)
+            .push_bind(cur_time as i64)
+            // This is just the current cpu time
+            .push_bind(proc_metadata.init_total_cpu)
+            .push_bind(proc.stat.processor)
+            // Store all memory data in KB
+            // Statm stores data in pages, and page_size returns bytes,
+            // so have to divide by 1000 to get KB
+            .push_bind((proc.statm.size * procfs::page_size() / 1000) as u32)
+            .push_bind((proc.statm.resident * procfs::page_size() / 1000) as u32)
+            .push_bind((proc.statm.shared * procfs::page_size() / 1000) as u32);
+    });
+    proc_stat_insert.push(";");
+    proc_stat_insert.build().execute(conn).await?;
+    event!(Level::DEBUG, "Finished inserting process metrics data");
+
+    // Update the process table in case any processes died since the last update
+    event!(
+        Level::DEBUG,
+        "Starting to update the status of dead processes"
+    );
+    let mut update_dead_processes: QueryBuilder<Sqlite> =
+        QueryBuilder::new("UPDATE PROCESS SET IS_ALIVE = FALSE WHERE PID NOT IN (");
+    let mut update_dead_separated = update_dead_processes.separated(", ");
+    for proc in cur_processes.iter() {
+        update_dead_separated.push_bind(proc.process.pid);
+    }
+    update_dead_separated.push_unseparated(");");
+    update_dead_processes.build().execute(conn).await?;
+    event!(
+        Level::DEBUG,
+        "Finished updating the status of dead processes"
+    );
+
+    Ok(())
+}
+
 /// Gets all of the current processes from procfs
 #[instrument]
-pub fn get_all_processes() -> Result<Vec<ProcInfo>, NebulaError> {
+fn get_all_processes() -> Result<Vec<ProcfsProcess>, NebulaError> {
     event!(Level::DEBUG, "Getting all processes from procfs");
-    let proc_vec: Vec<ProcInfo> = process::all_processes()?
+    let proc_vec: Vec<ProcfsProcess> = process::all_processes()?
         // Only keep processes that we can fully access
         .filter_map(|proc_res| proc_res.ok())
-        .filter(|proc| proc.exe().is_ok())
-        .filter(|proc| proc.stat().is_ok())
-        // Convert to a ProcInfo struct
-        .map(ProcInfo::from)
+        .map(ProcfsProcess::try_from)
+        .filter_map(|p| p.ok())
         .collect();
     event!(Level::DEBUG, "Done getting all processes from procfs");
     Ok(proc_vec)
@@ -181,23 +310,12 @@ pub fn get_all_processes() -> Result<Vec<ProcInfo>, NebulaError> {
 
 /// Gets all of the process info from the database
 #[instrument(skip(conn))]
-pub async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<ProcInfo>, NebulaError> {
+async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<Process>, NebulaError> {
     event!(Level::DEBUG, "Getting all processes from the db");
-    let row_vec: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCESS ORDER BY PID ASC;")
-        .fetch_all(conn)
-        .await?;
-    let mut proc_vec: Vec<ProcInfo> = Vec::with_capacity(row_vec.len());
-
-    // Map each row to a ProcInfo struct
-    for row in row_vec.iter() {
-        proc_vec.push(ProcInfo {
-            pid: row.get("PID"),
-            exec: row.get("EXEC"),
-            start_time: row.get("STARTTIME"),
-            is_alive: row.get("ISALIVE"),
-            init_total_cpu: row.get("INITTOTALCPU"),
-        });
-    }
+    let proc_vec: Vec<Process> =
+        sqlx::query_as::<_, Process>("SELECT * FROM PROCESS ORDER BY PID ASC;")
+            .fetch_all(conn)
+            .await?;
 
     event!(Level::DEBUG, "Done getting all processes from the db");
     Ok(proc_vec)
@@ -206,7 +324,10 @@ pub async fn get_processes_in_db(conn: &SqlitePool) -> Result<Vec<ProcInfo>, Neb
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::monitor::cpu;
+    use models::tables::ProcStat;
     use std::io;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
     fn test_get_all_processes() -> Result<(), NebulaError> {
@@ -227,7 +348,7 @@ mod tests {
             .try_init();
 
         // We should get 1 result back
-        let proc_vec: Vec<ProcInfo> = get_processes_in_db(&pool).await?;
+        let proc_vec: Vec<Process> = get_processes_in_db(&pool).await?;
         assert_eq!(proc_vec.len(), 1);
 
         Ok(())
@@ -240,7 +361,8 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let cur_process: ProcInfo = procfs::process::Process::myself()?.into();
+        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
@@ -252,25 +374,27 @@ mod tests {
 
         init_process_data(&pool).await?;
 
-        let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
-            .bind(cur_process.pid)
-            .fetch_one(&pool)
-            .await?;
+        let my_proc_row: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?")
+                .bind(cur_process.pid)
+                .fetch_one(&pool)
+                .await?;
         // Make sure the old process is overwritten and its old stats are gone
-        let my_proc_time: i64 = my_proc_row.get("STARTTIME");
-        assert_ne!(my_proc_time, 123456789);
-        let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
-            .bind(cur_process.pid)
-            .fetch_all(&pool)
-            .await?;
+        assert_ne!(my_proc_row.start_time, 123456789);
+
+        let my_proc_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
+                .bind(cur_process.pid)
+                .fetch_all(&pool)
+                .await?;
         assert_eq!(my_proc_stats.len(), 0);
 
         // Make sure the not found process is marked as not being alive anymore
-        let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = 9999999;")
-            .fetch_one(&pool)
-            .await?;
-        let old_process_alive: bool = old_process.get("ISALIVE");
-        assert_eq!(old_process_alive, false);
+        let old_process: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = 9999999;")
+                .fetch_one(&pool)
+                .await?;
+        assert_eq!(old_process.is_alive, false);
 
         Ok(())
     }
@@ -283,7 +407,8 @@ mod tests {
             .try_init();
 
         // This will be an existing process that is already running
-        let cur_process: ProcInfo = procfs::process::Process::myself()?.into();
+        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(cur_process.exec)
@@ -292,6 +417,7 @@ mod tests {
             .bind(cur_process.init_total_cpu)
             .execute(&pool)
             .await?;
+
         sqlx::query("INSERT INTO PROCSTAT VALUES(?, ?, ?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(123456789)
@@ -313,26 +439,27 @@ mod tests {
 
         init_process_data(&pool).await?;
 
-        let my_proc_row: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?")
-            .bind(cur_process.pid)
-            .fetch_one(&pool)
-            .await?;
+        let my_proc_row: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?")
+                .bind(cur_process.pid)
+                .fetch_one(&pool)
+                .await?;
         // This process still exists, so make sure that nothing has changed
-        let my_proc_time: i64 = my_proc_row.get("STARTTIME");
-        assert_eq!(my_proc_time, cur_process.start_time);
-        let my_proc_stats: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCSTAT WHERE PID = ?;")
-            .bind(cur_process.pid)
-            .fetch_all(&pool)
-            .await?;
+        assert_eq!(my_proc_row.start_time, cur_process.start_time);
+        let my_proc_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
+                .bind(cur_process.pid)
+                .fetch_all(&pool)
+                .await?;
         assert_eq!(my_proc_stats.len(), 1);
 
         // Make sure the not found process is marked as not being alive anymore
-        let old_process: SqliteRow = sqlx::query("SELECT * FROM PROCESS WHERE PID = ?;")
-            .bind(42)
-            .fetch_one(&pool)
-            .await?;
-        let old_process_alive: bool = old_process.get("ISALIVE");
-        assert_eq!(old_process_alive, false);
+        let old_process: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+                .bind(42)
+                .fetch_one(&pool)
+                .await?;
+        assert_eq!(old_process.is_alive, false);
 
         Ok(())
     }
@@ -344,15 +471,100 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let processes: Vec<ProcInfo> = get_all_processes()?;
+        let processes: Vec<ProcfsProcess> = get_all_processes()?;
 
         init_process_data(&pool).await?;
 
-        let rows: Vec<SqliteRow> = sqlx::query("SELECT * FROM PROCESS;")
+        let rows: Vec<Process> = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS;")
             .fetch_all(&pool)
             .await?;
         // All processes should have just been inserted without question
         assert_eq!(rows.len(), processes.len());
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("processTest"))]
+    async fn test_update_process_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        // Init the cpu data to make sure there are no foreign key issues
+        cpu::init_cpu_data(&pool).await?;
+
+        // Insert some junk data
+        let my_pid: i32 = process::Process::myself()?.pid;
+        sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
+            .bind(my_pid)
+            .bind("the-exe")
+            .bind(123456789)
+            .bind(0)
+            .bind(4242)
+            .execute(&pool)
+            .await?;
+        sqlx::query("INSERT INTO PROCSTAT VALUES (?, ?, ?, ?, ?, ?, ?);")
+            .bind(my_pid)
+            .bind(987654321)
+            .bind(424242)
+            .bind(0)
+            .bind(99)
+            .bind(89)
+            .bind(20)
+            .execute(&pool)
+            .await?;
+
+        let processes: Vec<ProcfsProcess> = get_all_processes()?;
+
+        let cur_time: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        update_process_data(cur_time, &pool).await?;
+
+        // Make sure the garbage process is overwritten
+        let my_pid_res: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+                .bind(my_pid)
+                .fetch_one(&pool)
+                .await?;
+        assert_ne!(my_pid_res.start_time, 123456789);
+        let my_pid_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>(
+            "SELECT * FROM PROCSTAT WHERE PID = ? AND TIMESTAMP = ?;",
+        )
+        .bind(my_pid)
+        .bind(987654321)
+        .fetch_all(&pool)
+        .await?;
+        assert_eq!(my_pid_stats.len(), 0);
+
+        // Check for the dead process
+        let dead_proc: Process =
+            sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = ?;")
+                .bind(9999999)
+                .fetch_one(&pool)
+                .await?;
+        assert_eq!(dead_proc.is_alive, false);
+        let dead_proc_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
+                .bind(9999999)
+                .fetch_all(&pool)
+                .await?;
+        assert_eq!(dead_proc_stats.len(), 1);
+
+        // Check to make sure all processes have been inserted
+        let all_processes: Vec<Process> = sqlx::query_as::<_, Process>("SELECT * FROM PROCESS;")
+            .fetch_all(&pool)
+            .await?;
+        // + 1 because of the dead process
+        assert_eq!(all_processes.len(), processes.len() + 1);
+        let all_process_stats: Vec<ProcStat> =
+            sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT;")
+                .fetch_all(&pool)
+                .await?;
+        // + 1 because of the dead process
+        assert_eq!(all_process_stats.len(), processes.len() + 1);
 
         Ok(())
     }
