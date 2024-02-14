@@ -32,8 +32,6 @@ const SystemPage: React.FC = () => {
       // Add more disks as needed
     ],
   };
-
-
   return (
     <div className="container-fluid px-0 mt-4">
       <div className="row mx-0">
