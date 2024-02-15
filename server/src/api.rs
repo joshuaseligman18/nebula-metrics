@@ -17,6 +17,7 @@ struct AppState {
 pub async fn create_api_router() -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
         .route("/processes", get(get_processes))
+        .route("/memory", get(get_memory_data))
         .with_state(AppState {
             conn: SqlitePool::connect(DB_FILE).await?,
         });
@@ -34,6 +35,22 @@ async fn get_processes(State(state): State<AppState>) -> Result<Json<Vec<Process
 
     if let Ok(proc_vec) = res {
         Ok(Json::from(proc_vec))
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+/// Returns all data in Memory Table ( my first attempt )
+async fn get_memory_data(State(state): State<AppState>) -> Result<Json<Vec<Memory>>, StatusCode> {
+    let res: Result<Vec<Memory>, sqlx::Error> =
+        sqlx::query_as::<_, Memory>("SELECT * FROM Memory;")
+            .fetch_all(&state.conn)
+            .await;
+
+    event!(Level::TRACE, "{:?}", res);
+
+    if let Ok(memory_vec) = res {
+        Ok(Json::from(memory_vec))
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }
