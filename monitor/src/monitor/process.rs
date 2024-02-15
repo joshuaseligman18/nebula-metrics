@@ -261,6 +261,9 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
             .push_bind(cur_time as i64)
             // This is just the current cpu time
             .push_bind(proc_metadata.init_total_cpu)
+            // Percent CPU time is initially NULL and will be updated when
+            // CPU aggregations are computed
+            .push_bind(None as Option<f32>)
             .push_bind(proc.stat.processor)
             // Store all memory data in KB
             // Statm stores data in pages, and page_size returns bytes,
@@ -361,7 +364,8 @@ mod tests {
             .with_max_level(Level::TRACE)
             .try_init();
 
-        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process_intermediate: ProcfsProcess =
+            procfs::process::Process::myself()?.try_into()?;
         let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
@@ -407,7 +411,8 @@ mod tests {
             .try_init();
 
         // This will be an existing process that is already running
-        let cur_process_intermediate: ProcfsProcess = procfs::process::Process::myself()?.try_into()?;
+        let cur_process_intermediate: ProcfsProcess =
+            procfs::process::Process::myself()?.try_into()?;
         let cur_process: Process = cur_process_intermediate.into();
         sqlx::query("INSERT INTO PROCESS VALUES (?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
@@ -418,10 +423,11 @@ mod tests {
             .execute(&pool)
             .await?;
 
-        sqlx::query("INSERT INTO PROCSTAT VALUES(?, ?, ?, ?, ?, ?, ?);")
+        sqlx::query("INSERT INTO PROCSTAT VALUES(?, ?, ?, ?, ?, ?, ?, ?);")
             .bind(cur_process.pid)
             .bind(123456789)
             .bind(999)
+            .bind(None as Option<f32>)
             .bind(0)
             .bind(42)
             .bind(42)
@@ -433,7 +439,7 @@ mod tests {
         sqlx::query("INSERT INTO PROCESS VALUES(42, \"test-exe\", 123456790, 1, 2048);")
             .execute(&pool)
             .await?;
-        sqlx::query("INSERT INTO PROCSTAT VALUES(42, 987654321, 5000, 0, 42, 42, 0);")
+        sqlx::query("INSERT INTO PROCSTAT VALUES(42, 987654321, 5000, NULL, 0, 42, 42, 0);")
             .execute(&pool)
             .await?;
 
@@ -504,10 +510,11 @@ mod tests {
             .bind(4242)
             .execute(&pool)
             .await?;
-        sqlx::query("INSERT INTO PROCSTAT VALUES (?, ?, ?, ?, ?, ?, ?);")
+        sqlx::query("INSERT INTO PROCSTAT VALUES (?, ?, ?, ?, ?, ?, ?, ?);")
             .bind(my_pid)
             .bind(987654321)
             .bind(424242)
+            .bind(None as Option<f32>)
             .bind(0)
             .bind(99)
             .bind(89)
