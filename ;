@@ -2,17 +2,17 @@ mod monitor;
 use monitor::Monitor;
 
 extern crate tokio;
-use tokio::sync::Mutex;
 use tokio::task::JoinSet;
+use tokio::sync::Mutex;
 use tokio::time::{interval, Duration, MissedTickBehavior};
 
 extern crate tracing;
-use tracing::{event, span, Level, Span};
+use tracing::{span, Level, Span, event};
 
 extern crate tracing_subscriber;
 
-use std::io;
 use std::sync::Arc;
+use std::io;
 
 #[tokio::main]
 async fn main() {
@@ -41,29 +41,24 @@ async fn main() {
             interval.tick().await;
             let monitor_span: Span = span!(Level::TRACE, "monitor");
             let _guard = monitor_span.enter();
-            let _ = monitor_update_mutex
-                .lock()
-                .await
-                .update(monitor_span.id().unwrap())
-                .await;
+            let _ = monitor_update_mutex.lock().await.update(monitor_span.id().unwrap()).await;
         }
     });
 
     let monitor_prune_mutex: Arc<Mutex<Monitor>> = Arc::clone(&shared_monitor);
     task_set.spawn(async move {
-        // Pruning should happen eveny hour
-        let mut interval = interval(Duration::from_secs(3600));
+        let mut interval = interval(Duration::from_secs(1));
+        // In the event that a tick takes longer than the duration, then we
+        // should reschedule future ticks to be based off this time
+        interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
 
-        loop {
+        //loop {
             interval.tick().await;
-            let prune_span: Span = span!(Level::TRACE, "prune");
-            let _guard = prune_span.enter();
-            let _ = monitor_prune_mutex
-                .lock()
-                .await
-                .prune_db(prune_span.id().unwrap())
-                .await;
-        }
+            let monitor_span: Span = span!(Level::TRACE, "monitor");
+            let _guard = monitor_span.enter();
+            // let _ = monitor_update_mutex.lock().await.update(monitor_span.id().unwrap()).await;
+            panic!("Erorr occured");
+            //}
     });
 
     let _ = task_set.join_next().await;
