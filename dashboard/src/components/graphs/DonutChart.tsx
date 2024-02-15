@@ -9,7 +9,12 @@ interface DonutChartProps {
   height: number;
 }
 
-const DonutChart: React.FC<DonutChartProps> = ({ total, inUse, width, height }) => {
+const DonutChart: React.FC<DonutChartProps> = ({
+  total,
+  inUse,
+  width,
+  height,
+}) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart>();
 
@@ -28,7 +33,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ total, inUse, width, height }) 
       ],
     };
 
-    const chartOptions: ChartOptions<'doughnut'> = {
+    const chartOptions: ChartOptions<"doughnut"> = {
       plugins: {
         legend: {
           display: true,
@@ -60,7 +65,14 @@ const DonutChart: React.FC<DonutChartProps> = ({ total, inUse, width, height }) 
     };
   }, [total, inUse, width, height]);
 
-  return <canvas ref={chartRef} width={width} height={height} style={{ width: "100%", height: "100%" }}></canvas>;
+  return (
+    <canvas
+      ref={chartRef}
+      width={width}
+      height={height}
+      style={{ width: "100%", height: "100%" }}
+    ></canvas>
+  );
 };
 
 export default DonutChart;

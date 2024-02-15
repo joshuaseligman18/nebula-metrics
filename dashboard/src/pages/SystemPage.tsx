@@ -8,15 +8,15 @@ import MemoryLineGraph from "../components/graphs/MemLineGraph";
 const SystemPage: React.FC = () => {
   // Sample data for Memory usage
   const cpuData = [
-    { x: new Date('2024-02-14T00:00:00'), y: 10 },
-    { x: new Date('2024-02-14T01:00:00'), y: 20 },
-    { x: new Date('2024-02-14T02:00:00'), y: 30 },
+    { x: new Date("2024-02-14T00:00:00"), y: 10 },
+    { x: new Date("2024-02-14T01:00:00"), y: 20 },
+    { x: new Date("2024-02-14T02:00:00"), y: 30 },
   ];
 
   const memoryData = [
-    { time: new Date('2024-02-14T00:00:00'), ram: 50, swapped: 20 },
-    { time: new Date('2024-02-14T01:00:00'), ram: 60, swapped: 25 },
-    { time: new Date('2024-02-14T02:00:00'), ram: 70, swapped: 30 },
+    { time: new Date("2024-02-14T00:00:00"), ram: 50, swapped: 20 },
+    { time: new Date("2024-02-14T01:00:00"), ram: 60, swapped: 25 },
+    { time: new Date("2024-02-14T02:00:00"), ram: 70, swapped: 30 },
     // Add more data points as needed
   ];
 
@@ -34,7 +34,7 @@ const SystemPage: React.FC = () => {
     <div className="container-fluid px-0 mt-4">
       <div className="row mx-0">
         <div className="col px-0 mb-4">
-        <Card className="bg-light-dark-mode" style={{ height: "450px" }}> {/* Set a fixed height */}
+          <Card className="bg-light-dark-mode" style={{ height: "450px" }}>
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
@@ -46,7 +46,10 @@ const SystemPage: React.FC = () => {
       </div>
       <div className="row mx-0 mb-4">
         <div className="col px-0">
-          <Card className="bg-light-dark-mode h-100" style={{ height: "450px" }}>
+          <Card
+            className="bg-light-dark-mode h-100"
+            style={{ height: "450px" }}
+          >
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
@@ -67,7 +70,12 @@ const SystemPage: React.FC = () => {
                 <div className="mr-4">
                   <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
                   <div className="flex justify-center">
-                      <DonutChart total={100} inUse={25} width={150} height={150} />
+                    <DonutChart
+                      total={100}
+                      inUse={25}
+                      width={150}
+                      height={150}
+                    />
                   </div>
                 </div>
                 <div>
