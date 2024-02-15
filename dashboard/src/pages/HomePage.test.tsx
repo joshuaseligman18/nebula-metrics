@@ -1,8 +1,8 @@
 /**
  * @jest-environment jsdom
  */
-import { render } from '@testing-library/react';
-import HomePage from './HomePage';
+import { render } from "@testing-library/react";
+import HomePage from "./HomePage";
 
 // Mock document before rendering the component
 beforeEach(() => {
@@ -11,6 +11,6 @@ beforeEach(() => {
   document.addEventListener = jest.fn();
 });
 
-test('renders HomePage component', () => {
+test("renders HomePage component", () => {
   render(<HomePage />);
 });
