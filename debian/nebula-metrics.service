@@ -1,5 +1,6 @@
 [Unit]
 Description=nebula-monitor
+Wants=nebula-server.service
 
 [Service]
 ExecStart=/usr/bin/nebula-monitor

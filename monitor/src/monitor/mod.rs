@@ -1,12 +1,14 @@
 mod cpu;
 mod disk;
+mod memory;
 mod process;
 
-pub mod error;
-use error::NebulaError;
+use models::error::NebulaError;
 
 use sqlx::SqlitePool;
 use tracing::{event, instrument, span::Id, Level};
+
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Absolute path to the database file
 const DB_FILE: &str = "sqlite:///var/nebula/db/nebulaMetrics.db";
@@ -45,6 +47,23 @@ impl Monitor {
     #[instrument(skip(self))]
     pub async fn update(&self, id: Id) {
         event!(Level::INFO, "Entering monitor update function");
+        let cur_time: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+
+        process::update_process_data(cur_time, &self.conn)
+            .await
+            .expect("Should update process data without error");
+        cpu::update_cpu_data(cur_time, &self.conn)
+            .await
+            .expect("Should update cpu usage data without error");
+        memory::update_memory_data(cur_time, &self.conn)
+            .await
+            .expect("Should update memory data without error");
+        disk::update_disk_data(cur_time, &self.conn)
+            .await
+            .expect("Should update disk data without error");
 
         event!(Level::INFO, "Exiting monitor update function");
     }
