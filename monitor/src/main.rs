@@ -20,7 +20,7 @@ async fn main() {
         .init();
 
     let forever = task::spawn(async {
-        let mut interval = interval(Duration::from_secs(1));
+        let mut interval = interval(Duration::from_secs(4));
 
         let monitor: Monitor = Monitor::new().await.expect("Monitor should be created");
         monitor
