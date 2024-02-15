@@ -100,6 +100,12 @@ impl Monitor {
             .await
             .expect("Should be able to clear old processes");
 
+        sqlx::query("DELETE FROM CPUSTAT WHERE TIMESTAMP < ?;")
+            .bind(three_hours_ago as i64)
+            .execute(&self.conn)
+            .await
+            .expect("Should be able to prune from CPUSTAT");
+
         sqlx::query("DELETE FROM MEMORY WHERE TIMESTAMP < ?;")
             .bind(three_hours_ago as i64)
             .execute(&self.conn)
