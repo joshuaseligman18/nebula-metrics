@@ -146,7 +146,16 @@ pub async fn update_cpu_data(cur_time: u64, conn: &SqlitePool) -> Result<(), Neb
 
             if let Some(core) = cur_stat.cpu_core {
                 // Add the usage for the respective core
-                cpu_usage[core as usize] += proc_cpu_time / d_time as f32;
+                let proc_cpu_percent_usage: f32 = proc_cpu_time / d_time as f32;
+                cpu_usage[core as usize] += proc_cpu_percent_usage;
+
+                // Update the process in the DB to have the correct percent usage
+                sqlx::query("UPDATE PROCSTAT SET PERCENT_CPU = ? WHERE PID = ? AND TIMESTAMP = ?;")
+                    .bind(proc_cpu_percent_usage)
+                    .bind(cur_stat.pid)
+                    .bind(cur_stat.timestamp)
+                    .execute(conn)
+                    .await?;
             }
         }
         event!(Level::DEBUG, "Finished aggregating CPU usage");
@@ -234,6 +243,21 @@ mod tests {
                 .fetch_one(&pool)
                 .await?;
         assert_eq!(output_stat.usage, 0.154);
+
+        let proc_stats: Vec<ProcStat> = sqlx::query_as::<_, ProcStat>(
+            "SELECT * FROM PROCSTAT WHERE TIMESTAMP = 123456790 ORDER BY PID ASC;",
+        )
+        .fetch_all(&pool)
+        .await?;
+
+        let expected_cpu_percents: Vec<f32> = vec![0.004, 0.05, 0.1];
+        for proc_stat in proc_stats.iter() {
+            assert!(proc_stat.percent_cpu.is_some());
+            assert_eq!(
+                proc_stat.percent_cpu.unwrap(),
+                expected_cpu_percents[(proc_stat.pid - 1) as usize]
+            );
+        }
 
         Ok(())
     }
