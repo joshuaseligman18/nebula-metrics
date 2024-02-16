@@ -32,7 +32,7 @@ async fn main() {
 
     let monitor_update_mutex: Arc<Mutex<Monitor>> = Arc::clone(&shared_monitor);
     task_set.spawn(async move {
-        let mut interval = interval(Duration::from_secs(1));
+        let mut interval = interval(Duration::from_secs(4));
         // In the event that a tick takes longer than the duration, then we
         // should reschedule future ticks to be based off this time
         interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
