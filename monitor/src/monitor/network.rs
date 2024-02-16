@@ -109,4 +109,25 @@ mod tests {
 
         Ok(())
     }
+
+    #[sqlx::test(fixtures("networkTest"))]
+    async fn test_init_interface_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let cur_interfaces: Vec<DeviceStatus> = InterfaceDeviceStatus::current()?
+            .0
+            .values()
+            .cloned()
+            .collect();
+
+        init_network_data(&pool).await?;
+
+        assert_eq!(sqlx::query("SELECT * FROM NETWORKINTERFACE;").fetch_all(&pool).await?.len(), cur_interfaces.len());
+        assert!(sqlx::query("SELECT * FROM NETWORKSTAT;").fetch_all(&pool).await?.is_empty());
+
+        Ok(())
+    }
 }
