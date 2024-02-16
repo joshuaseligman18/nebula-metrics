@@ -41,6 +41,7 @@ pub async fn init_network_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         "Finished inserting current network interfaces"
     );
 
+    clean_up_old_interfaces(conn, &interfaces).await?;
     event!(Level::INFO, "Successfully initialized network info");
     Ok(())
 }
