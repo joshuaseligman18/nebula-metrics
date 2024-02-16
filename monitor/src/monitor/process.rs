@@ -398,7 +398,7 @@ mod tests {
             sqlx::query_as::<_, Process>("SELECT * FROM PROCESS WHERE PID = 9999999;")
                 .fetch_one(&pool)
                 .await?;
-        assert_eq!(old_process.is_alive, false);
+        assert!(!old_process.is_alive);
 
         Ok(())
     }
@@ -465,7 +465,7 @@ mod tests {
                 .bind(42)
                 .fetch_one(&pool)
                 .await?;
-        assert_eq!(old_process.is_alive, false);
+        assert!(!old_process.is_alive);
 
         Ok(())
     }
@@ -552,7 +552,7 @@ mod tests {
                 .bind(9999999)
                 .fetch_one(&pool)
                 .await?;
-        assert_eq!(dead_proc.is_alive, false);
+        assert!(!dead_proc.is_alive);
         let dead_proc_stats: Vec<ProcStat> =
             sqlx::query_as::<_, ProcStat>("SELECT * FROM PROCSTAT WHERE PID = ?;")
                 .bind(9999999)

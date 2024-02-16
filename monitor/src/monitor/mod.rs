@@ -1,6 +1,7 @@
 mod cpu;
 mod disk;
 mod memory;
+mod network;
 mod process;
 
 use models::error::NebulaError;
@@ -45,6 +46,7 @@ impl Monitor {
         cpu::init_cpu_data(&self.conn).await?;
         disk::init_disk_data(&self.conn).await?;
         process::init_process_data(&self.conn).await?;
+        network::init_network_data(&self.conn).await?;
 
         event!(Level::INFO, "Successfully set up initial data");
         Ok(())
