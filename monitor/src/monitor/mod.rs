@@ -73,6 +73,9 @@ impl Monitor {
         disk::update_disk_data(cur_time, &self.conn)
             .await
             .expect("Should update disk data without error");
+        network::update_network_interface_data(cur_time, &self.conn)
+            .await
+            .expect("Should update network data without error");
 
         event!(Level::INFO, "Exiting monitor update function");
     }

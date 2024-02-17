@@ -123,16 +123,16 @@ pub struct NetworkStat {
     pub name: String,
     /// Unix epoch timestamp at which the entry was recorded
     pub timestamp: i64,
-    /// Change in total bytes received from the last record
-    pub delta_bytes_recv: u32,
-    /// Change in total bytes sent from the last record
-    pub delta_bytes_sent: u32,
+    /// Change in total KB received from the last record
+    pub kb_recv: u32,
+    /// Change in total KB sent from the last record
+    pub kb_sent: u32,
     /// Change in total packets received from the last record
-    pub delta_packets_recv: u32,
+    pub packets_recv: u32,
     /// Change in total packets sent from the last record
-    pub delta_packets_sent: u32,
+    pub packets_sent: u32,
     /// Change in total transmission errors received from the last record
-    pub delta_err_recv: u32,
+    pub err_recv: u32,
     /// Change in total transmission errors sent from the last record
-    pub delta_err_sent: u32,
+    pub err_sent: u32,
 }

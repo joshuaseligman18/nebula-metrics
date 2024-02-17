@@ -1,4 +1,5 @@
 use models::error::NebulaError;
+use models::tables::NetworkInterface;
 use procfs::net::{self, ARPEntry, DeviceStatus, InterfaceDeviceStatus};
 use procfs::Current;
 use sqlx::{QueryBuilder, Sqlite, SqlitePool};
@@ -85,6 +86,81 @@ async fn clean_up_old_interfaces(
     Ok(())
 }
 
+#[instrument(skip(conn))]
+pub async fn update_network_interface_data(
+    cur_time: u64,
+    conn: &SqlitePool,
+) -> Result<(), NebulaError> {
+    event!(Level::INFO, "Starting to update network data");
+
+    let db_interfaces: Vec<NetworkInterface> =
+        sqlx::query_as::<_, NetworkInterface>("SELECT * FROM NETWORKINTERFACE;")
+            .fetch_all(conn)
+            .await?;
+
+    let cur_interfaces: Vec<DeviceStatus> = InterfaceDeviceStatus::current()?
+        .0
+        .values()
+        .cloned()
+        .collect();
+    let cur_arp: Vec<ARPEntry> = net::arp()?;
+
+    for cur_interface in cur_interfaces.iter() {
+        let matching_db_interface: Vec<NetworkInterface> = db_interfaces
+            .clone()
+            .into_iter()
+            .filter(|i| i.name == cur_interface.name)
+            .collect();
+
+        let arp_entry_vec: Vec<ARPEntry> = cur_arp
+            .clone()
+            .into_iter()
+            .filter(|entry| entry.device == cur_interface.name)
+            .collect();
+        let device_ip: Option<String> = if arp_entry_vec.is_empty() {
+            None
+        } else {
+            Some(arp_entry_vec[0].ip_address.to_string())
+        };
+
+        if matching_db_interface.is_empty() {
+            event!(Level::DEBUG, "Found new network interface {:?}", cur_interface.name);
+            sqlx::query("INSERT INTO NETWORKINTERFACE VALUES (?, ?);")
+                .bind(&cur_interface.name)
+                .bind(device_ip)
+                .execute(conn)
+                .await?;
+        } else if matching_db_interface[0].ip_addr != device_ip {
+            event!(Level::DEBUG, "New IP found for network interface {:?}", cur_interface.name);
+            sqlx::query("UPDATE NETWORKINTERFACE SET IP_ADDR = ? WHERE NAME = ?;")
+                .bind(device_ip)
+                .bind(&cur_interface.name)
+                .execute(conn)
+                .await?;
+        }
+    }
+
+    event!(Level::DEBUG, "Starting to insert network stat info");
+    let mut network_stat_query: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO NETWORKSTAT ");
+    network_stat_query.push_values(cur_interfaces.iter(), |mut builder, interface| {
+        builder.push_bind(&interface.name)
+            .push_bind(cur_time as i64)
+            .push_bind((interface.recv_bytes / 1000) as i64)
+            .push_bind((interface.sent_bytes / 1000) as i64)
+            .push_bind(interface.recv_packets as i64)
+            .push_bind(interface.sent_packets as i64)
+            .push_bind(interface.recv_errs as i64)
+            .push_bind(interface.sent_errs as i64);
+    });
+    network_stat_query.push(";").build().execute(conn).await?;
+    event!(Level::DEBUG, "Finished inserting network stat info");
+    
+    clean_up_old_interfaces(conn, &cur_interfaces).await?;
+
+    event!(Level::DEBUG, "Finished updating network data");
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -105,8 +181,14 @@ mod tests {
 
         clean_up_old_interfaces(&pool, &cur_interfaces).await?;
 
-        assert!(sqlx::query("SELECT * FROM NETWORKINTERFACE;").fetch_all(&pool).await?.is_empty());
-        assert!(sqlx::query("SELECT * FROM NETWORKSTAT;").fetch_all(&pool).await?.is_empty());
+        assert!(sqlx::query("SELECT * FROM NETWORKINTERFACE;")
+            .fetch_all(&pool)
+            .await?
+            .is_empty());
+        assert!(sqlx::query("SELECT * FROM NETWORKSTAT;")
+            .fetch_all(&pool)
+            .await?
+            .is_empty());
 
         Ok(())
     }
@@ -126,8 +208,17 @@ mod tests {
 
         init_network_data(&pool).await?;
 
-        assert_eq!(sqlx::query("SELECT * FROM NETWORKINTERFACE;").fetch_all(&pool).await?.len(), cur_interfaces.len());
-        assert!(sqlx::query("SELECT * FROM NETWORKSTAT;").fetch_all(&pool).await?.is_empty());
+        assert_eq!(
+            sqlx::query("SELECT * FROM NETWORKINTERFACE;")
+                .fetch_all(&pool)
+                .await?
+                .len(),
+            cur_interfaces.len()
+        );
+        assert!(sqlx::query("SELECT * FROM NETWORKSTAT;")
+            .fetch_all(&pool)
+            .await?
+            .is_empty());
 
         Ok(())
     }
