@@ -124,14 +124,22 @@ pub async fn update_network_interface_data(
         };
 
         if matching_db_interface.is_empty() {
-            event!(Level::DEBUG, "Found new network interface {:?}", cur_interface.name);
+            event!(
+                Level::DEBUG,
+                "Found new network interface {:?}",
+                cur_interface.name
+            );
             sqlx::query("INSERT INTO NETWORKINTERFACE VALUES (?, ?);")
                 .bind(&cur_interface.name)
                 .bind(device_ip)
                 .execute(conn)
                 .await?;
         } else if matching_db_interface[0].ip_addr != device_ip {
-            event!(Level::DEBUG, "New IP found for network interface {:?}", cur_interface.name);
+            event!(
+                Level::DEBUG,
+                "New IP found for network interface {:?}",
+                cur_interface.name
+            );
             sqlx::query("UPDATE NETWORKINTERFACE SET IP_ADDR = ? WHERE NAME = ?;")
                 .bind(device_ip)
                 .bind(&cur_interface.name)
@@ -141,9 +149,11 @@ pub async fn update_network_interface_data(
     }
 
     event!(Level::DEBUG, "Starting to insert network stat info");
-    let mut network_stat_query: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO NETWORKSTAT ");
+    let mut network_stat_query: QueryBuilder<Sqlite> =
+        QueryBuilder::new("INSERT INTO NETWORKSTAT ");
     network_stat_query.push_values(cur_interfaces.iter(), |mut builder, interface| {
-        builder.push_bind(&interface.name)
+        builder
+            .push_bind(&interface.name)
             .push_bind(cur_time as i64)
             .push_bind((interface.recv_bytes / 1000) as i64)
             .push_bind((interface.sent_bytes / 1000) as i64)
@@ -154,7 +164,7 @@ pub async fn update_network_interface_data(
     });
     network_stat_query.push(";").build().execute(conn).await?;
     event!(Level::DEBUG, "Finished inserting network stat info");
-    
+
     clean_up_old_interfaces(conn, &cur_interfaces).await?;
 
     event!(Level::DEBUG, "Finished updating network data");
@@ -163,7 +173,10 @@ pub async fn update_network_interface_data(
 
 #[cfg(test)]
 mod tests {
+    use models::tables::NetworkStat;
+
     use super::*;
+    use std::time::{UNIX_EPOCH, SystemTime};
     use std::io;
 
     #[sqlx::test(fixtures("networkTest"))]
@@ -219,6 +232,44 @@ mod tests {
             .fetch_all(&pool)
             .await?
             .is_empty());
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("networkTest"))]
+    async fn test_update_network_data(pool: SqlitePool) -> Result<(), NebulaError> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let cur_interfaces: Vec<DeviceStatus> = InterfaceDeviceStatus::current()?
+            .0
+            .values()
+            .cloned()
+            .collect();
+        
+        let mut pre_insert_query: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO NETWORKINTERFACE ");
+        pre_insert_query.push_values(cur_interfaces.iter(), |mut builder, interface| {
+            builder.push_bind(&interface.name)
+                .push_bind(Some("1.2.3.4"));
+        });
+        pre_insert_query.push(";").build().execute(&pool).await?;
+
+        let cur_time: u64 = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        update_network_interface_data(cur_time, &pool).await?;
+
+        let db_interfaces: Vec<NetworkInterface> = sqlx::query_as::<_, NetworkInterface>("SELECT * FROM NETWORKINTERFACE;").fetch_all(&pool).await?;
+        assert_eq!(db_interfaces.len(), cur_interfaces.len());
+        for interface in db_interfaces.iter() {
+            assert_ne!(interface.ip_addr, Some("1.2.3.4".to_string()));
+        }
+
+        let db_stats: Vec<NetworkStat> = sqlx::query_as::<_, NetworkStat>("SELECT * FROM NETWORKSTAT;").fetch_all(&pool).await?;
+        assert_eq!(db_stats.len(), cur_interfaces.len());
 
         Ok(())
     }
