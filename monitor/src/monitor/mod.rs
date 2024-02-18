@@ -140,7 +140,7 @@ mod tests {
     use tracing::{span, Span};
 
     #[sqlx::test(fixtures("pruneTest"))]
-    async fn test_update_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
+    async fn test_prune_db(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
             .with_max_level(Level::TRACE)
