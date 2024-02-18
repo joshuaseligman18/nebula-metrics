@@ -176,8 +176,8 @@ mod tests {
     use models::tables::NetworkStat;
 
     use super::*;
-    use std::time::{UNIX_EPOCH, SystemTime};
     use std::io;
+    use std::time::{SystemTime, UNIX_EPOCH};
 
     #[sqlx::test(fixtures("networkTest"))]
     async fn test_clean_up_old_interface_data(pool: SqlitePool) -> Result<(), NebulaError> {
@@ -248,10 +248,12 @@ mod tests {
             .values()
             .cloned()
             .collect();
-        
-        let mut pre_insert_query: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT INTO NETWORKINTERFACE ");
+
+        let mut pre_insert_query: QueryBuilder<Sqlite> =
+            QueryBuilder::new("INSERT INTO NETWORKINTERFACE ");
         pre_insert_query.push_values(cur_interfaces.iter(), |mut builder, interface| {
-            builder.push_bind(&interface.name)
+            builder
+                .push_bind(&interface.name)
                 .push_bind(Some("1.2.3.4"));
         });
         pre_insert_query.push(";").build().execute(&pool).await?;
@@ -262,13 +264,19 @@ mod tests {
             .as_secs();
         update_network_interface_data(cur_time, &pool).await?;
 
-        let db_interfaces: Vec<NetworkInterface> = sqlx::query_as::<_, NetworkInterface>("SELECT * FROM NETWORKINTERFACE;").fetch_all(&pool).await?;
+        let db_interfaces: Vec<NetworkInterface> =
+            sqlx::query_as::<_, NetworkInterface>("SELECT * FROM NETWORKINTERFACE;")
+                .fetch_all(&pool)
+                .await?;
         assert_eq!(db_interfaces.len(), cur_interfaces.len());
         for interface in db_interfaces.iter() {
             assert_ne!(interface.ip_addr, Some("1.2.3.4".to_string()));
         }
 
-        let db_stats: Vec<NetworkStat> = sqlx::query_as::<_, NetworkStat>("SELECT * FROM NETWORKSTAT;").fetch_all(&pool).await?;
+        let db_stats: Vec<NetworkStat> =
+            sqlx::query_as::<_, NetworkStat>("SELECT * FROM NETWORKSTAT;")
+                .fetch_all(&pool)
+                .await?;
         assert_eq!(db_stats.len(), cur_interfaces.len());
 
         Ok(())

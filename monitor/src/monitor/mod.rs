@@ -123,6 +123,12 @@ impl Monitor {
             .await
             .expect("Should be able to prune from DISKSTAT");
 
+        sqlx::query("DELETE FROM NETWORKSTAT WHERE TIMESTAMP < ?;")
+            .bind(three_hours_ago as i64)
+            .execute(&self.conn)
+            .await
+            .expect("Should be able to prune from NETWORKSTAT");
+
         event!(Level::INFO, "Exiting database pruning");
     }
 }
@@ -180,6 +186,14 @@ mod tests {
 
         assert_eq!(
             sqlx::query("SELECT * FROM DISKSTAT;")
+                .fetch_all(&pool)
+                .await?
+                .len(),
+            1
+        );
+
+        assert_eq!(
+            sqlx::query("SELECT * FROM NETWORKSTAT;")
                 .fetch_all(&pool)
                 .await?
                 .len(),
