@@ -39,6 +39,8 @@ pub struct ProcStat {
     pub timestamp: i64,
     /// Total CPU time for the process in seconds
     pub total_cpu: f32,
+    /// Percent of CPU time since the last metric check
+    pub percent_cpu: Option<f32>,
     /// CPU core the process is running on
     pub cpu_core: Option<u32>,
     /// Amount of virtual memory for the process in KB
@@ -97,8 +99,8 @@ pub struct DiskStat {
     pub device_name: String,
     /// Unix epoch timestamp at which the entry was recorded
     pub timestamp: i64,
-    /// Amount of disk space used
+    /// Amount of disk space used in MB
     pub used: u32,
-    /// Amount of disk space available
+    /// Amount of disk space available in MB
     pub available: u32,
 }
