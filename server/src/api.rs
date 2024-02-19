@@ -1,9 +1,10 @@
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::{Memory, Process};
+use models::tables::{Memory, Process, Disk, DiskStat};
 use sqlx::SqlitePool;
 use axum::extract::Path;
 mod response;
-use response::ProcessInfo;
+use response::{ProcessInfo, DiskInfo};
+
 use serde::Serialize;
 
 /// Absolute path to the database file
@@ -28,8 +29,9 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
         .route("/processes", get(get_processes))
         .route("/memory", get(get_memory_data))
-        .route("/processes1", get(get_all_processes))
+        .route("/allProcesses", get(get_all_processes))
         .route("/process/:pid", get(get_specific_process))
+        .route("/disks", get(get_disk_info))
         .with_state(AppState {
             conn: SqlitePool::connect(DB_FILE).await?,
         });
@@ -109,5 +111,38 @@ async fn get_specific_process(State(state): State<AppState>, pid: Path<u32>) -> 
     match res {
         Ok(process_info) => Ok(Json(ApiResponse { data: Some(process_info), error_message: None })),
         Err(_) => Ok(Json(ApiResponse { data: None, error_message: Some("Error fetching specific process".to_string()) })),
+    }
+}
+
+/// Returns all disk information
+async fn get_disk_info(State(state): State<AppState>) -> Result<Json<ApiResponse<Vec<DiskInfo>>>, StatusCode> {
+    let query = r#"
+        SELECT
+            d.device_name,
+            d.mount,
+            d.fs_type,
+            ds.timestamp,
+            ds.used,
+            ds.available
+        FROM
+            Disk d
+        INNER JOIN
+            DiskStat ds
+        ON
+            d.device_name = ds.device_name
+    "#;
+
+    println!("Generated SQL query: {}", query); // Log the SQL query
+
+    let res = sqlx::query_as::<_, DiskInfo>(query)
+        .fetch_all(&state.conn)
+        .await;
+
+    match res {
+        Ok(disk_info) => Ok(Json(ApiResponse { data: Some(disk_info), error_message: None })),
+        Err(e) => {
+            let error_message = format!("Error fetching disk information: {}", e);
+            Ok(Json(ApiResponse { data: None, error_message: Some(error_message) }))
+        }
     }
 }

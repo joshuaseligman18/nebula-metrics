@@ -3,7 +3,7 @@ use sqlx::FromRow;
 
 /// Struct For Process Info Response
 #[derive(Debug, Serialize, FromRow, Clone)]
-#[serde(rename_all="camelCase")]
+#[sqlx(rename_all="UPPERCASE")]
 pub struct ProcessInfo {
     /// The PID of the process
     pub pid: u32,
@@ -28,4 +28,22 @@ pub struct ProcessInfo {
     /// Whether or not the process is alive
     pub is_alive: bool,
 
+}
+
+/// Struct For Process Info Response
+#[derive(Debug, Serialize, FromRow, Clone)]
+#[sqlx(rename_all="UPPERCASE")]
+pub struct DiskInfo{
+    /// Name of the device
+    pub device_name: String,
+    /// Folder the device is mounted to
+    pub mount: String,
+    /// Type of file system used by the disk
+    pub fs_type: String,
+    /// Unix epoch timestamp at which the entry was recorded
+    pub timestamp: i64,
+    /// Amount of disk space used in MB
+    pub used: u32,
+    /// Amount of disk space available in MB
+    pub available: u32,
 }
