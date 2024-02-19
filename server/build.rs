@@ -30,6 +30,12 @@ fn main() {
     assert!(build_status.success());
 
     // Copy its contents over to the assets folder
+    Command::new("rm")
+        .arg("-rf")
+        .arg(assets_dir.join("web"))
+        .spawn()
+        .expect("Should run the command to remove assets/web");
+
     let cp_status: ExitStatus = Command::new("cp")
         .arg("-r")
         .arg(dashboard_dir.join("dist/."))
