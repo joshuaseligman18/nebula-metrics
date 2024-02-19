@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 fn main() {
     println!(
@@ -13,19 +13,28 @@ fn main() {
     let dashboard_dir: PathBuf = fs::canonicalize("../dashboard/").expect("Dashboard should exist");
     let assets_dir: PathBuf = fs::canonicalize("../assets/").expect("Assets should exist");
 
+    let ci_status: ExitStatus = Command::new("npm")
+        .current_dir(&dashboard_dir)
+        .arg("ci")
+        .status()
+        .expect("Should be able to run npm i");
+    assert!(ci_status.success());
+
     // Build the static website
-    Command::new("npm")
+    let build_status: ExitStatus = Command::new("npm")
         .current_dir(&dashboard_dir)
         .arg("run")
         .arg("build")
-        .spawn()
+        .status()
         .expect("Should be able to build the static website");
+    assert!(build_status.success());
 
     // Copy its contents over to the assets folder
-    Command::new("cp")
+    let cp_status: ExitStatus = Command::new("cp")
         .arg("-r")
         .arg(dashboard_dir.join("dist/."))
         .arg(assets_dir.join("web"))
-        .spawn()
+        .status()
         .expect("Should be able to copy the static website into the assets folder");
+    assert!(cp_status.success());
 }
