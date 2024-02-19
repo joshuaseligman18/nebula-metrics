@@ -2,8 +2,13 @@ import React, { useEffect } from 'react';
 import LeaderboardBar from '../components/systemBar/LeaderBoardBar';
 import Container from 'react-bootstrap/Container';
 import ProcessChart from '../components/AgGrid/ProcessChart';
+//import { useAllProcesses } from '../hooks/useGetAllProcesses';
 
 const HomePage: React.FC = () => {
+  //const { data:processData, isLoading, isError } = useAllProcesses();
+  //console.log(processData);
+
+  
   useEffect(() => {
     // Will modularize and unit test for gonna add another committ
     if (typeof document !== 'undefined') {
@@ -17,6 +22,9 @@ const HomePage: React.FC = () => {
     // Add more data as needed
   ];
 
+  //if (isLoading) return <div>Loading...</div>;
+  //if (isError) return <div>Error fetching data</div>
+
   return (
     <>
       <LeaderboardBar />
@@ -24,6 +32,9 @@ const HomePage: React.FC = () => {
         <h1 className="text-2xl font-bold text-white">Process List</h1>
       </Container>
       <ProcessChart data={data}/>
+      <div>
+        The data is 
+      </div>
     </>
   );
 };

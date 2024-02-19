@@ -5,14 +5,15 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
 const Root: React.FC = () => {
+
   useEffect(() => {
     document.body.classList.toggle('dark-mode');
   }, []);
 
   return (
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
   );
 };
 
