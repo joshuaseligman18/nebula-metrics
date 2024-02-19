@@ -1,7 +1,6 @@
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::Process;
+use models::tables::{Memory, Process};
 use sqlx::SqlitePool;
-use models::tables::Memory;
 use axum::extract::Path;
 mod response;
 use response::ProcessInfo;
@@ -65,19 +64,44 @@ async fn get_memory_data(State(state): State<AppState>) -> Result<Json<ApiRespon
 
 /// Returns all data for all processes
 async fn get_all_processes(State(state): State<AppState>) -> Result<Json<ApiResponse<Vec<ProcessInfo>>>, StatusCode> {
-    let res = sqlx::query_as::<_, ProcessInfo>("SELECT pid, exec AS name, init_total_cpu AS cpu_usage, (strftime('%s','now') - start_time) AS elapsed_time FROM process;")
+    let query = r#"
+        SELECT
+            p.pid,
+            p.exec,
+            p.start_time,
+            p.is_alive,
+            p.init_total_cpu,
+            ps.timestamp,
+            ps.total_cpu,
+            ps.percent_cpu,
+            ps.cpu_core,
+            ps.virtual_memory,
+            ps.resident_memory,
+            ps.shared_memory
+        FROM
+            Process p
+        LEFT JOIN
+            ProcStat ps
+        ON
+            p.pid = ps.pid
+    "#;
+
+    let res = sqlx::query_as::<_, ProcessInfo>(query)
         .fetch_all(&state.conn)
         .await;
 
     match res {
         Ok(process_infos) => Ok(Json(ApiResponse { data: Some(process_infos), error_message: None })),
-        Err(_) => Ok(Json(ApiResponse { data: None, error_message: Some("Error fetching all processes".to_string()) })),
+        Err(e) => {
+            let error_message = format!("Error fetching all processes: {}", e);
+            Ok(Json(ApiResponse { data: None, error_message: Some(error_message) }))
+        }
     }
 }
 
 /// Returns data for a specific process
 async fn get_specific_process(State(state): State<AppState>, pid: Path<u32>) -> Result<Json<ApiResponse<ProcessInfo>>, StatusCode> {
-    let res = sqlx::query_as::<_, ProcessInfo>("SELECT pid, exec AS name, init_total_cpu AS cpu_usage, (strftime('%s','now') - start_time) AS elapsed_time FROM process WHERE pid = ?;")
+    let res = sqlx::query_as::<_, ProcessInfo>("SELECT pid, exec AS name, init_total_cpu AS cpu_usage, (strftime('%s','now') - start_time) AS elapsed_time FROM PROCESS WHERE pid = ?;")
         .bind(*pid)
         .fetch_one(&state.conn)
         .await;
