@@ -30,7 +30,7 @@ pub struct ProcessInfo {
 
 }
 
-/// Struct For Process Info Response
+/// Struct For disk Info Response
 #[derive(Debug, Serialize, FromRow, Clone)]
 #[sqlx(rename_all="UPPERCASE")]
 pub struct DiskInfo{
@@ -46,4 +46,20 @@ pub struct DiskInfo{
     pub used: u32,
     /// Amount of disk space available in MB
     pub available: u32,
+}
+
+/// Struct For disk Info Response
+#[derive(Debug, Serialize, FromRow, Clone)]
+#[sqlx(rename_all="UPPERCASE")]
+pub struct CpuInfo{
+    /// The core number for the CPU
+    pub cpu_core: u32,
+    /// The speed of the processor in MHz
+    pub mhz: f32,
+    /// Amount of cache in MB
+    pub total_cache: u32,
+    /// Unix epoch timestamp at which the entry was recorded
+    pub timestamp: i64,
+    /// Percentage of time the CPU was in-use
+    pub usage: f32,
 }

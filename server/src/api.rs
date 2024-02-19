@@ -1,9 +1,9 @@
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::{Memory, Process, Disk, DiskStat};
+use models::tables::{Memory, Process};
 use sqlx::SqlitePool;
 use axum::extract::Path;
 mod response;
-use response::{ProcessInfo, DiskInfo};
+use response::{ProcessInfo, DiskInfo, CpuInfo};
 
 use serde::Serialize;
 
@@ -32,6 +32,7 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
         .route("/allProcesses", get(get_all_processes))
         .route("/process/:pid", get(get_specific_process))
         .route("/disks", get(get_disk_info))
+        .route("/cpu-info", get(get_cpu_info))
         .with_state(AppState {
             conn: SqlitePool::connect(DB_FILE).await?,
         });
@@ -132,8 +133,6 @@ async fn get_disk_info(State(state): State<AppState>) -> Result<Json<ApiResponse
             d.device_name = ds.device_name
     "#;
 
-    println!("Generated SQL query: {}", query); // Log the SQL query
-
     let res = sqlx::query_as::<_, DiskInfo>(query)
         .fetch_all(&state.conn)
         .await;
@@ -146,3 +145,34 @@ async fn get_disk_info(State(state): State<AppState>) -> Result<Json<ApiResponse
         }
     }
 }
+
+/// Returns all CPU information
+async fn get_cpu_info(State(state): State<AppState>) -> Result<Json<ApiResponse<Vec<CpuInfo>>>, StatusCode> {
+    let query = r#"
+        SELECT
+            c.cpu_core,
+            c.mhz,
+            c.total_cache,
+            cs.timestamp,
+            cs.usage
+        FROM
+            Cpu c
+        INNER JOIN
+            CpuStat cs
+        ON
+            c.cpu_core = cs.cpu_core
+    "#;
+
+    let res = sqlx::query_as::<_, CpuInfo>(query)
+        .fetch_all(&state.conn)
+        .await;
+
+    match res {
+        Ok(cpu_info) => Ok(Json(ApiResponse { data: Some(cpu_info), error_message: None })),
+        Err(e) => {
+            let error_message = format!("Error fetching CPU information: {}", e);
+            Ok(Json(ApiResponse { data: None, error_message: Some(error_message) }))
+        }
+    }
+}
+
