@@ -2,6 +2,8 @@ use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use models::tables::Process;
 use sqlx::SqlitePool;
 use tracing::{event, Level};
+use models::tables::Memory;
+use axum::extract::Path;
 mod response;
 use response::ProcessInfo;
 
@@ -76,7 +78,7 @@ async fn get_all_processes(State(state): State<AppState>) -> Result<Json<Vec<Pro
 /// Returns all data for a specific process
 async fn get_specific_process(State(state): State<AppState>, pid: Path<u32>) -> Result<Json<ProcessInfo>, StatusCode> {
     let res = sqlx::query_as::<_, ProcessInfo>("SELECT pid, exec AS name, init_total_cpu AS cpu_usage, (strftime('%s','now') - start_time) AS elapsed_time FROM process WHERE pid = ?;")
-        .bind(pid.into_inner())
+        .bind(*pid) // Directly use `*pid` instead of `pid.param()`
         .fetch_one(&state.conn)
         .await;
 
@@ -85,3 +87,4 @@ async fn get_specific_process(State(state): State<AppState>, pid: Path<u32>) -> 
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
+
