@@ -4,6 +4,8 @@ Wants=nebula-server.service
 
 [Service]
 ExecStart=/usr/bin/nebula-monitor
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
