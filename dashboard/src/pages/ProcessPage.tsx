@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const ProcessPage: React.FC = () => {
   return <div>Process Page</div>;
