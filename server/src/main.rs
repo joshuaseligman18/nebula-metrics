@@ -5,7 +5,7 @@ use axum::Router;
 use tokio::net::TcpListener;  
 use tower_http::trace::TraceLayer;
 use tracing::Level;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer}; // Import AllowOrigin
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -18,11 +18,7 @@ async fn main() -> Result<(), sqlx::Error> {
         .nest("/web", web::create_web_router())
         .nest("/api", api::create_api_router().await?)
         .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::new().allow_origin(|origin, _headers| {
-            // Allow any origin
-            origin == Some("http://127.0.0.1:4242") // Adjust as per your React app's URL
-        }));
-
+        .layer(CorsLayer::new().allow_origin(AllowOrigin::any())); // Use AllowOrigin::any() 
     let listener: TcpListener = tokio::net::TcpListener::bind("0.0.0.0:4242").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 

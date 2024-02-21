@@ -32,9 +32,6 @@ const HomePage: React.FC = () => {
         <h1 className="text-2xl font-bold text-white">Process List</h1>
       </Container>
       <ProcessChart data={data}/>
-      <div>
-        The data is {processData} after data
-      </div>
     </>
   );
 };
