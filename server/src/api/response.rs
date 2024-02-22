@@ -3,7 +3,7 @@ use sqlx::FromRow;
 
 /// Struct For Process Info Response
 #[derive(Debug, Serialize, FromRow, Clone)]
-#[sqlx(rename_all="UPPERCASE")]
+#[sqlx(rename_all = "UPPERCASE")]
 pub struct ProcessInfo {
     /// The PID of the process
     pub pid: u32,
@@ -27,13 +27,12 @@ pub struct ProcessInfo {
     pub start_time: i64,
     /// Whether or not the process is alive
     pub is_alive: bool,
-
 }
 
 /// Struct For disk Info Response
 #[derive(Debug, Serialize, FromRow, Clone)]
-#[sqlx(rename_all="UPPERCASE")]
-pub struct DiskInfo{
+#[sqlx(rename_all = "UPPERCASE")]
+pub struct DiskInfo {
     /// Name of the device
     pub device_name: String,
     /// Folder the device is mounted to
@@ -50,8 +49,8 @@ pub struct DiskInfo{
 
 /// Struct For disk Info Response
 #[derive(Debug, Serialize, FromRow, Clone)]
-#[sqlx(rename_all="UPPERCASE")]
-pub struct CpuInfo{
+#[sqlx(rename_all = "UPPERCASE")]
+pub struct CpuInfo {
     /// The core number for the CPU
     pub cpu_core: u32,
     /// The speed of the processor in MHz
