@@ -3,6 +3,8 @@ Description=nebula-server
 
 [Service]
 ExecStart=/usr/bin/nebula-server
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=first-app.service
