@@ -3,10 +3,22 @@ import LeaderboardBar from '../components/systemBar/LeaderBoardBar';
 import Container from 'react-bootstrap/Container';
 import ProcessChart from '../components/AgGrid/ProcessChart';
 import { useAllProcesses } from '../hooks/useGetAllProcesses';
+import { useGetCpuData } from '../hooks/useGetCpuData';
+import { useGetMemoryData } from '../hooks/useGetMemoryData';
+import { useGetDiskData } from '../hooks/useGetDiskData';
 
 const HomePage: React.FC = () => {
   const { data:processData, isLoading, isError } = useAllProcesses();
   console.log(processData);
+
+  const { data:cpuData} = useGetCpuData();
+  console.log(cpuData);
+
+  const { data:memoryData} = useGetMemoryData();
+  console.log(memoryData);
+
+  const { data:diskData} = useGetDiskData();
+  console.log(diskData);
 
   
   useEffect(() => {

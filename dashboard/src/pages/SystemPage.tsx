@@ -4,16 +4,29 @@ import DonutChart from "../components/graphs/DonutChart";
 import DiskUsagePieChart from "../components/graphs/PieChart";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
+import { useGetCpuData } from '../hooks/useGetCpuData';
+import { useGetMemoryData } from '../hooks/useGetMemoryData';
+import { useGetDiskData } from '../hooks/useGetDiskData';
 
 const SystemPage: React.FC = () => {
+
+  const { data:cpuData} = useGetCpuData();
+  console.log(cpuData);
+
+  const { data:memoryData} = useGetMemoryData();
+  console.log(memoryData);
+
+  const { data:diskData} = useGetDiskData();
+  console.log(diskData);
+
   // Sample data for Memory usage
-  const cpuData = [
+  const sampleCpuData = [
     { x: new Date("2024-02-14T00:00:00"), y: 10 },
     { x: new Date("2024-02-14T01:00:00"), y: 20 },
     { x: new Date("2024-02-14T02:00:00"), y: 30 },
   ];
 
-  const memoryData = [
+  const sampleMemoryData = [
     { time: new Date("2024-02-14T00:00:00"), ram: 50, swapped: 20 },
     { time: new Date("2024-02-14T01:00:00"), ram: 60, swapped: 25 },
     { time: new Date("2024-02-14T02:00:00"), ram: 70, swapped: 30 },
@@ -39,7 +52,7 @@ const SystemPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
               </Card.Title>
-              <CpuLineGraph data={cpuData} />
+              <CpuLineGraph data={sampleCpuData} />
             </Card.Body>
           </Card>
         </div>
@@ -54,7 +67,7 @@ const SystemPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
               </Card.Title>
-              <MemoryLineGraph data={memoryData} />
+              <MemoryLineGraph data={sampleMemoryData} />
             </Card.Body>
           </Card>
         </div>
