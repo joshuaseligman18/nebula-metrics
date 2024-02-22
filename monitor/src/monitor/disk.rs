@@ -189,7 +189,7 @@ mod tests {
 
         let output: Vec<DiskMetrics> = get_all_disk_data();
 
-        assert!(output.len() > 0);
+        assert!(!output.is_empty());
         for disk in output.iter() {
             assert_eq!(&disk.name[0..1], "/");
         }

@@ -104,3 +104,35 @@ pub struct DiskStat {
     /// Amount of disk space available in MB
     pub available: u32,
 }
+
+/// Struct for the NETWORKINTERFACE table
+#[derive(Debug, Serialize, FromRow, Clone)]
+#[sqlx(rename_all = "UPPERCASE")]
+pub struct NetworkInterface {
+    /// Logical name of the interface
+    pub name: String,
+    /// IP address of the interface
+    pub ip_addr: Option<String>,
+}
+
+/// Struct for the NETWORKSTAT table
+#[derive(Debug, Serialize, FromRow, Clone)]
+#[sqlx(rename_all = "UPPERCASE")]
+pub struct NetworkStat {
+    /// Logical name of the interface
+    pub name: String,
+    /// Unix epoch timestamp at which the entry was recorded
+    pub timestamp: i64,
+    /// Change in total KB received from the last record
+    pub kb_recv: u32,
+    /// Change in total KB sent from the last record
+    pub kb_sent: u32,
+    /// Change in total packets received from the last record
+    pub packets_recv: u32,
+    /// Change in total packets sent from the last record
+    pub packets_sent: u32,
+    /// Change in total transmission errors received from the last record
+    pub err_recv: u32,
+    /// Change in total transmission errors sent from the last record
+    pub err_sent: u32,
+}

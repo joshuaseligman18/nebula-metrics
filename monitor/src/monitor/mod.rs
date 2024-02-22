@@ -1,6 +1,7 @@
 mod cpu;
 mod disk;
 mod memory;
+mod network;
 mod process;
 
 use models::error::NebulaError;
@@ -45,6 +46,7 @@ impl Monitor {
         cpu::init_cpu_data(&self.conn).await?;
         disk::init_disk_data(&self.conn).await?;
         process::init_process_data(&self.conn).await?;
+        network::init_network_data(&self.conn).await?;
 
         event!(Level::INFO, "Successfully set up initial data");
         Ok(())
@@ -71,6 +73,9 @@ impl Monitor {
         disk::update_disk_data(cur_time, &self.conn)
             .await
             .expect("Should update disk data without error");
+        network::update_network_interface_data(cur_time, &self.conn)
+            .await
+            .expect("Should update network data without error");
 
         event!(Level::INFO, "Exiting monitor update function");
     }
@@ -118,6 +123,12 @@ impl Monitor {
             .await
             .expect("Should be able to prune from DISKSTAT");
 
+        sqlx::query("DELETE FROM NETWORKSTAT WHERE TIMESTAMP < ?;")
+            .bind(three_hours_ago as i64)
+            .execute(&self.conn)
+            .await
+            .expect("Should be able to prune from NETWORKSTAT");
+
         event!(Level::INFO, "Exiting database pruning");
     }
 }
@@ -129,7 +140,7 @@ mod tests {
     use tracing::{span, Span};
 
     #[sqlx::test(fixtures("pruneTest"))]
-    async fn test_update_disk_data(pool: SqlitePool) -> Result<(), NebulaError> {
+    async fn test_prune_db(pool: SqlitePool) -> Result<(), NebulaError> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
             .with_max_level(Level::TRACE)
@@ -175,6 +186,14 @@ mod tests {
 
         assert_eq!(
             sqlx::query("SELECT * FROM DISKSTAT;")
+                .fetch_all(&pool)
+                .await?
+                .len(),
+            1
+        );
+
+        assert_eq!(
+            sqlx::query("SELECT * FROM NETWORKSTAT;")
                 .fetch_all(&pool)
                 .await?
                 .len(),
