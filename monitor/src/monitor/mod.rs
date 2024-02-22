@@ -6,7 +6,7 @@ mod process;
 
 use models::error::NebulaError;
 
-use sqlx::SqlitePool;
+use sqlx::{Sqlite, SqlitePool, Transaction};
 use tracing::{event, instrument, span::Id, Level};
 
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -84,6 +84,12 @@ impl Monitor {
     #[instrument(skip(self))]
     pub async fn prune_db(&self, id: Id) {
         event!(Level::INFO, "Entering database pruning");
+        let prune_trans: Transaction<Sqlite> = self
+            .conn
+            .begin()
+            .await
+            .expect("Should be able to start a new transaction");
+
         // Tables with timestamp data: PROCSTAT, CPUSTAT, MEMORY, DISKSTAT
         let cur_time: u64 = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -128,6 +134,11 @@ impl Monitor {
             .execute(&self.conn)
             .await
             .expect("Should be able to prune from NETWORKSTAT");
+
+        prune_trans
+            .commit()
+            .await
+            .expect("Should be able to commit the transaction");
 
         event!(Level::INFO, "Exiting database pruning");
     }
