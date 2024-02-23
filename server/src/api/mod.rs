@@ -27,7 +27,6 @@ struct ApiResponse<T> {
 /// Creates the router for the api routes
 pub async fn create_api_router() -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
-        .route("/processes", get(get_processes))
         .route("/memory", get(get_memory_data))
         .route("/allProcesses", get(get_all_processes))
         .route("/process/:pid", get(get_specific_process))
@@ -37,29 +36,6 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
             conn: SqlitePool::connect(DB_FILE).await?,
         });
     Ok(router)
-}
-
-/// Returns all processes in the database
-async fn get_processes(
-    State(state): State<AppState>,
-) -> Result<Json<Vec<Process>>, (StatusCode , String)> {
-    // let res: Result<Vec<Process>, sqlx::Error> =
-    //     sqlx::query_as::<_, Process>("SELECT * FROM PROCESS;")
-    //         .fetch_all(&state.conn)
-    //         .await;
-
-    // match res {
-    //     Ok(proc_vec) => Ok(Json(ApiResponse {
-    //         data: Some(proc_vec),
-    //         error_message: None,
-    //     })),
-    //     Err(_) => Ok(Json(ApiResponse {
-    //         data: None,
-    //         error_message: Some("Error fetching processes".to_string()),
-    //     })),
-    // }
-
-    Err(( StatusCode::INTERNAL_SERVER_ERROR , "error".to_string() ))
 }
 
 /// Returns all data in Memory Table
