@@ -56,10 +56,12 @@ const HomePage: React.FC = () => {
   return (
     <>
       <LeaderboardBar />
-      <Container className="text-center mt-3 bg-dark p-4">
-        <h1 className="text-2xl font-bold text-white">Process List</h1>
+      <Container fluid className="mt-3 bg-dark p-4">
+        <h1 className="text-2xl font-bold text-white text-center mb-4">Process List</h1>
+        <div className="flex justify-center">
+          <ProcessChart data={latestProcesses}/>
+        </div>
       </Container>
-      <ProcessChart data={latestProcesses}/>
     </>
   );
 };

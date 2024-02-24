@@ -29,7 +29,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
   ]);
 
   return (
-    <div className="ag-theme-alpine-dark" style={{ width: '100%' }}>
+    <div className="ag-theme-alpine-dark" style={{ height: '100%', width: '85%' }}>
       <AgGridReact rowData={data} columnDefs={colDefs} domLayout="autoHeight" />
     </div>
   );
