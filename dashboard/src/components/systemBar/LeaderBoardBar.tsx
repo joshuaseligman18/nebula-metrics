@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
 import DonutChart from "../graphs/DonutChart";
-import { useAllProcesses } from "../../hooks/useGetAllProcesses";
 import { useGetCpuData } from "../../hooks/useGetCpuData";
 import { useGetMemoryData } from "../../hooks/useGetMemoryData";
 import { useGetDiskData } from "../../hooks/useGetDiskData";
@@ -19,12 +18,8 @@ const LeaderboardBar: React.FC = () => {
     avalible: number;
     used: number;
   } | null>(null);
-  
 
-  const { data: processData, isLoading, isError } = useAllProcesses();
-  console.log(processData);
-
-  const { data: cpuData } = useGetCpuData();
+  const { data: cpuData, isLoading, isError } = useGetCpuData();
   console.log(cpuData);
 
   const { data: memoryData } = useGetMemoryData();
@@ -101,11 +96,6 @@ const LeaderboardBar: React.FC = () => {
   // Sample variables for peak percentage use and average
   const peakPercentage = 80;
   const averagePercentage = 50;
-
-  // Sample variables for Disk card
-  const diskTotal = 500; // in GB
-  const diskUsed = 250; // in GB
-  const diskAvailable = diskTotal - diskUsed;
 
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error fetching data</div>;
