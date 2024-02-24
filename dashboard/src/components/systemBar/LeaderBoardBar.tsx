@@ -15,6 +15,12 @@ const LeaderboardBar: React.FC = () => {
     swap_free: number;
   } | null>(null);
 
+  const [latestDisk, setLatestDisk] = useState<{
+    avalible: number;
+    used: number;
+  } | null>(null);
+  
+
   const { data: processData, isLoading, isError } = useAllProcesses();
   console.log(processData);
 
@@ -22,7 +28,6 @@ const LeaderboardBar: React.FC = () => {
   console.log(cpuData);
 
   const { data: memoryData } = useGetMemoryData();
-  console.log(memoryData);
 
   const { data: diskData } = useGetDiskData();
   console.log(diskData);
@@ -49,6 +54,49 @@ const LeaderboardBar: React.FC = () => {
       });
     }
   }, [memoryData]);
+
+  useEffect(() => {
+    if (diskData && diskData.length > 0) {
+      // Create a map to store the latest entries for each unique disk name
+      const latestEntriesMap = new Map();
+  
+      // Iterate through diskData to find the latest entry for each unique disk name
+      diskData.forEach((disk: { device_name: any; timestamp: number; }) => {
+        if (!latestEntriesMap.has(disk.device_name)) {
+          latestEntriesMap.set(disk.device_name, disk);
+        } else {
+          const currentLatestEntry = latestEntriesMap.get(disk.device_name);
+          if (currentLatestEntry.timestamp < disk.timestamp) {
+            latestEntriesMap.set(disk.device_name, disk);
+          }
+        }
+      });
+  
+      // Initialize variables to hold total values
+      let totalAvailable = 0;
+      let totalUsed = 0;
+  
+      // Calculate the sum of values for the latest entries with unique disk names
+      latestEntriesMap.forEach(entry => {
+        totalAvailable += entry.available;
+        totalUsed += entry.used;
+      });
+  
+      // Convert total values from MB to GB
+      const totalAvailableInGB = totalAvailable / 1024;
+      const totalUsedInGB = totalUsed / 1024;
+  
+      // Create an object representing the sum of values for the latest entries with unique disk names
+      const latestDiskTotal = {
+        avalible: totalAvailableInGB,
+        used: totalUsedInGB,
+        // You might want to include other properties here if needed
+      };
+  
+      // Set the state with the total values
+      setLatestDisk(latestDiskTotal);
+    }
+  }, [diskData]);
 
   // Sample variables for peak percentage use and average
   const peakPercentage = 80;
@@ -146,17 +194,17 @@ const LeaderboardBar: React.FC = () => {
                 <b>Usage</b>
               </h5>
               <div className="w-40 h-40">
-                <DonutChart total={100} inUse={25} width={150} height={150} />
+                <DonutChart total={latestDisk?.avalible ?? 0} inUse={latestDisk?.used?? 0} width={150} height={150} />
               </div>
               <div className="text-black text-center mt-2">
                 <p>
-                  <b>Total:</b> {diskTotal} GB
+                  <b>Total:</b> {(latestDisk?.avalible ?? 0).toFixed(2)} GB
                 </p>
                 <p>
-                  <b>Used:</b> {diskUsed} GB
+                  <b>Used:</b> {(latestDisk?.used?? 0).toFixed(2)} GB
                 </p>
                 <p>
-                  <b>Available:</b> {diskAvailable} GB
+                  <b>Available:</b> {((latestDisk?.avalible ?? 0) - (latestDisk?.used?? 0)).toFixed(2)} GB
                 </p>
               </div>
             </Card.Body>
