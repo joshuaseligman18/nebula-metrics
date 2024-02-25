@@ -4,10 +4,11 @@ import Container from 'react-bootstrap/Container';
 import ProcessChart from '../components/AgGrid/ProcessChart';
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { ProcessDataType } from '../types/processDataType';
+import Spinner from 'react-bootstrap/Spinner';
 
 const HomePage: React.FC = () => {
   const [latestProcesses, setLatestProcesses] = useState<Array<ProcessDataType>>([]);
-  const { data: processData} = useAllProcesses();
+  const { data: processData, isLoading:loadingTable, isError:errorTable} = useAllProcesses();
   console.log(processData);
 
   useEffect(() => {
@@ -49,9 +50,15 @@ const HomePage: React.FC = () => {
     }
   }, [processData]);
   
-  
 
-  console.log(latestProcesses);
+  if (loadingTable) {
+    // Render loading spinner while loading
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
+  }  if (errorTable) return <div>Error fetching data</div>;
 
   return (
     <>

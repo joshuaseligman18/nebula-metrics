@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
+import Spinner from 'react-bootstrap/Spinner';
 import DonutChart from "../graphs/DonutChart";
 import { useGetCpuData } from "../../hooks/useGetCpuData";
 import { useGetMemoryData } from "../../hooks/useGetMemoryData";
@@ -135,8 +136,14 @@ const LeaderboardBar: React.FC = () => {
     }
   }, [diskData]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error fetching data</div>;
+  if (isLoading) {
+    // Render loading spinner while loading
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
+  }  if (isError) return <div>Error fetching data</div>;
 
   return (
     <div className="container mx-auto mt-3">
