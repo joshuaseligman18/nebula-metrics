@@ -149,7 +149,7 @@ const LeaderboardBar: React.FC = () => {
                 <b>Usage</b>
               </h5>
               <div className="w-40 h-40">
-                <DonutChart total={100} inUse={25} width={150} height={150} />
+                <DonutChart total={100} inUse={totalSystemUsage ?? 0} width={150} height={150} />
               </div>
               <div className="text-black text-center mt-2">
                 <p>
