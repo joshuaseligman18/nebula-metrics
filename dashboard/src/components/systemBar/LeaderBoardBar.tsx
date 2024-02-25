@@ -162,6 +162,9 @@ const LeaderboardBar: React.FC = () => {
                 <p>
                   <b>Used:</b> {totalSystemUsage !== null ? totalSystemUsage.toFixed(2) : 'N/A'} %
                 </p>
+                <p>
+                  <b>Cores:</b> {latestCpuData?.length} 
+                </p>
               </div>
             </Card.Body>
           </Card>
