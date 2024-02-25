@@ -135,10 +135,6 @@ const LeaderboardBar: React.FC = () => {
     }
   }, [diskData]);
 
-  // Sample variables for peak percentage use and average
-  const peakPercentage = 80;
-  const averagePercentage = 50;
-
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error fetching data</div>;
 
