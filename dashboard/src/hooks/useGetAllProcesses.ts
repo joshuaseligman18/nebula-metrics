@@ -9,3 +9,4 @@ export const useAllProcesses = (): UseQueryResult<any, Error> => {
     return response.json();
   });
 };
+     

@@ -4,6 +4,7 @@ import DonutChart from "../graphs/DonutChart";
 import { useGetCpuData } from "../../hooks/useGetCpuData";
 import { useGetMemoryData } from "../../hooks/useGetMemoryData";
 import { useGetDiskData } from "../../hooks/useGetDiskData";
+import { CpuData } from "../../types/cpuDataType";
 
 const LeaderboardBar: React.FC = () => {
   const [latestMemory, setLatestMemory] = useState<{
@@ -19,18 +20,59 @@ const LeaderboardBar: React.FC = () => {
     used: number;
   } | null>(null);
 
+  const [latestCpuData, setLatestCpuData] = useState<CpuData[] | null>(null);
+  const [totalSystemUsage, setTotalSystemUsage] = useState<number | null>(null);
+
+
   const { data: cpuData, isLoading, isError } = useGetCpuData();
   console.log(cpuData);
 
   const { data: memoryData } = useGetMemoryData();
 
   const { data: diskData } = useGetDiskData();
-  console.log(diskData);
 
   useEffect(() => {
     // Apply dark mode toggle
     document.documentElement.classList.toggle("dark-mode");
   }, []);
+
+  useEffect(() => {
+    if (cpuData && Array.isArray(cpuData)) {
+      // Process the received data to extract unique cpu_core attributes
+      const uniqueCores: Record<string, CpuData> = {};
+      cpuData.forEach((core: CpuData) => {
+        const cpuCore = core.cpu_core;
+        if (!(cpuCore in uniqueCores)) {
+          uniqueCores[cpuCore] = core;
+        } else {
+          // Check if the current data is newer than the one stored
+          if (core.timestamp > uniqueCores[cpuCore].timestamp) {
+            uniqueCores[cpuCore] = core;
+          }
+        }
+      });
+  
+      // Get the latest two unique CPU cores
+      const latestTwoCores = Object.values(uniqueCores).slice(-2);
+  
+      // Calculate the total usage for the latest two CPU cores
+      let totalUsage = 0;
+      latestTwoCores.forEach((core: CpuData) => {
+        // Add the usage percentage of each core to the total usage
+        totalUsage += core.usage;
+      });
+  
+      // Convert the total usage to a percentage out of 100
+      const totalUsagePercentage = totalUsage * 100;
+  
+      // Update the total system usage
+      setTotalSystemUsage(totalUsagePercentage);
+  
+      // Set the latest CPU data for the latest two unique CPU cores
+      setLatestCpuData(latestTwoCores);
+    }
+  }, [cpuData]); // Run the effect whenever cpuData changes
+  
 
   useEffect(() => {
     if (memoryData && memoryData.length > 0) {
@@ -115,10 +157,7 @@ const LeaderboardBar: React.FC = () => {
               </div>
               <div className="text-black text-center mt-2">
                 <p>
-                  <b>Peak:</b> {peakPercentage}%
-                </p>
-                <p>
-                  <b>Average:</b> {averagePercentage}%
+                  <b>Used:</b> {totalSystemUsage !== null ? totalSystemUsage.toFixed(2) : 'N/A'} %
                 </p>
               </div>
             </Card.Body>
@@ -150,8 +189,8 @@ const LeaderboardBar: React.FC = () => {
                   <DonutChart
                     total={latestMemory?.swap_total ?? 0}
                     inUse={
-                      (latestMemory?.swap_total ?? 0) -
-                      (latestMemory?.swap_free ?? 0)
+                      ((latestMemory?.swap_total ?? 0) -
+                      (latestMemory?.swap_free ?? 0))
                     }
                     width={150}
                     height={150}
