@@ -35,40 +35,37 @@ const LeaderboardBar: React.FC = () => {
 
   useEffect(() => {
     if (cpuData && Array.isArray(cpuData)) {
-      // Process the received data to extract unique cpu_core attributes
-      const uniqueCores: Record<string, CpuData> = {};
-      cpuData.forEach((core: CpuData) => {
-        const cpuCore = core.cpu_core;
-        if (!(cpuCore in uniqueCores)) {
-          uniqueCores[cpuCore] = core;
-        } else {
-          // Check if the current data is newer than the one stored
-          if (core.timestamp > uniqueCores[cpuCore].timestamp) {
-            uniqueCores[cpuCore] = core;
-          }
+      // Find the latest timestamp
+      const latestTimestamp = Math.max(
+        ...cpuData.map((core) => core.timestamp)
+      );
+
+      // Filter out CPU data with the latest timestamp
+      const latestData = cpuData.filter(
+        (core) => core.timestamp === latestTimestamp
+      );
+
+      // Calculate total usage across all cores
+      const totalUsage = latestData.reduce(
+        (total, core) => total + core.usage,
+        0
+      );
+
+      // Calculate the total number of cores
+      const totalCores = latestData.reduce((total, core) => {
+        if (!total.includes(core.cpu_core)) {
+          total.push(core.cpu_core);
         }
-      });
-
-      // Get the latest two unique CPU cores
-      const latestTwoCores = Object.values(uniqueCores).slice(-2);
-
-      // Calculate the total usage for the latest two CPU cores
-      let totalUsage = 0;
-      latestTwoCores.forEach((core: CpuData) => {
-        // Add the usage percentage of each core to the total usage
-        totalUsage += core.usage;
-      });
-
-      // Convert the total usage to a percentage out of 100
-      const totalUsagePercentage = totalUsage * 100;
+        return total;
+      }, []).length;
 
       // Update the total system usage
-      setTotalSystemUsage(totalUsagePercentage);
+      setTotalSystemUsage((totalUsage * 100) / totalCores); // Convert to percentage
 
-      // Set the latest CPU data for the latest two unique CPU cores
-      setLatestCpuData(latestTwoCores);
+      // Set the latest CPU data for the latest timestamp
+      setLatestCpuData(latestData);
     }
-  }, [cpuData]); // Run the effect whenever cpuData changes
+  }, [cpuData]);
 
   useEffect(() => {
     if (memoryData && memoryData.length > 0) {
@@ -130,8 +127,6 @@ const LeaderboardBar: React.FC = () => {
       setLatestDisk(latestDiskTotal);
     }
   }, [diskData]);
-
-  console.log("MODE", mode);
 
   if (isLoading) {
     // Render loading spinner while loading
@@ -265,7 +260,7 @@ const LeaderboardBar: React.FC = () => {
               </h5>
               <div className="w-40 h-40">
                 <DonutChart
-                  total={latestDisk?.avalible ?? 0}
+                  total={(latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)}
                   inUse={latestDisk?.used ?? 0}
                   width={150}
                   height={150}
@@ -273,17 +268,16 @@ const LeaderboardBar: React.FC = () => {
               </div>
               <div className="text-black text-center mt-2">
                 <p>
-                  <b>Total:</b> {(latestDisk?.avalible ?? 0).toFixed(2)} GB
+                  <b>Total:</b>{" "}
+                  {((latestDisk?.avalible ?? 0) +
+                    (latestDisk?.used ?? 0)).toFixed(2)}{" "}
+                  GB
                 </p>
                 <p>
                   <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
                 </p>
                 <p>
-                  <b>Available:</b>{" "}
-                  {(
-                    (latestDisk?.avalible ?? 0) - (latestDisk?.used ?? 0)
-                  ).toFixed(2)}{" "}
-                  GB
+                  <b>Available:</b> {(latestDisk?.avalible ?? 0).toFixed(2)} GB
                 </p>
               </div>
             </Card.Body>
