@@ -1,9 +1,14 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 body.dark-mode {
-    /* Dark mode styles */
-    background-color: #111314; /* Set your dark mode background color */
-    color: #ffffff; /* Set your dark mode text color */
-  }
+  /* Dark mode styles */
+  background-color: #111314; /* Set your dark mode background color */
+  color: #ffffff; /* Set your dark mode text color */
+}
+
+.container.mx-auto.mt-3.bg-dark {
+  background-color: #343a40; /* Your desired dark background color */
+  /* Add any other necessary styles */
+}

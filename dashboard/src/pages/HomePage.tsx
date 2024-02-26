@@ -5,18 +5,14 @@ import ProcessChart from '../components/AgGrid/ProcessChart';
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { ProcessDataType } from '../types/processDataType';
 import Spinner from 'react-bootstrap/Spinner';
+import { useMode } from '../context/ModeContext';
+
 
 const HomePage: React.FC = () => {
+  const { mode } = useMode(); 
+
   const [latestProcesses, setLatestProcesses] = useState<Array<ProcessDataType>>([]);
   const { data: processData, isLoading:loadingTable, isError:errorTable} = useAllProcesses();
-  console.log(processData);
-
-  useEffect(() => {
-    // Will modularize and unit test for gonna add another committ
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark-mode', /* condition */);
-    }
-  }, []);
 
   useEffect(() => {
     if (processData && processData.length > 0) {
@@ -61,15 +57,15 @@ const HomePage: React.FC = () => {
   }  if (errorTable) return <div>Error fetching data</div>;
 
   return (
-    <>
+    <div className={`mt-3 ${mode === 'dark' ? 'bg-dark text-white' : 'bg-light text-black'} p-4`}>
       <LeaderboardBar />
-      <Container fluid className="mt-3 bg-dark p-4">
-        <h1 className="text-2xl font-bold text-white text-center mb-4">Process List</h1>
+      <Container fluid className={` ${mode === 'dark' ? 'bg-dark text-white' : 'bg-light text-black'} p-4`}>
+        <h1 className="text-2xl font-bold text-center mb-4">Process List</h1>
         <div className="flex justify-center">
           <ProcessChart data={latestProcesses}/>
         </div>
       </Container>
-    </>
+    </div>
   );
 };
 

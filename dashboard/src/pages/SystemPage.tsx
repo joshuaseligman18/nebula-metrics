@@ -4,19 +4,21 @@ import DonutChart from "../components/graphs/DonutChart";
 import DiskUsagePieChart from "../components/graphs/PieChart";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
-import { useGetCpuData } from '../hooks/useGetCpuData';
-import { useGetMemoryData } from '../hooks/useGetMemoryData';
-import { useGetDiskData } from '../hooks/useGetDiskData';
+import { useGetCpuData } from "../hooks/useGetCpuData";
+import { useGetMemoryData } from "../hooks/useGetMemoryData";
+import { useGetDiskData } from "../hooks/useGetDiskData";
+import { useMode } from "../context/ModeContext";
 
 const SystemPage: React.FC = () => {
+  const { mode } = useMode();
 
-  const { data:cpuData} = useGetCpuData();
+  const { data: cpuData } = useGetCpuData();
   console.log(cpuData);
 
-  const { data:memoryData} = useGetMemoryData();
+  const { data: memoryData } = useGetMemoryData();
   console.log(memoryData);
 
-  const { data:diskData} = useGetDiskData();
+  const { data: diskData } = useGetDiskData();
   console.log(diskData);
 
   // Sample data for Memory usage
@@ -43,11 +45,17 @@ const SystemPage: React.FC = () => {
       // Add more disks as needed
     ],
   };
+
   return (
-    <div className="container-fluid px-0 mt-4">
+    <div
+      className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
+    >
       <div className="row mx-0">
         <div className="col px-0 mb-4">
-          <Card className="bg-light-dark-mode" style={{ height: "450px" }}>
+          <Card
+            className={`bg-${mode === "dark" ? "secondary" : "light"}`}
+            style={{ height: "450px" }}
+          >
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
@@ -60,7 +68,7 @@ const SystemPage: React.FC = () => {
       <div className="row mx-0 mb-4">
         <div className="col px-0">
           <Card
-            className="bg-light-dark-mode h-100"
+            className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
           >
             <Card.Body>
@@ -74,7 +82,7 @@ const SystemPage: React.FC = () => {
       </div>
       <div className="row mx-0">
         <div className="col px-0">
-          <Card className="bg-light-dark-mode h-100">
+          <Card className={`bg-${mode === "dark" ? "secondary" : "light"}`}>
             <Card.Body className="flex flex-col items-center">
               <h5 className="text-xl font-semibold mb-4">
                 DISK Usage Over Time

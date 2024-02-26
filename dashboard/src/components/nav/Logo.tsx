@@ -1,7 +1,14 @@
-import React from 'react';
-import logoImage from '../../images/darkmode.png';
+import React from "react";
+import darkImage from '../../images/darkmode.png';
+import lightImage from '../../images/lightmode.png';
 
-const Logo: React.FC = () => {
+interface LogoProps {
+  mode: "light" | "dark";
+}
+
+const Logo: React.FC<LogoProps> = ({ mode }) => {
+  const logoImage = mode === "light" ? lightImage : darkImage;
+
   return <img src={logoImage} alt="Nebula Metrics" style={{ height: '60px' }} className='ml-4' />;
 };
 

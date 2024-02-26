@@ -11,6 +11,9 @@
     "test": "jest --coverage"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "@types/react-bootstrap": "^0.32.35",
     "@types/react-router-dom": "^5.3.3",
     "ag-grid-community": "^31.0.3",

@@ -4,6 +4,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css'; 
 import { ColDef } from 'ag-grid-community';
 import { ProcessDataType } from '../../types/processDataType';
+import { useMode } from '../../context/ModeContext'; // Import your mode context
 
 interface ProcessChartProps {
   data: ProcessDataType[];
@@ -28,8 +29,10 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
     { field: 'virtual_memory', headerName: 'Virtual Memory (GB)', valueFormatter: (params) => convertKBToGB(params.value) }
   ]);
 
+  const { mode } = useMode(); // Get the mode from your context
+
   return (
-    <div className="ag-theme-alpine-dark" style={{ height: '100%', width: '85%' }}>
+    <div className={`ag-theme-alpine${mode === 'dark' ? '-dark' : ''}`} style={{ height: '100%', width: '85%' }}>
       <AgGridReact rowData={data} columnDefs={colDefs} domLayout="autoHeight" />
     </div>
   );
