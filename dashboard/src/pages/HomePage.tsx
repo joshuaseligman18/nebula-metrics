@@ -13,6 +13,7 @@ const HomePage: React.FC = () => {
 
   const [latestProcesses, setLatestProcesses] = useState<Array<ProcessDataType>>([]);
   const { data: processData, isLoading:loadingTable, isError:errorTable} = useAllProcesses();
+  console.log(processData);
 
   useEffect(() => {
     if (processData && processData.length > 0) {

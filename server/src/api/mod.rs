@@ -94,14 +94,25 @@ async fn get_specific_process(
     State(state): State<AppState>,
     pid: Path<u32>,
 ) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
-    let res = sqlx::query_as::<_, ProcessInfo>("SELECT pid, exec AS name, init_total_cpu AS cpu_usage, (strftime('%s','now') - start_time) AS elapsed_time FROM PROCESS WHERE pid = ?;")
-        .bind(*pid)
-        .fetch_one(&state.conn)
-        .await;
-
-    match res {
-        Ok(process_info) => Ok(Json(process_info)),
-        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, "Error fetching specific process".to_string())),
+    match sqlx::query_as::<_, ProcessInfo>(
+        "SELECT p.PID AS pid, p.EXEC AS name, ps.TOTAL_CPU AS cpu_usage, (strftime('%s','now') - p.START_TIME) AS elapsed_time 
+        FROM PROCESS p 
+        WHERE p.PID = ?;"
+    )
+    .bind(*pid)
+    .fetch_optional(&state.conn)
+    .await
+    {
+        Ok(Some(process_info)) => Ok(Json(process_info)),
+        Ok(None) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
+        }
+        Err(err) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}", pid_str)))
+        },
     }
 }
 
