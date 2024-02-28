@@ -92,14 +92,14 @@ async fn get_all_processes(
 /// Returns data for a specific process
 async fn get_specific_process(
     State(state): State<AppState>,
-    pid: Path<u32>,
+    Path(pid): Path<u32>,
 ) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
     match sqlx::query_as::<_, ProcessInfo>(
         "SELECT p.PID AS pid, p.EXEC AS name, ps.TOTAL_CPU AS cpu_usage, (strftime('%s','now') - p.START_TIME) AS elapsed_time 
         FROM PROCESS p 
         WHERE p.PID = ?;"
     )
-    .bind(*pid)
+    .bind(pid)
     .fetch_optional(&state.conn)
     .await
     {
