@@ -60,7 +60,7 @@ jobs:
       with:
         tag_name: ${{ format('v{0}', steps.bumpVersion.outputs.new-version) }}
         generate_release_notes: true
-        files: target/x86_64-unkonwn-linux-gnu/debian/*.deb
+        files: target/x86_64-unknown-linux-gnu/debian/*.deb
         fail_on_unmatched_files: true
         token: ${{ secrets.NEBULA_CICD }}
         # To be removed once the workflow is confirmed to work
