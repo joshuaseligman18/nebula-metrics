@@ -92,7 +92,7 @@ async fn get_all_processes(
 async fn get_combined_process_info(
     state: State<AppState>,
     Path(pid): Path<u32>,
-) -> Result<Json<ProcessInfo>, (StatusCode, String)> {    
+) -> Result<Json<Vec<ProcessInfo>>, (StatusCode, String)> {
     // Execute the SQL query to fetch combined process info
     let query_result = sqlx::query_as::<_, ProcessInfo>(
         r#"
@@ -107,18 +107,19 @@ async fn get_combined_process_info(
         "#
     )
     .bind(pid)
-    .fetch_optional(&state.conn)
+    .fetch_all(&state.conn)
     .await;
 
     // Match the query result
     match query_result {
-        Ok(Some(combined_info)) => {
-            Ok(Json(combined_info)) // Return the combined process info
+        Ok(combined_infos) => {
+            if combined_infos.is_empty() {
+                let pid_str = pid.to_string(); // Convert Path<u32> to a string
+                Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
+            } else {
+                Ok(Json(combined_infos)) // Return the combined process info
+            }
         },
-        Ok(None) => {
-            let pid_str = pid.to_string(); // Convert Path<u32> to a string
-            Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
-        }
         Err(err) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
             eprintln!("Error fetching combined process info for PID {}: {:?}", pid_str, err); // Print error to stderr
