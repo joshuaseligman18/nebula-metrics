@@ -1,10 +1,11 @@
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::{Memory, Process, ProcStat};
-use sqlx::sqlite::{SqlitePool};
+use models::tables::{Memory, Process};
+use sqlx::SqlitePool;
 mod response;
 use response::{CpuInfo, DiskInfo, ProcessInfo};
 
+use serde::Serialize;
 
 /// Absolute path to the database file
 const DB_FILE: &str = "sqlite:///var/nebula/db/nebulaMetrics.db?mode=ro";
@@ -14,6 +15,13 @@ const DB_FILE: &str = "sqlite:///var/nebula/db/nebulaMetrics.db?mode=ro";
 struct AppState {
     /// Connection to the database
     conn: SqlitePool,
+}
+
+/// Response structure for API endpoints
+#[derive(Debug, Serialize)]
+struct ApiResponse<T> {
+    data: Option<T>,
+    error_message: Option<String>,
 }
 
 /// Creates the router for the api routes
@@ -81,30 +89,39 @@ async fn get_all_processes(
     }
 }
 
-/// Returns data for a specific process
-async fn get_specific_process(
-    State(state): State<AppState>,
+async fn get_combined_process_info(
+    state: State<AppState>,
     Path(pid): Path<u32>,
 ) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
-    let query_result = sqlx::query_as::<_, ProcessInfo>(
-        "SELECT p.PID AS pid, p.EXEC AS name, ps.TOTAL_CPU AS cpu_usage, (strftime('%s','now') - p.START_TIME) AS elapsed_time 
-        FROM PROCESS p 
-        WHERE p.PID = ?;"
+    println!("PID before SQL query: {}", pid); // Print PID before SQL query
+    match sqlx::query_as::<_, ProcessInfo>(
+        r#"
+        SELECT *
+        FROM
+            PROCESS p
+        JOIN
+            PROCSTAT ps ON p.PID = ps.PID
+        WHERE
+            p.PID = ?
+        ORDER BY timestamp DESC;
+        "#
     )
     .bind(pid)
     .fetch_optional(&state.conn)
-    .await;
-
-    match query_result {
-        Ok(Some(process_info)) => Ok(Json(process_info)),
+    .await
+    {
+        Ok(Some(combined_info)) => {
+            //let x = combined_info.columns().iter().map(|col| format!("{:?}", col)).collect();
+            Ok(Json(combined_info))
+        },
         Ok(None) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
             Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
         }
         Err(err) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
-            eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
-            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}", pid_str)))
+            eprintln!("Error fetching combined process info for PID {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching combined process info for PID {}: {:?}", pid_str, err)))
         },
     }
 }
