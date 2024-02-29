@@ -3,7 +3,7 @@ members = ["models", "monitor", "server"]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Josh Seligman", "Trent Green"]
 description = "A system metrics monitor for Linux operating systems."
 
