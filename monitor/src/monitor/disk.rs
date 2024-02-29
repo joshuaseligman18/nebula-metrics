@@ -1,4 +1,4 @@
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::process::{Command, Output};
 use tracing::{event, instrument, Level};
 
@@ -26,6 +26,7 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     let disks: Vec<DiskMetrics> = get_all_disk_data();
 
     event!(Level::DEBUG, "Starting to insert updated disk information");
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     let mut disk_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT OR REPLACE INTO DISK ");
 
     disk_insert.push_values(disks.iter(), |mut builder, disk| {
@@ -46,6 +47,7 @@ pub async fn init_disk_data(conn: &SqlitePool) -> Result<(), NebulaError> {
 
     clean_up_old_disk_data(conn, &disks).await?;
 
+    trans.commit().await?;
     event!(Level::INFO, "Successfully initialized disk info");
     Ok(())
 }
@@ -60,6 +62,7 @@ pub async fn update_disk_data(cur_time: u64, conn: &SqlitePool) -> Result<(), Ne
         .fetch_all(conn)
         .await?;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     for disk in cur_disks.iter() {
         let matching_db_disk: Vec<Disk> = db_disks
             .clone()
@@ -94,6 +97,7 @@ pub async fn update_disk_data(cur_time: u64, conn: &SqlitePool) -> Result<(), Ne
     // Any removed disks have to be removed from the db
     clean_up_old_disk_data(conn, &cur_disks).await?;
 
+    trans.commit().await?;
     event!(Level::INFO, "Finished updating disk information");
     Ok(())
 }

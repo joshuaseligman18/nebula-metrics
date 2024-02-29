@@ -1,6 +1,6 @@
 use procfs::process::{self, Stat, StatM};
 use procfs::WithCurrentSystemInfo;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use std::{cmp::Ordering, path::PathBuf};
 use tracing::{event, instrument, Level};
 
@@ -67,9 +67,10 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         .collect();
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
+
     let mut cur_index: usize = 0;
     let mut db_index: usize = 0;
-
     while cur_index < cur_processes.len() && db_index < db_processes.len() {
         let cur_proc: &Process = &cur_processes[cur_index];
         let db_proc: &Process = &db_processes[db_index];
@@ -185,6 +186,7 @@ pub async fn init_process_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         update_dead_processes.build().execute(conn).await?;
     }
 
+    trans.commit().await?;
     event!(Level::INFO, "Finished initializing process data");
     Ok(())
 }
@@ -197,6 +199,7 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
     let cur_processes: Vec<ProcfsProcess> = get_all_processes()?;
     let db_processes: Vec<Process> = get_processes_in_db(conn).await?;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     for proc in cur_processes.iter() {
         let proc_metadata: Process = proc.into();
 
@@ -289,6 +292,8 @@ pub async fn update_process_data(cur_time: u64, conn: &SqlitePool) -> Result<(),
     }
     update_dead_separated.push_unseparated(");");
     update_dead_processes.build().execute(conn).await?;
+
+    trans.commit().await?;
     event!(
         Level::DEBUG,
         "Finished updating the status of dead processes"
