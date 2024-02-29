@@ -1,9 +1,10 @@
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::{Memory, Process};
-use sqlx::SqlitePool;
+use models::tables::{Memory, Process, ProcStat};
+use sqlx::sqlite::{SqlitePool, SqliteColumn};
 mod response;
-use response::{CpuInfo, DiskInfo, ProcessInfo};
+use response::{CpuInfo, DiskInfo, ProcessInfo, CombinedProcessInfo};
+use sqlx::Row;
 
 use serde::Serialize;
 
@@ -29,7 +30,9 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
         .route("/memory", get(get_memory_data))
         .route("/allProcesses", get(get_all_processes))
-        .route("/process/:pid", get(get_specific_process))
+        .route("/process/:pid", get(get_combined_process_info))
+        .route("/processFromTable/:pid", get(get_process_from_processT))
+        .route("/processFromProcStat/:pid", get(get_process_from_procstat))
         .route("/disks", get(get_disk_info))
         .route("/cpu-info", get(get_cpu_info))
         .with_state(AppState {
@@ -89,14 +92,19 @@ async fn get_all_processes(
     }
 }
 
-/// Returns data for a specific process
 async fn get_specific_process(
-    State(state): State<AppState>,
+    state: State<AppState>,
     Path(pid): Path<u32>,
-) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
-    match sqlx::query_as::<_, ProcessInfo>(
-        "SELECT p.PID AS pid, p.EXEC AS name, ps.TOTAL_CPU AS cpu_usage, (strftime('%s','now') - p.START_TIME) AS elapsed_time 
-        FROM PROCESS p 
+) -> Result<Json<CombinedProcessInfo>, (StatusCode, String)> {
+    println!("PID before SQL query: {}", pid); // Print PID before SQL query
+    match sqlx::query_as::<_, CombinedProcessInfo>(
+        "SELECT p.PID AS pid, p.EXEC AS exec, p.START_TIME AS start_time, p.IS_ALIVE AS is_alive, 
+        p.INIT_TOTAL_CPU AS init_total_cpu, 
+        ps.TIMESTAMP AS procstat_timestamp, ps.TOTAL_CPU AS total_cpu, 
+        ps.PERCENT_CPU AS percent_cpu, ps.CPU_CORE AS cpu_core, ps.VIRTUAL_MEMORY AS virtual_memory, 
+        ps.RESIDENT_MEMORY AS resident_memory, ps.SHARED_MEMORY AS shared_memory
+        FROM PROCESS p
+        JOIN PROCSTAT ps ON p.PID = ps.PID
         WHERE p.PID = ?;"
     )
     .bind(pid)
@@ -111,7 +119,102 @@ async fn get_specific_process(
         Err(err) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
             eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
-            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}", pid_str)))
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}: {:?}", pid_str, err)))
+        },
+    }
+}
+
+async fn get_process_from_processT(
+    state: State<AppState>,
+    Path(pid): Path<u32>,
+) -> Result<Json<Process>, (StatusCode, String)> {
+    println!("PID before SQL query: {}", pid); // Print PID before SQL query
+    match sqlx::query_as::<_, Process>(
+        "SELECT * FROM PROCESS WHERE PID = ?;"
+    )
+    .bind(pid)
+    .fetch_optional(&state.conn)
+    .await
+    {
+        Ok(Some(process_info)) => Ok(Json(process_info)),
+        Ok(None) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
+        }
+        Err(err) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}: {:?}", pid_str, err)))
+        },
+    }
+}
+
+async fn get_process_from_procstat(
+    state: State<AppState>,
+    Path(pid): Path<u32>,
+) -> Result<Json<ProcStat>, (StatusCode, String)> {
+    println!("PID before SQL query: {}", pid); // Print PID before SQL query
+    match sqlx::query_as::<_, ProcStat>(
+        "SELECT * FROM PROCSTAT WHERE PID = ?;"
+    )
+    .bind(pid)
+    .fetch_optional(&state.conn)
+    .await
+    {
+        Ok(Some(procstat_info)) => Ok(Json(procstat_info)),
+        Ok(None) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            Err((StatusCode::NOT_FOUND, format!("Process {} not found in PROCSTAT", pid_str)))
+        }
+        Err(err) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}: {:?}", pid_str, err)))
+        },
+    }
+}
+
+async fn get_combined_process_info(
+    state: State<AppState>,
+    Path(pid): Path<u32>,
+) -> Result<Json<Vec<SqliteColumn>>, (StatusCode, String)> {
+    println!("PID before SQL query: {}", pid); // Print PID before SQL query
+    match sqlx::query(
+        r#"
+        SELECT
+            p.PID AS pid,
+            p.EXEC AS exec,
+            p.START_TIME AS start_time,
+            p.IS_ALIVE AS is_alive,
+            p.INIT_TOTAL_CPU AS init_total_cpu,
+            ps.TIMESTAMP AS procstat_timestamp,
+            ps.TOTAL_CPU AS total_cpu,
+            ps.PERCENT_CPU AS percent_cpu,
+            ps.CPU_CORE AS cpu_core,
+            ps.VIRTUAL_MEMORY AS virtual_memory,
+            ps.RESIDENT_MEMORY AS resident_memory,
+            ps.SHARED_MEMORY AS shared_memory
+        FROM
+            PROCESS p
+        JOIN
+            PROCSTAT ps ON p.PID = ps.PID
+        WHERE
+            p.PID = ?
+        "#
+    )
+    .bind(pid)
+    .fetch_optional(&state.conn)
+    .await
+    {
+        Ok(Some(combined_info)) => Ok(Json(combined_info.columns().to_vec())),
+        Ok(None) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
+        }
+        Err(err) => {
+            let pid_str = pid.to_string(); // Convert Path<u32> to a string
+            eprintln!("Error fetching combined process info for PID {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching combined process info for PID {}: {:?}", pid_str, err)))
         },
     }
 }
