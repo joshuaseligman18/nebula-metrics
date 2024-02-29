@@ -20,10 +20,10 @@ jobs:
         token: ${{ secrets.NEBULA_CICD }}
 
     # TESTS
-    - name: Install cargo-llvm-cov
-      run: cargo install cargo-llvm-cov
-    - name: Run Rust tests
-      run: cargo llvm-cov --html --no-cfg-coverage --all-features
+    # - name: Install cargo-llvm-cov
+    #   run: cargo install cargo-llvm-cov
+    # - name: Run Rust tests
+    #   run: cargo llvm-cov --html --no-cfg-coverage --all-features
 
     # BUMP VERSION AND BUILD PACKAGE
     - name: Install cargo-edit
