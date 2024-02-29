@@ -27,14 +27,20 @@ jobs:
 
     # BUMP VERSION AND BUILD PACKAGE
     - name: Install cargo-edit
-      run: cargo install cargo-edit
+      run: |
+        # Install dependencies for cargo-edit
+        sudo apt update
+        sudo apt install libssl-dev
+        sudo apt install pkg-config
+        cargo install cargo-edit
     - name: Bump version
       id: bumpVersion
       run: |
         # Cargo sends output to stderr, so have to use anonymous pipe
         # (i.e., >2 >) instead of a regular pipe (i.e., |) when getting
         # the new version of the application
-        NEW_VERSION=$(cargo set-version --bump ${{ inputs.bump-type }} 2> >(grep -m1 -o ".\..\.." | tail -n1))
+        NEW_VERSION=$(cargo set-version --bump ${{ inputs.bump-type }} \
+                      2> >(grep -m1 -o ".\..\.." | tail -n1))
         echo "Bumped version to $NEW_VERSION"
         echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
     - name: Install cargo-deb
