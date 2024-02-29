@@ -47,6 +47,9 @@ jobs:
     # Commit the new version after we know the package was built successfully
     - name: Commit and push new version
       run: |
+        git config --global user.email "joshuaseligman18@gmail.com"
+        git config --global user.name "Josh Seligman"
+
         git add Cargo.toml Cargo.lock
         git commit -m "v${{ steps.bumpVersion.outputs.new-version }}"
         git push
