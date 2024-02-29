@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ProcessBar from "../components/processes/ProcessBar";
-import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { ProcessDataType } from "../types/processDataType";
 import { Card, Spinner } from "react-bootstrap";
 import DiskUsagePieChart from "../components/graphs/PieChart";
@@ -14,30 +13,32 @@ const ProcessPage: React.FC = () => {
   const { mode } = useMode();
   const { data,  isLoading:loadingTable, isError:errorTable } = useGetProcessData(319);
   console.log(data);
-   // Sample data for Memory usage
-   const sampleCpuData = [
-    { x: new Date("2024-02-14T00:00:00"), y: 10 },
-    { x: new Date("2024-02-14T01:00:00"), y: 20 },
-    { x: new Date("2024-02-14T02:00:00"), y: 30 },
-  ];
 
-  const sampleMemoryData = [
-    { time: new Date("2024-02-14T00:00:00"), ram: 50, swapped: 20 },
-    { time: new Date("2024-02-14T01:00:00"), ram: 60, swapped: 25 },
-    { time: new Date("2024-02-14T02:00:00"), ram: 70, swapped: 30 },
-    // Add more data points as needed
-  ];
+  // Preprocess CPU data
+  const [cpuData, setCpuData] = useState([]);
 
-  //Sample data for Disk usage
-  const diskUsageData = {
-    totalDiskSpace: 1000,
-    diskUsage: [
-      { name: "Hard Drive", space: 400 },
-      { name: "SSD", space: 300 },
-      { name: "M.2", space: 200 },
-      // Add more disks as needed
-    ],
-  };
+  useEffect(() => {
+    if (data) {
+      const processedData = data.map((cpu: { timestamp: number; percent_cpu: number; }) => ({
+        x: new Date(cpu.timestamp * 1000),
+        y: cpu.percent_cpu * 100 // Assuming CPU percentage is in decimal form
+      }));
+      setCpuData(processedData);
+    }
+  }, [data]);
+
+  const [memoryData, setMemoryData] = useState([]);
+
+  useEffect(() => {
+    if (data) {
+      const processedMemoryData = data.map((memory: { timestamp: number; virtual_memory: number; resident_memory: number; }) => ({
+        time: new Date(memory.timestamp * 1000),
+        ram: (memory.virtual_memory - memory.resident_memory) / memory.virtual_memory * 100,
+        swapped: 0 // Assuming no swap usage data is available
+      }));
+      setMemoryData(processedMemoryData);
+    }
+  }, [data]);
 
   const sampleProcess: ProcessDataType = {
     pid: 1234,
@@ -79,7 +80,7 @@ const ProcessPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
               </Card.Title>
-              <CpuLineGraph data={sampleCpuData} />
+              <CpuLineGraph data={cpuData} />
             </Card.Body>
           </Card>
         </div>
@@ -94,39 +95,7 @@ const ProcessPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
               </Card.Title>
-              <MemoryLineGraph data={sampleMemoryData} />
-            </Card.Body>
-          </Card>
-        </div>
-      </div>
-      <div className="row mx-0">
-        <div className="col px-0">
-          <Card className={`bg-${mode === "dark" ? "secondary" : "light"}`}>
-            <Card.Body className="flex flex-col items-center">
-              <h5 className="text-xl font-semibold mb-4">
-                DISK Usage Over Time
-              </h5>
-              <div className="flex">
-                <div className="mr-4">
-                  <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
-                  <div className="flex justify-center">
-                    <DonutChart
-                      total={100}
-                      inUse={25}
-                      width={150}
-                      height={150}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h6 className="text-lg font-semibold mb-2">
-                    Total Disk Storage
-                  </h6>
-                  <div className="flex justify-center">
-                    <DiskUsagePieChart data={diskUsageData} />
-                  </div>
-                </div>
-              </div>
+              <MemoryLineGraph data={memoryData} />
             </Card.Body>
           </Card>
         </div>
