@@ -11,6 +11,7 @@ import { useMode } from "../context/ModeContext";
 import { CpuData } from "../types/cpuDataType";
 
 const SystemPage: React.FC = () => {
+  
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
   const { data: rawCpuData } = useGetCpuData();

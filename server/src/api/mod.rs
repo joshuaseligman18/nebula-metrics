@@ -107,7 +107,7 @@ async fn get_combined_process_info(
         "#
     )
     .bind(pid)
-    .fetch_optional(&state.conn)
+    .fetch_all(&state.conn)
     .await;
 
     // Match the query result

@@ -8,12 +8,12 @@ import DonutChart from "../components/graphs/DonutChart";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import { useMode } from "../context/ModeContext";
+import { useGetProcessData } from "../hooks/useGetProcess";
 
 const ProcessPage: React.FC = () => {
   const { mode } = useMode();
-
-  const { data: processData, isLoading:loadingTable, isError:errorTable} = useAllProcesses();
-  console.log(processData);
+  const { data,  isLoading:loadingTable, isError:errorTable } = useGetProcessData(319);
+  console.log(data);
    // Sample data for Memory usage
    const sampleCpuData = [
     { x: new Date("2024-02-14T00:00:00"), y: 10 },
