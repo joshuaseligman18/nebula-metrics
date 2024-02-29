@@ -177,7 +177,7 @@ async fn get_process_from_procstat(
 async fn get_combined_process_info(
     state: State<AppState>,
     Path(pid): Path<u32>,
-) -> Result<Json<Vec<SqliteColumn>>, (StatusCode, String)> {
+) -> Result<Json<Vec<String>>, (StatusCode, String)> {
     println!("PID before SQL query: {}", pid); // Print PID before SQL query
     match sqlx::query(
         r#"
@@ -206,7 +206,10 @@ async fn get_combined_process_info(
     .fetch_optional(&state.conn)
     .await
     {
-        Ok(Some(combined_info)) => Ok(Json(combined_info.columns().to_vec())),
+        Ok(Some(combined_info)) => {
+            let x = combined_info.columns().iter().map(|col| format!("{:?}", col)).collect();
+            Ok(Json(x))
+        },
         Ok(None) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
             Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
