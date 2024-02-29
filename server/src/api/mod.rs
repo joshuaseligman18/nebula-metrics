@@ -81,39 +81,30 @@ async fn get_all_processes(
     }
 }
 
-async fn get_combined_process_info(
-    state: State<AppState>,
+/// Returns data for a specific process
+async fn get_specific_process(
+    State(state): State<AppState>,
     Path(pid): Path<u32>,
 ) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
-    println!("PID before SQL query: {}", pid); // Print PID before SQL query
-    match sqlx::query_as::<_, ProcessInfo>(
-        r#"
-        SELECT *
-        FROM
-            PROCESS p
-        JOIN
-            PROCSTAT ps ON p.PID = ps.PID
-        WHERE
-            p.PID = ?
-        ORDER BY timestamp DESC;
-        "#
+    let query_result = sqlx::query_as::<_, ProcessInfo>(
+        "SELECT p.PID AS pid, p.EXEC AS name, ps.TOTAL_CPU AS cpu_usage, (strftime('%s','now') - p.START_TIME) AS elapsed_time 
+        FROM PROCESS p 
+        WHERE p.PID = ?;"
     )
     .bind(pid)
     .fetch_optional(&state.conn)
-    .await
-    {
-        Ok(Some(combined_info)) => {
-            //let x = combined_info.columns().iter().map(|col| format!("{:?}", col)).collect();
-            Ok(Json(combined_info))
-        },
+    .await;
+
+    match query_result {
+        Ok(Some(process_info)) => Ok(Json(process_info)),
         Ok(None) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
             Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
         }
         Err(err) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
-            eprintln!("Error fetching combined process info for PID {}: {:?}", pid_str, err); // Print error to stderr
-            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching combined process info for PID {}: {:?}", pid_str, err)))
+            eprintln!("Error fetching specific process {}: {:?}", pid_str, err); // Print error to stderr
+            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching specific process {}", pid_str)))
         },
     }
 }
