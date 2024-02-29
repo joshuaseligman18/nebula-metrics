@@ -20,10 +20,10 @@ jobs:
         token: ${{ secrets.NEBULA_CICD }}
 
     # TESTS
-    # - name: Install cargo-llvm-cov
-    #   run: cargo install cargo-llvm-cov
-    # - name: Run Rust tests
-    #   run: cargo llvm-cov --html --no-cfg-coverage --all-features
+    - name: Install cargo-llvm-cov
+      run: cargo install cargo-llvm-cov
+    - name: Run Rust tests
+      run: cargo llvm-cov --html --no-cfg-coverage --all-features
 
     # BUMP VERSION AND BUILD PACKAGE
     - name: Install cargo-edit
@@ -63,5 +63,3 @@ jobs:
         files: target/x86_64-unknown-linux-gnu/debian/*.deb
         fail_on_unmatched_files: true
         token: ${{ secrets.NEBULA_CICD }}
-        # To be removed once the workflow is confirmed to work
-        draft: true
