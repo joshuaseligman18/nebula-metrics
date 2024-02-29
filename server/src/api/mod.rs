@@ -92,9 +92,9 @@ async fn get_all_processes(
 async fn get_combined_process_info(
     state: State<AppState>,
     Path(pid): Path<u32>,
-) -> Result<Json<ProcessInfo>, (StatusCode, String)> {
-    println!("PID before SQL query: {}", pid); // Print PID before SQL query
-    match sqlx::query_as::<_, ProcessInfo>(
+) -> Result<Json<ProcessInfo>, (StatusCode, String)> {    
+    // Execute the SQL query to fetch combined process info
+    let query_result = sqlx::query_as::<_, ProcessInfo>(
         r#"
         SELECT *
         FROM
@@ -108,11 +108,12 @@ async fn get_combined_process_info(
     )
     .bind(pid)
     .fetch_optional(&state.conn)
-    .await
-    {
+    .await;
+
+    // Match the query result
+    match query_result {
         Ok(Some(combined_info)) => {
-            //let x = combined_info.columns().iter().map(|col| format!("{:?}", col)).collect();
-            Ok(Json(combined_info))
+            Ok(Json(combined_info)) // Return the combined process info
         },
         Ok(None) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
@@ -125,6 +126,7 @@ async fn get_combined_process_info(
         },
     }
 }
+
 
 /// Returns all disk information
 async fn get_disk_info(
