@@ -10,20 +10,21 @@ import { useMode } from "../context/ModeContext";
 import { CpuData } from "../types/cpuDataType";
 import DiskUsageAgGrid from "../components/AgGrid/DiskChart";
 import { DiskUsageData } from "../types/diskUsageData";
+import { Spinner } from "react-bootstrap";
 
 const SystemPage: React.FC = () => {
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
-  const { data: rawCpuData } = useGetCpuData();
+  const { data: rawCpuData, isLoading: cpuLoading, isError: cpuError } = useGetCpuData();
   const [memoryUsageData, setMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
   >([]);
-  const { data: memoryData } = useGetMemoryData();
+  const { data: memoryData, isLoading: memoryLoading, isError: memoryError } = useGetMemoryData();
   const [latestDisk, setLatestDisk] = useState<{
     avalible: number;
     used: number;
   } | null>(null);
-  const { data: diskData } = useGetDiskData();
+  const { data: diskData, isLoading: diskLoading, isError: diskError } = useGetDiskData();
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
   console.log(diskData);
@@ -169,7 +170,17 @@ const SystemPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
               </Card.Title>
-              <CpuLineGraph data={cpuData} />
+              {cpuLoading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : cpuError ? (
+                <div>Error fetching CPU data</div>
+              ) : (
+                <CpuLineGraph data={cpuData} />
+              )}
             </Card.Body>
           </Card>
         </div>
@@ -184,7 +195,17 @@ const SystemPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
               </Card.Title>
-              <MemoryLineGraph data={memoryUsageData} />
+              {memoryLoading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : memoryError ? (
+                <div>Error fetching memory data</div>
+              ) : (
+                <MemoryLineGraph data={memoryUsageData} />
+              )}
             </Card.Body>
           </Card>
         </div>
@@ -196,56 +217,53 @@ const SystemPage: React.FC = () => {
               <h5 className="text-xl font-semibold mb-4">
                 DISK Usage Over Time
               </h5>
-              <div className="row">
-                {/* Left side */}
-                <div className="col-md-6">
-                  <div className="mr-4">
-                    <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
-                    <div className="flex justify-center" style={{ width: "250px", height: "250px" }}>
-                      <DonutChart
-                        total={
-                          (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
-                        }
-                        inUse={latestDisk?.used ?? 0}
-                        width={50}
-                        height={50}
-                      />
+              {diskLoading ? (
+                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : diskError ? (
+                <div>Error fetching disk data</div>
+              ) : (
+                <div className="row">
+                  {/* Left side */}
+                  <div className="col-md-6">
+                    {/* Disk Usage */}
+                    <div className="mr-4">
+                      {/* Donut Chart */}
+                      <div className="flex justify-center" style={{ width: "250px", height: "250px" }}>
+                        <DonutChart
+                          total={(latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)}
+                          inUse={latestDisk?.used ?? 0}
+                          width={50}
+                          height={50}
+                        />
+                      </div>
+                      {/* Disk Usage details */}
+                      <div className="text-black text-left mt-2">
+                        <p><b>Total:</b> {(latestDisk?.avalible ?? 0 + (latestDisk?.used ?? 0)).toFixed(2)} GB</p>
+                        <p><b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB</p>
+                        <p><b>Available:</b> {(latestDisk?.avalible ?? 0).toFixed(2)} GB</p>
+                      </div>
                     </div>
-                    <div className="text-black text-left mt-2">
-                      <p>
-                        <b>Total:</b>{" "}
-                        {(
-                          (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
-                        ).toFixed(2)}{" "}
-                        GB
-                      </p>
-                      <p>
-                        <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
-                      </p>
-                      <p>
-                        <b>Available:</b>{" "}
-                        {(latestDisk?.avalible ?? 0).toFixed(2)} GB
-                      </p>
+                  </div>
+                  {/* Right side */}
+                  <div className="col-md-6">
+                    {/* Total Disk Storage */}
+                    <div>
+                      {/* Disk Usage AgGrid */}
+                      <div className="flex justify-center" style={{ width: "100%", height: "400px" }}>
+                        {formattedDiskData ? (
+                          <DiskUsageAgGrid data={formattedDiskData} />
+                        ) : (
+                          <div>No data available</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-                {/* Right side */}
-                <div className="col-md-6">
-                  <div>
-                    <h6 className="text-lg font-semibold mb-2">
-                      Total Disk Storage
-                    </h6>
-                    <div
-                      className="flex justify-center"
-                      style={{ width: "100%", height: "400px" }}
-                    >
-                      {formattedDiskData && (
-                        <DiskUsageAgGrid data={formattedDiskData} />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              )}
             </Card.Body>
           </Card>
         </div>
