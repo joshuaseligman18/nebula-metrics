@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import ProcessBar from "../components/processes/ProcessBar";
 import { ProcessDataType } from "../types/processDataType";
 import { Card, Spinner } from "react-bootstrap";
-import DiskUsagePieChart from "../components/graphs/PieChart";
-import DonutChart from "../components/graphs/DonutChart";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import { useMode } from "../context/ModeContext";

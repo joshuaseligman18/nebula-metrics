@@ -46,25 +46,25 @@ const HomePage: React.FC = () => {
       setLatestProcesses(latestProcesses);
     }
   }, [processData]);
-  
-
-  if (loadingTable) {
-    // Render loading spinner while loading
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
-  }  if (errorTable) return <div>Error fetching data</div>;
 
   return (
     <div className={`mt-3 ${mode === 'dark' ? 'bg-dark text-white' : 'bg-light text-black'} p-4`}>
       <LeaderboardBar />
       <Container fluid className={` ${mode === 'dark' ? 'bg-dark text-white' : 'bg-light text-black'} p-4`}>
         <h1 className="text-2xl font-bold text-center mb-4">Process List</h1>
-        <div className="flex justify-center">
-          <ProcessChart data={latestProcesses}/>
-        </div>
+        {loadingTable ? (
+          <div className="flex justify-center">
+            <Spinner animation="border" variant="primary" />
+          </div>
+        ) : errorTable ? (
+          <div className="flex justify-center">
+            Error fetching process data
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <ProcessChart data={latestProcesses}/>
+          </div>
+        )}
       </Container>
     </div>
   );
