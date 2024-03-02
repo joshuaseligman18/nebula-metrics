@@ -9,7 +9,7 @@ import { useGetProcessData } from "../hooks/useGetProcess";
 
 const ProcessPage: React.FC = () => {
   const { mode } = useMode();
-  const { data,  isLoading:loadingTable, isError:errorTable } = useGetProcessData(319);
+  const { data,  isLoading:loadingTable, isError:errorTable } = useGetProcessData(320);
   console.log(data);
 
   // Preprocess CPU data

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
 import DonutChart from "../components/graphs/DonutChart";
-import DiskUsagePieChart from "../components/graphs/PieChart";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
 import { useGetCpuData } from "../hooks/useGetCpuData";
@@ -9,9 +8,10 @@ import { useGetMemoryData } from "../hooks/useGetMemoryData";
 import { useGetDiskData } from "../hooks/useGetDiskData";
 import { useMode } from "../context/ModeContext";
 import { CpuData } from "../types/cpuDataType";
+import DiskUsageAgGrid from "../components/AgGrid/DiskChart";
+import { DiskUsageData } from "../types/diskUsageData";
 
 const SystemPage: React.FC = () => {
-  
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
   const { data: rawCpuData } = useGetCpuData();
@@ -24,10 +24,8 @@ const SystemPage: React.FC = () => {
     used: number;
   } | null>(null);
   const { data: diskData } = useGetDiskData();
-  const [formattedDiskData, setFormattedDiskData] = useState<{
-    totalDiskSpace: number;
-    diskUsage: { name: string; space: number }[];
-  } | null>(null);
+  const [formattedDiskData, setFormattedDiskData] =
+    useState<DiskUsageData | null>(null);
   console.log(diskData);
 
   useEffect(() => {
@@ -72,6 +70,8 @@ const SystemPage: React.FC = () => {
       setMemoryUsageData(processedData);
     }
   }, [memoryData]);
+
+  console.log(diskData);
 
   useEffect(() => {
     if (diskData && diskData.length > 0) {
@@ -125,7 +125,14 @@ const SystemPage: React.FC = () => {
           !(disk.device_name in groupedData) ||
           disk.timestamp > groupedData[disk.device_name].timestamp
         ) {
-          groupedData[disk.device_name] = disk;
+          // Include additional fields in the grouped data
+          groupedData[disk.device_name] = {
+            device_name: disk.device_name,
+            available: disk.available,
+            used: disk.used,
+            fs_type: disk.fs_type,
+            mount: disk.mount,
+          };
         }
       });
 
@@ -137,6 +144,11 @@ const SystemPage: React.FC = () => {
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
         space: (disk.available + disk.used) / 1024,
+        // Include additional fields in the formatted data
+        available: disk.available / 1024,
+        fs_type: disk.fs_type,
+        mount: disk.mount,
+        timestamp: disk.timestamp,
       }));
 
       setFormattedDiskData({ totalDiskSpace, diskUsage });
@@ -184,54 +196,53 @@ const SystemPage: React.FC = () => {
               <h5 className="text-xl font-semibold mb-4">
                 DISK Usage Over Time
               </h5>
-              <div className="flex">
-                <div className="mr-4">
-                  <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
-                  <div className="flex justify-center">
-                    <DonutChart
-                      total={
-                        (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
-                      }
-                      inUse={latestDisk?.used ?? 0}
-                      width={150}
-                      height={150}
-                    />
-                  </div>
-                  <div className="text-black text-center mt-2">
-                    <p>
-                      <b>Total:</b>{" "}
-                      {(
-                        (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
-                      ).toFixed(2)}{" "}
-                      GB
-                    </p>
-                    <p>
-                      <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
-                    </p>
-                    <p>
-                      <b>Available:</b> {(latestDisk?.avalible ?? 0).toFixed(2)}{" "}
-                      GB
-                    </p>
+              <div className="row">
+                {/* Left side */}
+                <div className="col-md-6">
+                  <div className="mr-4">
+                    <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
+                    <div className="flex justify-center" style={{ width: "250px", height: "250px" }}>
+                      <DonutChart
+                        total={
+                          (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
+                        }
+                        inUse={latestDisk?.used ?? 0}
+                        width={50}
+                        height={50}
+                      />
+                    </div>
+                    <div className="text-black text-left mt-2">
+                      <p>
+                        <b>Total:</b>{" "}
+                        {(
+                          (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
+                        ).toFixed(2)}{" "}
+                        GB
+                      </p>
+                      <p>
+                        <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
+                      </p>
+                      <p>
+                        <b>Available:</b>{" "}
+                        {(latestDisk?.avalible ?? 0).toFixed(2)} GB
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <h6 className="text-lg font-semibold mb-2">
-                    Total Disk Storage
-                  </h6>
-                  <div className="flex justify-center">
-                    {formattedDiskData && (
-                      <DiskUsagePieChart data={formattedDiskData} />
-                    )}
-                  </div>
-                  <div className="text-black text-center mt-2">
-                    <p>
-                      {formattedDiskData &&
-                        formattedDiskData.diskUsage.map((disk, index) => (
-                          <p key={index}>
-                            <b>{disk.name}:</b> {disk.space.toFixed(2)} GB
-                          </p>
-                        ))}
-                    </p>
+                {/* Right side */}
+                <div className="col-md-6">
+                  <div>
+                    <h6 className="text-lg font-semibold mb-2">
+                      Total Disk Storage
+                    </h6>
+                    <div
+                      className="flex justify-center"
+                      style={{ width: "100%", height: "400px" }}
+                    >
+                      {formattedDiskData && (
+                        <DiskUsageAgGrid data={formattedDiskData} />
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
