@@ -27,15 +27,17 @@ jobs:
 
     # BUMP VERSION AND BUILD PACKAGE
     - name: Install cargo-edit
-      run: cargo install cargo-edit
+      run: |
+        # Install dependencies for cargo-edit
+        sudo apt update
+        sudo apt install libssl-dev
+        sudo apt install pkg-config
+        cargo install cargo-edit
     - name: Bump version
       id: bumpVersion
       run: |
-        # Cargo sends output to stderr, so have to use anonymous pipe
-        # (i.e., >2 >) instead of a regular pipe (i.e., |) when getting
-        # the new version of the application
-        NEW_VERSION=$(cargo set-version --bump ${{ inputs.bump-type }} \
-                      2> >(grep -m1 -o ".\..\.." | tail -n1))
+        cargo set-version --bump ${{ inputs.bump-type }}
+        NEW_VERSION=$(cargo pkgid -p monitor | grep -o "\#.*" | cut -c 2-)
         echo "Bumped version to $NEW_VERSION"
         echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
     - name: Install cargo-deb
@@ -45,6 +47,9 @@ jobs:
     # Commit the new version after we know the package was built successfully
     - name: Commit and push new version
       run: |
+        git config --global user.email "joshuaseligman18@gmail.com"
+        git config --global user.name "Josh Seligman"
+
         git add Cargo.toml Cargo.lock
         git commit -m "v${{ steps.bumpVersion.outputs.new-version }}"
         git push
@@ -55,8 +60,6 @@ jobs:
       with:
         tag_name: ${{ format('v{0}', steps.bumpVersion.outputs.new-version) }}
         generate_release_notes: true
-        files: target/x86_64-unkonwn-linux-gnu/debian/*.deb
+        files: target/x86_64-unknown-linux-gnu/debian/*.deb
         fail_on_unmatched_files: true
         token: ${{ secrets.NEBULA_CICD }}
-        # To be removed once the workflow is confirmed to work
-        draft: true
