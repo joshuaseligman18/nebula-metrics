@@ -11,20 +11,33 @@ import { CpuData } from "../types/cpuDataType";
 import DiskUsageAgGrid from "../components/AgGrid/DiskChart";
 import { DiskUsageData } from "../types/diskUsageData";
 import { Spinner } from "react-bootstrap";
+import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
-  const { data: rawCpuData, isLoading: cpuLoading, isError: cpuError } = useGetCpuData();
+  const {
+    data: rawCpuData,
+    isLoading: cpuLoading,
+    isError: cpuError,
+  } = useGetCpuData();
   const [memoryUsageData, setMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
   >([]);
-  const { data: memoryData, isLoading: memoryLoading, isError: memoryError } = useGetMemoryData();
+  const {
+    data: memoryData,
+    isLoading: memoryLoading,
+    isError: memoryError,
+  } = useGetMemoryData();
   const [latestDisk, setLatestDisk] = useState<{
     avalible: number;
     used: number;
   } | null>(null);
-  const { data: diskData, isLoading: diskLoading, isError: diskError } = useGetDiskData();
+  const {
+    data: diskData,
+    isLoading: diskLoading,
+    isError: diskError,
+  } = useGetDiskData();
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
   console.log(diskData);
@@ -157,11 +170,20 @@ const SystemPage: React.FC = () => {
   }, [diskData]);
 
   return (
-    <div
-      className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
-    >
-      <div className="row mx-0">
-        <div className="col px-0 mb-4">
+    <div className="container-fluid px-0 mt-4 d-flex">
+      <div style={{ flex: "1 0 10%" }}>
+        <div className="d-flex flex-column h-100">
+          <div className="flex-grow-1">
+            <SortingBar />
+          </div>
+        </div>
+      </div>
+      <div
+        style={{ flex: "1 0 90%" }}
+        className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
+      >
+        {/* CPU Section */}
+        <div className="col mb-4">
           <Card
             className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
@@ -171,7 +193,10 @@ const SystemPage: React.FC = () => {
                 CPU Usage Over Time
               </Card.Title>
               {cpuLoading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
                   <Spinner animation="border" role="status">
                     <span className="sr-only">Loading...</span>
                   </Spinner>
@@ -184,9 +209,8 @@ const SystemPage: React.FC = () => {
             </Card.Body>
           </Card>
         </div>
-      </div>
-      <div className="row mx-0 mb-4">
-        <div className="col px-0">
+        {/* Memory Section */}
+        <div className="col mb-4">
           <Card
             className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
@@ -196,7 +220,10 @@ const SystemPage: React.FC = () => {
                 Memory Usage Over Time
               </Card.Title>
               {memoryLoading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
                   <Spinner animation="border" role="status">
                     <span className="sr-only">Loading...</span>
                   </Spinner>
@@ -209,16 +236,18 @@ const SystemPage: React.FC = () => {
             </Card.Body>
           </Card>
         </div>
-      </div>
-      <div className="row mx-0">
-        <div className="col px-0">
+        {/* Disk Section */}
+        <div className="col">
           <Card className={`bg-${mode === "dark" ? "secondary" : "light"}`}>
             <Card.Body className="flex flex-col items-center">
               <h5 className="text-xl font-semibold mb-4">
                 DISK Usage Over Time
               </h5>
               {diskLoading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: "100%" }}>
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
                   <Spinner animation="border" role="status">
                     <span className="sr-only">Loading...</span>
                   </Spinner>
@@ -232,9 +261,15 @@ const SystemPage: React.FC = () => {
                     {/* Disk Usage */}
                     <div className="mr-4">
                       {/* Donut Chart */}
-                      <div className="flex justify-center" style={{ width: "250px", height: "250px" }}>
+                      <div
+                        className="flex justify-center"
+                        style={{ width: "250px", height: "250px" }}
+                      >
                         <DonutChart
-                          total={(latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)}
+                          total={
+                            (latestDisk?.avalible ?? 0) +
+                            (latestDisk?.used ?? 0)
+                          }
                           inUse={latestDisk?.used ?? 0}
                           width={50}
                           height={50}
@@ -242,24 +277,35 @@ const SystemPage: React.FC = () => {
                       </div>
                       {/* Disk Usage details */}
                       <div className="text-black text-left mt-2">
-                        <p><b>Total:</b> {(latestDisk?.avalible ?? 0 + (latestDisk?.used ?? 0)).toFixed(2)} GB</p>
-                        <p><b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB</p>
-                        <p><b>Available:</b> {(latestDisk?.avalible ?? 0).toFixed(2)} GB</p>
+                        <p>
+                          <b>Total:</b>{" "}
+                          {(
+                            latestDisk?.avalible ?? 0 + (latestDisk?.used ?? 0)
+                          ).toFixed(2)}{" "}
+                          GB
+                        </p>
+                        <p>
+                          <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
+                        </p>
+                        <p>
+                          <b>Available:</b>{" "}
+                          {(latestDisk?.avalible ?? 0).toFixed(2)} GB
+                        </p>
                       </div>
                     </div>
                   </div>
                   {/* Right side */}
                   <div className="col-md-6">
                     {/* Total Disk Storage */}
-                    <div>
-                      {/* Disk Usage AgGrid */}
-                      <div className="flex justify-center" style={{ width: "100%", height: "400px" }}>
-                        {formattedDiskData ? (
-                          <DiskUsageAgGrid data={formattedDiskData} />
-                        ) : (
-                          <div>No data available</div>
-                        )}
-                      </div>
+                    <div
+                      className="flex justify-center"
+                      style={{ width: "100%", height: "400px" }}
+                    >
+                      {formattedDiskData ? (
+                        <DiskUsageAgGrid data={formattedDiskData} />
+                      ) : (
+                        <div>No data available</div>
+                      )}
                     </div>
                   </div>
                 </div>
