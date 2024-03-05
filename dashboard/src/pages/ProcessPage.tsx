@@ -15,6 +15,7 @@ const ProcessPage: React.FC = () => {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
+    refetch
   } = useGetProcessData(selectedPid || 1); // Fetch data based on selected PID or default
 
   useEffect(() => {
@@ -25,6 +26,37 @@ const ProcessPage: React.FC = () => {
       setSelectedPid(uniquePidsArray[0]); // Select the first PID by default
     }
   }, [allProcessesData]);
+  const [cpuData, setCpuData] = useState([]);
+
+  useEffect(() => {
+    if (processData) {
+      const processedData = processData.map((cpu: { timestamp: number; percent_cpu: number; }) => ({
+        x: new Date(cpu.timestamp * 1000),
+        y: cpu.percent_cpu * 100 // Assuming CPU percentage is in decimal form
+      }));
+      setCpuData(processedData);
+    }
+  }, [processData]);
+
+  const [memoryData, setMemoryData] = useState([]);
+
+  useEffect(() => {
+    if (processData) {
+      const processedMemoryData = processData.map((memory: { timestamp: number; virtual_memory: number; resident_memory: number; }) => ({
+        time: new Date(memory.timestamp * 1000),
+        ram: (memory.virtual_memory - memory.resident_memory) / memory.virtual_memory * 100,
+        swapped: 0 // Assuming no swap usage data is available
+      }));
+      setMemoryData(processedMemoryData);
+    }
+  }, [processData]);
+
+  useEffect(() => {
+    // Fetch process data whenever selectedPid changes
+    refetch();
+  }, [selectedPid, refetch]);
+
+  console.log(processData);
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
@@ -38,10 +70,11 @@ const ProcessPage: React.FC = () => {
             ) : processesError ? (
               <div>Error fetching CPU data</div>
             ) : (
-               <ProcessBar
-                pids={Array.from(new Set(allProcessesData.map((process: any) => process.pid)))} // Pass unique PIDs
-                onSelectPid={setSelectedPid}
-              />
+              <ProcessBar
+              pids={Array.from(new Set(allProcessesData.map((process: any) => process.pid)))} // Pass unique PIDs
+              onSelectPid={setSelectedPid}
+              allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
+            />
             )}
           </div>
         </div>
@@ -74,7 +107,7 @@ const ProcessPage: React.FC = () => {
               ) : errorTable ? (
                 <div>Error fetching CPU data</div>
               ) : (
-                <CpuLineGraph data={processData} />
+                <CpuLineGraph data={cpuData} />
               )}
             </Card.Body>
           </Card>
@@ -100,7 +133,7 @@ const ProcessPage: React.FC = () => {
               ) : errorTable ? (
                 <div>Error fetching memory data</div>
               ) : (
-                <MemoryLineGraph data={processData} />
+                <MemoryLineGraph data={memoryData} />
               )}
             </Card.Body>
           </Card>
