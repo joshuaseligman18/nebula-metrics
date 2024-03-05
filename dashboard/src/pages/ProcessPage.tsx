@@ -1,75 +1,59 @@
 import React, { useEffect, useState } from "react";
-import ProcessBar from "../components/processes/ProcessBar";
-import { ProcessDataType } from "../types/processDataType";
+import ProcessBar from "../components/sorting/ProcessBar";
 import { Card, Spinner } from "react-bootstrap";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import { useMode } from "../context/ModeContext";
+import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
 
 const ProcessPage: React.FC = () => {
   const { mode } = useMode();
-  const { data,  isLoading:loadingTable, isError:errorTable } = useGetProcessData(320);
-  console.log(data);
-
-  // Preprocess CPU data
-  const [cpuData, setCpuData] = useState([]);
-
-  useEffect(() => {
-    if (data) {
-      const processedData = data.map((cpu: { timestamp: number; percent_cpu: number; }) => ({
-        x: new Date(cpu.timestamp * 1000),
-        y: cpu.percent_cpu * 100 // Assuming CPU percentage is in decimal form
-      }));
-      setCpuData(processedData);
-    }
-  }, [data]);
-
-  const [memoryData, setMemoryData] = useState([]);
+  const { data: allProcessesData, isLoading:processLoad, isError:processesError } = useAllProcesses(); // Get all processes data
+  const [selectedPid, setSelectedPid] = useState<number | null>(null); // State to store selected PID
+  const {
+    data: processData,
+    isLoading: loadingTable,
+    isError: errorTable,
+  } = useGetProcessData(selectedPid || 1); // Fetch data based on selected PID or default
 
   useEffect(() => {
-    if (data) {
-      const processedMemoryData = data.map((memory: { timestamp: number; virtual_memory: number; resident_memory: number; }) => ({
-        time: new Date(memory.timestamp * 1000),
-        ram: (memory.virtual_memory - memory.resident_memory) / memory.virtual_memory * 100,
-        swapped: 0 // Assuming no swap usage data is available
-      }));
-      setMemoryData(processedMemoryData);
+    if (allProcessesData) {
+      const allPids: number[] = allProcessesData.map((process: any) => process.pid); // Explicitly typing as an array of numbers
+      const uniquePidsSet = new Set(allPids); // Convert to Set to remove duplicates
+      const uniquePidsArray = Array.from(uniquePidsSet); // Convert back to array
+      setSelectedPid(uniquePidsArray[0]); // Select the first PID by default
     }
-  }, [data]);
+  }, [allProcessesData]);
 
-  const sampleProcess: ProcessDataType = {
-    pid: 1234,
-    exec: 'sample_executable',
-    percent_cpu: 50,
-    resident_memory: 1024 * 1024 * 512, // 512 MB in KB
-    shared_memory: 1024 * 1024 * 256, // 256 MB in KB
-    elapsedTime: '2 hours',
-    total_cpu: 100,
-    virtual_memory: 1024 * 1024 * 1024,
-    cpu_core: 0,
-    is_alive: false,
-    start_time: 0,
-    timestamp: 0
-  };
-
-  if (loadingTable) {
-    // Render loading spinner while loading
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
-        <Spinner animation="border" variant="primary" />
+  return (
+    <div className="container-fluid px-0 mt-4 d-flex">
+      <div style={{ flex: "1 0 15%" }}>
+        <div className="d-flex flex-column h-100">
+          <div className="flex-grow-1">
+          {processLoad ? (
+              <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+              </Spinner>
+            ) : processesError ? (
+              <div>Error fetching CPU data</div>
+            ) : (
+               <ProcessBar
+                pids={Array.from(new Set(allProcessesData.map((process: any) => process.pid)))} // Pass unique PIDs
+                onSelectPid={setSelectedPid}
+              />
+            )}
+          </div>
+        </div>
       </div>
-    );
-  }  if (errorTable) return <div>Error fetching data</div>;
-  
-  return(
-    <>
-    <ProcessBar process={sampleProcess}/>
-    <div
-      className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
-    >
-      <div className="row mx-0">
-        <div className="col px-0 mb-4">
+      <div
+        style={{ flex: "1 0 85%" }}
+        className={`container-fluid px-0 mt-4 ${
+          mode === "dark" ? "dark-mode" : "light-mode"
+        }`}
+      >
+        {/* CPU and Memory Sections */}
+        <div className="col mb-4">
           <Card
             className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
@@ -78,13 +62,24 @@ const ProcessPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
               </Card.Title>
-              <CpuLineGraph data={cpuData} />
+              {loadingTable ? (
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : errorTable ? (
+                <div>Error fetching CPU data</div>
+              ) : (
+                <CpuLineGraph data={processData} />
+              )}
             </Card.Body>
           </Card>
         </div>
-      </div>
-      <div className="row mx-0 mb-4">
-        <div className="col px-0">
+        <div className="col mb-4">
           <Card
             className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
@@ -93,13 +88,25 @@ const ProcessPage: React.FC = () => {
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
               </Card.Title>
-              <MemoryLineGraph data={memoryData} />
+              {loadingTable ? (
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : errorTable ? (
+                <div>Error fetching memory data</div>
+              ) : (
+                <MemoryLineGraph data={processData} />
+              )}
             </Card.Body>
           </Card>
         </div>
       </div>
     </div>
-    </>
   );
 };
 

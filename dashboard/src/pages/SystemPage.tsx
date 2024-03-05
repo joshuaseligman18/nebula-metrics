@@ -40,7 +40,6 @@ const SystemPage: React.FC = () => {
   } = useGetDiskData();
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
-  console.log(diskData);
 
   useEffect(() => {
     if (rawCpuData) {
