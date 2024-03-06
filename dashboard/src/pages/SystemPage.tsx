@@ -14,6 +14,8 @@ import { Spinner } from "react-bootstrap";
 import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
+  const [selectedMinuteRange, setSelectedMinuteRange] = useState<number>(60);
+  const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
   const {
@@ -41,28 +43,28 @@ const SystemPage: React.FC = () => {
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
 
-  useEffect(() => {
-    if (rawCpuData) {
-      const processedData: { x: Date; y: number }[] = [];
-      const usageMap = new Map<number, number>();
-
-      rawCpuData.forEach((cpu: CpuData) => {
-        const { timestamp, usage } = cpu;
-        if (usageMap.has(timestamp)) {
-          const currentUsage = usageMap.get(timestamp) || 0;
-          usageMap.set(timestamp, currentUsage + usage * 100);
-        } else {
-          usageMap.set(timestamp, usage);
-        }
-      });
-
-      usageMap.forEach((usage, timestamp) => {
-        processedData.push({ x: new Date(timestamp * 1000), y: usage });
-      });
-
-      setCpuData(processedData);
-    }
-  }, [rawCpuData]);
+    useEffect(() => {
+      if (rawCpuData) {
+        const processedData: { x: Date; y: number }[] = [];
+        const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
+  
+        rawCpuData.forEach((cpu: CpuData) => {
+          const { timestamp, usage } = cpu;
+          const date = new Date(timestamp * 1000);
+          const hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+          const amPm = date.getHours() >= 12 ? 'PM' : 'AM';
+          const formattedTime = `${hours === 0 ? 12 : hours}:${date.getMinutes().toString().padStart(2, '0')} ${amPm}`;
+          
+          // Add the formatted timestamp to the Set
+          minuteSet.add(formattedTime);
+          processedData.push({ x: date, y: usage });
+        });
+  
+        setCpuData(processedData);
+        // Convert the Set to an array and set the state
+        setCpuMinuteValues(Array.from(minuteSet));
+      }
+    }, [rawCpuData]);
 
   useEffect(() => {
     if (memoryData) {
@@ -83,8 +85,6 @@ const SystemPage: React.FC = () => {
       setMemoryUsageData(processedData);
     }
   }, [memoryData]);
-
-  console.log(diskData);
 
   useEffect(() => {
     if (diskData && diskData.length > 0) {
@@ -168,12 +168,36 @@ const SystemPage: React.FC = () => {
     }
   }, [diskData]);
 
+  const processCpuData = (rawData: { x: Date; y: number }[]) => {
+    // Process the raw CPU data here (filtering, sorting, etc.)
+    // For example, you can filter based on the selected minute range
+    const filteredData = rawData.filter(
+      ({ x }) =>
+        new Date().getTime() - x.getTime() < selectedMinuteRange * 60 * 1000
+    );
+    // Sort the filtered data if needed
+    // Return the processed data
+    return filteredData;
+  };
+
+  const handleMinuteRangeChange = (minutes: number) => {
+    setSelectedMinuteRange(minutes);
+    // Process CPU data based on the selected minute range
+    const processedData = processCpuData(rawCpuData);
+    setCpuData(processedData);
+  };
+
+  console.log(cpuData);
+
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
       <div style={{ flex: "1 0 10%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
-            <SortingBar />
+            <SortingBar
+              cpuMinuteValues={cpuMinuteValues} // Pass CPU minute values here
+              onMinuteRangeChange={handleMinuteRangeChange} // Pass event handler here
+            />
           </div>
         </div>
       </div>
