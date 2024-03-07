@@ -1,9 +1,10 @@
+pub mod response;
+use response::{CpuInfo, DiskInfo, ProcessInfo};
+
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use models::tables::Memory;
 use sqlx::SqlitePool;
-mod response;
-use response::{CpuInfo, DiskInfo, ProcessInfo};
 use tracing::{event, Level};
 
 /// Absolute path to the database file
