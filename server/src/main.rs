@@ -182,9 +182,15 @@ mod tests {
         let app: Router = create_app(Some(pool)).await?;
 
         let response: Response = app
-            .oneshot(Request::builder().uri("/api/memory").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/api/memory")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
 
         let res_string: String = String::from_utf8(
             response
@@ -214,9 +220,15 @@ mod tests {
         let app: Router = create_app(Some(pool)).await?;
 
         let response: Response = app
-            .oneshot(Request::builder().uri("/api/allProcesses").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/api/allProcesses")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
 
         let res_string: String = String::from_utf8(
             response
@@ -229,9 +241,82 @@ mod tests {
         )
         .expect("Should be able to convert to a string");
 
-        let res_vec: Vec<ProcessInfo> =
-            serde_json::from_str(&res_string).expect("Should be able to convert to a memory vec");
+        let res_vec: Vec<ProcessInfo> = serde_json::from_str(&res_string)
+            .expect("Should be able to convert to a process info vec");
         assert_eq!(res_vec.len(), 6);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("apiTest"))]
+    async fn test_api_existing_process(pool: SqlitePool) -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app(Some(pool)).await?;
+
+        let response: Response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/process/1")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let res_string: String = String::from_utf8(
+            response
+                .into_body()
+                .collect()
+                .await
+                .unwrap()
+                .to_bytes()
+                .to_vec(),
+        )
+        .expect("Should be able to convert to a string");
+
+        let res_vec: Vec<ProcessInfo> = serde_json::from_str(&res_string)
+            .expect("Should be able to convert to a process info vec");
+        assert_eq!(res_vec.len(), 2);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("apiTest"))]
+    async fn test_api_nonexistent_process(pool: SqlitePool) -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app(Some(pool)).await?;
+
+        let response: Response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/process/7")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+
+        let res_string: String = String::from_utf8(
+            response
+                .into_body()
+                .collect()
+                .await
+                .unwrap()
+                .to_bytes()
+                .to_vec(),
+        )
+        .expect("Should be able to convert to a string");
+        assert!(res_string.contains("Error fetching combined process info for PID 7"));
 
         Ok(())
     }
