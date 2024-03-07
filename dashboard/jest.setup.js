@@ -1,2 +1,2 @@
 // Mocking text-encoding
-require('text-encoding').TextEncoder;
+require("text-encoding").TextEncoder;

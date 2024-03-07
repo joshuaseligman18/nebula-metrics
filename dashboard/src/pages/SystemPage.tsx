@@ -1,92 +1,339 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
 import DonutChart from "../components/graphs/DonutChart";
-import DiskUsagePieChart from "../components/graphs/PieChart";
 import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import MemoryLineGraph from "../components/graphs/MemLineGraph";
+import { useGetCpuData } from "../hooks/useGetCpuData";
+import { useGetMemoryData } from "../hooks/useGetMemoryData";
+import { useGetDiskData } from "../hooks/useGetDiskData";
+import { useMode } from "../context/ModeContext";
+import { CpuData } from "../types/cpuDataType";
+import DiskUsageAgGrid from "../components/AgGrid/DiskChart";
+import { DiskUsageData } from "../types/diskUsageData";
+import { Spinner } from "react-bootstrap";
+import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
-  // Sample data for Memory usage
-  const cpuData = [
-    { x: new Date("2024-02-14T00:00:00"), y: 10 },
-    { x: new Date("2024-02-14T01:00:00"), y: 20 },
-    { x: new Date("2024-02-14T02:00:00"), y: 30 },
-  ];
+  const [selectedMinuteRange, setSelectedMinuteRange] = useState<number>(60);
+  const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
+  const { mode } = useMode();
+  const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const {
+    data: rawCpuData,
+    isLoading: cpuLoading,
+    isError: cpuError,
+  } = useGetCpuData();
+  const [memoryUsageData, setMemoryUsageData] = useState<
+    { time: Date; ram: number; swapped: number }[]
+  >([]);
+  const {
+    data: memoryData,
+    isLoading: memoryLoading,
+    isError: memoryError,
+  } = useGetMemoryData();
+  const [latestDisk, setLatestDisk] = useState<{
+    avalible: number;
+    used: number;
+  } | null>(null);
+  const {
+    data: diskData,
+    isLoading: diskLoading,
+    isError: diskError,
+  } = useGetDiskData();
+  const [formattedDiskData, setFormattedDiskData] =
+    useState<DiskUsageData | null>(null);
 
-  const memoryData = [
-    { time: new Date("2024-02-14T00:00:00"), ram: 50, swapped: 20 },
-    { time: new Date("2024-02-14T01:00:00"), ram: 60, swapped: 25 },
-    { time: new Date("2024-02-14T02:00:00"), ram: 70, swapped: 30 },
-    // Add more data points as needed
-  ];
+  useEffect(() => {
+    if (rawCpuData) {
+      const processedData: { x: Date; y: number }[] = [];
+      const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
 
-  //Sample data for Disk usage
-  const diskUsageData = {
-    totalDiskSpace: 1000,
-    diskUsage: [
-      { name: "Hard Drive", space: 400 },
-      { name: "SSD", space: 300 },
-      { name: "M.2", space: 200 },
-      // Add more disks as needed
-    ],
+      rawCpuData.forEach((cpu: CpuData) => {
+        const { timestamp, usage } = cpu;
+        const date = new Date(timestamp * 1000);
+        const hours =
+          date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+        const amPm = date.getHours() >= 12 ? "PM" : "AM";
+        const formattedTime = `${hours === 0 ? 12 : hours}:${date.getMinutes().toString().padStart(2, "0")} ${amPm}`;
+
+        // Add the formatted timestamp to the Set
+        minuteSet.add(formattedTime);
+        processedData.push({ x: date, y: usage });
+      });
+
+      setCpuData(processedData);
+      // Convert the Set to an array and set the state
+      setCpuMinuteValues(Array.from(minuteSet));
+    }
+  }, [rawCpuData]);
+
+  useEffect(() => {
+    if (memoryData) {
+      const processedData: { time: Date; ram: number; swapped: number }[] = [];
+
+      memoryData.forEach((memory: any) => {
+        const { timestamp, free, total, swap_free, swap_total } = memory;
+        const ramUsage = ((total - free) / total) * 100;
+        const swappedUsage = ((swap_total - swap_free) / swap_total) * 100;
+
+        processedData.push({
+          time: new Date(timestamp * 1000),
+          ram: ramUsage,
+          swapped: swappedUsage,
+        });
+      });
+
+      setMemoryUsageData(processedData);
+    }
+  }, [memoryData]);
+
+  useEffect(() => {
+    if (diskData && diskData.length > 0) {
+      // Create a map to store the latest entries for each unique disk name
+      const latestEntriesMap = new Map();
+
+      // Iterate through diskData to find the latest entry for each unique disk name
+      diskData.forEach((disk: { device_name: any; timestamp: number }) => {
+        if (!latestEntriesMap.has(disk.device_name)) {
+          latestEntriesMap.set(disk.device_name, disk);
+        } else {
+          const currentLatestEntry = latestEntriesMap.get(disk.device_name);
+          if (currentLatestEntry.timestamp < disk.timestamp) {
+            latestEntriesMap.set(disk.device_name, disk);
+          }
+        }
+      });
+
+      // Initialize variables to hold total values
+      let totalAvailable = 0;
+      let totalUsed = 0;
+
+      // Calculate the sum of values for the latest entries with unique disk names
+      latestEntriesMap.forEach((entry) => {
+        totalAvailable += entry.available;
+        totalUsed += entry.used;
+      });
+
+      // Convert total values from MB to GB
+      const totalAvailableInGB = totalAvailable / 1024;
+      const totalUsedInGB = totalUsed / 1024;
+
+      // Create an object representing the sum of values for the latest entries with unique disk names
+      const latestDiskTotal = {
+        avalible: totalAvailableInGB,
+        used: totalUsedInGB,
+        // You might want to include other properties here if needed
+      };
+
+      // Set the state with the total values
+      setLatestDisk(latestDiskTotal);
+    }
+  }, [diskData]);
+
+  useEffect(() => {
+    if (diskData) {
+      // Group disk data by device_name
+      const groupedData: Record<string, any> = {};
+      diskData.forEach((disk: any) => {
+        if (
+          !(disk.device_name in groupedData) ||
+          disk.timestamp > groupedData[disk.device_name].timestamp
+        ) {
+          // Include additional fields in the grouped data
+          groupedData[disk.device_name] = {
+            device_name: disk.device_name,
+            available: disk.available,
+            used: disk.used,
+            fs_type: disk.fs_type,
+            mount: disk.mount,
+          };
+        }
+      });
+
+      // Calculate total disk space and format disk usage data
+      const totalDiskSpace = Object.values(groupedData).reduce(
+        (total, disk) => total + disk.available + disk.used,
+        0,
+      );
+      const diskUsage = Object.values(groupedData).map((disk) => ({
+        name: disk.device_name,
+        space: (disk.available + disk.used) / 1024,
+        // Include additional fields in the formatted data
+        available: disk.available / 1024,
+        fs_type: disk.fs_type,
+        mount: disk.mount,
+        timestamp: disk.timestamp,
+      }));
+
+      setFormattedDiskData({ totalDiskSpace, diskUsage });
+    }
+  }, [diskData]);
+
+  const processCpuData = (rawData: { x: Date; y: number }[]) => {
+    // Process the raw CPU data here (filtering, sorting, etc.)
+    // For example, you can filter based on the selected minute range
+    const filteredData = rawData.filter(
+      ({ x }) =>
+        new Date().getTime() - x.getTime() < selectedMinuteRange * 60 * 1000,
+    );
+    // Sort the filtered data if needed
+    // Return the processed data
+    return filteredData;
   };
+
+  const handleMinuteRangeChange = (minutes: number) => {
+    setSelectedMinuteRange(minutes);
+    // Process CPU data based on the selected minute range
+    const processedData = processCpuData(rawCpuData);
+    setCpuData(processedData);
+  };
+
+  console.log(cpuData);
+
   return (
-    <div className="container-fluid px-0 mt-4">
-      <div className="row mx-0">
-        <div className="col px-0 mb-4">
-          <Card className="bg-light-dark-mode" style={{ height: "450px" }}>
+    <div className="container-fluid px-0 mt-4 d-flex">
+      <div style={{ flex: "1 0 10%" }}>
+        <div className="d-flex flex-column h-100">
+          <div className="flex-grow-1">
+            <SortingBar
+              cpuMinuteValues={cpuMinuteValues} // Pass CPU minute values here
+              onMinuteRangeChange={handleMinuteRangeChange} // Pass event handler here
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        style={{ flex: "1 0 90%" }}
+        className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
+      >
+        {/* CPU Section */}
+        <div className="col mb-4">
+          <Card
+            className={`bg-${mode === "dark" ? "secondary" : "light"}`}
+            style={{ height: "450px" }}
+          >
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 CPU Usage Over Time
               </Card.Title>
-              <CpuLineGraph data={cpuData} />
+              {cpuLoading ? (
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : cpuError ? (
+                <div>Error fetching CPU data</div>
+              ) : (
+                <CpuLineGraph data={cpuData} />
+              )}
             </Card.Body>
           </Card>
         </div>
-      </div>
-      <div className="row mx-0 mb-4">
-        <div className="col px-0">
+        {/* Memory Section */}
+        <div className="col mb-4">
           <Card
-            className="bg-light-dark-mode h-100"
+            className={`bg-${mode === "dark" ? "secondary" : "light"}`}
             style={{ height: "450px" }}
           >
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
                 Memory Usage Over Time
               </Card.Title>
-              <MemoryLineGraph data={memoryData} />
+              {memoryLoading ? (
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : memoryError ? (
+                <div>Error fetching memory data</div>
+              ) : (
+                <MemoryLineGraph data={memoryUsageData} />
+              )}
             </Card.Body>
           </Card>
         </div>
-      </div>
-      <div className="row mx-0">
-        <div className="col px-0">
-          <Card className="bg-light-dark-mode h-100">
+        {/* Disk Section */}
+        <div className="col">
+          <Card className={`bg-${mode === "dark" ? "secondary" : "light"}`}>
             <Card.Body className="flex flex-col items-center">
               <h5 className="text-xl font-semibold mb-4">
                 DISK Usage Over Time
               </h5>
-              <div className="flex">
-                <div className="mr-4">
-                  <h6 className="text-lg font-semibold mb-2">Disk Usage</h6>
-                  <div className="flex justify-center">
-                    <DonutChart
-                      total={100}
-                      inUse={25}
-                      width={150}
-                      height={150}
-                    />
+              {diskLoading ? (
+                <div
+                  className="d-flex justify-content-center align-items-center"
+                  style={{ height: "100%" }}
+                >
+                  <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                  </Spinner>
+                </div>
+              ) : diskError ? (
+                <div>Error fetching disk data</div>
+              ) : (
+                <div className="row">
+                  {/* Left side */}
+                  <div className="col-md-6">
+                    {/* Disk Usage */}
+                    <div className="mr-4">
+                      {/* Donut Chart */}
+                      <div
+                        className="flex justify-center"
+                        style={{ width: "250px", height: "250px" }}
+                      >
+                        <DonutChart
+                          total={
+                            (latestDisk?.avalible ?? 0) +
+                            (latestDisk?.used ?? 0)
+                          }
+                          inUse={latestDisk?.used ?? 0}
+                          width={50}
+                          height={50}
+                        />
+                      </div>
+                      {/* Disk Usage details */}
+                      <div className="text-black text-left mt-2">
+                        <p>
+                          <b>Total:</b>{" "}
+                          {(
+                            latestDisk?.avalible ?? 0 + (latestDisk?.used ?? 0)
+                          ).toFixed(2)}{" "}
+                          GB
+                        </p>
+                        <p>
+                          <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
+                        </p>
+                        <p>
+                          <b>Available:</b>{" "}
+                          {(latestDisk?.avalible ?? 0).toFixed(2)} GB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Right side */}
+                  <div className="col-md-6">
+                    {/* Total Disk Storage */}
+                    <div
+                      className="flex justify-center"
+                      style={{ width: "100%", height: "400px" }}
+                    >
+                      {formattedDiskData ? (
+                        <DiskUsageAgGrid data={formattedDiskData} />
+                      ) : (
+                        <div>No data available</div>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <h6 className="text-lg font-semibold mb-2">
-                    Total Disk Storage
-                  </h6>
-                  <div className="flex justify-center">
-                    <DiskUsagePieChart data={diskUsageData} />
-                  </div>
-                </div>
-              </div>
+              )}
             </Card.Body>
           </Card>
         </div>

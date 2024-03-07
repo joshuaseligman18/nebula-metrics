@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
-import "chartjs-adapter-date-fns"; 
+import "chartjs-adapter-date-fns";
 
 interface CpuLineGraphProps {
   data: { x: Date; y: number }[];
