@@ -118,7 +118,7 @@ async fn get_combined_process_info(
     match query_result {
         Ok(combined_infos) => {
             if combined_infos.is_empty() {
-                Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid)))
+                Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Process {} not found", pid)))
             } else {
                 Ok(Json(combined_infos))
             }

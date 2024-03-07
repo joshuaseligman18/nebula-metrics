@@ -316,7 +316,7 @@ mod tests {
                 .to_vec(),
         )
         .expect("Should be able to convert to a string");
-        assert!(res_string.contains("Error fetching combined process info for PID 7"));
+        assert_eq!(res_string, "Process 7 not found");
 
         Ok(())
     }
