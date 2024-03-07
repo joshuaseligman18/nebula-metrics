@@ -45,7 +45,6 @@ mod tests {
     use axum::extract::Request;
     use axum::http::StatusCode;
     use axum::response::Response;
-    use axum::Json;
     use http_body_util::BodyExt;
     use models::tables::Memory;
     use tower::util::ServiceExt;
@@ -173,7 +172,7 @@ mod tests {
     }
 
     #[sqlx::test(fixtures("apiTest"))]
-    async fn test_api(pool: SqlitePool) -> Result<(), sqlx::Error> {
+    async fn test_api_memory(pool: SqlitePool) -> Result<(), sqlx::Error> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
             .with_max_level(Level::TRACE)
@@ -182,7 +181,7 @@ mod tests {
         let app: Router = create_app(Some(pool)).await?;
 
         let response: Response = app
-            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .oneshot(Request::builder().uri("/api/memory").body(Body::empty()).unwrap())
             .await
             .unwrap();
 
