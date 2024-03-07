@@ -1,6 +1,6 @@
 use models::error::NebulaError;
 use procfs::{Current, Meminfo};
-use sqlx::SqlitePool;
+use sqlx::{Sqlite, SqlitePool, Transaction};
 use tracing::{event, instrument, Level};
 
 /// Inserts the current memory usage information into the db
@@ -10,6 +10,7 @@ pub async fn update_memory_data(cur_time: u64, conn: &SqlitePool) -> Result<(), 
 
     let mem_info: Meminfo = Meminfo::current()?;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     sqlx::query("INSERT INTO MEMORY VALUES (?, ?, ?, ?, ?);")
         .bind(cur_time as i64)
         // Meminfo stores everything in bytes, so convert to KB
@@ -25,6 +26,7 @@ pub async fn update_memory_data(cur_time: u64, conn: &SqlitePool) -> Result<(), 
         .execute(conn)
         .await?;
 
+    trans.commit().await?;
     event!(Level::INFO, "Finished updating memory information");
     Ok(())
 }

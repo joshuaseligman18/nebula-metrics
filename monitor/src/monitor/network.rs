@@ -2,7 +2,7 @@ use models::error::NebulaError;
 use models::tables::NetworkInterface;
 use procfs::net::{self, ARPEntry, DeviceStatus, InterfaceDeviceStatus};
 use procfs::Current;
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use tracing::{event, instrument, Level};
 
 /// Initializes the database with up-to-date disk info at monitor start up
@@ -20,6 +20,7 @@ pub async fn init_network_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         Level::DEBUG,
         "Starting to insert current network interfaces"
     );
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     let mut insert_interface_query: QueryBuilder<Sqlite> =
         QueryBuilder::new("INSERT OR REPLACE INTO NETWORKINTERFACE ");
     insert_interface_query.push_values(interfaces.iter(), |mut builder, interface| {
@@ -43,6 +44,8 @@ pub async fn init_network_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     );
 
     clean_up_old_interfaces(conn, &interfaces).await?;
+
+    trans.commit().await?;
     event!(Level::INFO, "Successfully initialized network info");
     Ok(())
 }
@@ -105,6 +108,7 @@ pub async fn update_network_interface_data(
         .collect();
     let cur_arp: Vec<ARPEntry> = net::arp()?;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     for cur_interface in cur_interfaces.iter() {
         let matching_db_interface: Vec<NetworkInterface> = db_interfaces
             .clone()
@@ -167,6 +171,7 @@ pub async fn update_network_interface_data(
 
     clean_up_old_interfaces(conn, &cur_interfaces).await?;
 
+    trans.commit().await?;
     event!(Level::DEBUG, "Finished updating network data");
     Ok(())
 }

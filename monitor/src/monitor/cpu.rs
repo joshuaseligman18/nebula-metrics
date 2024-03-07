@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use procfs::{CpuInfo, Current};
-use sqlx::{QueryBuilder, Sqlite, SqlitePool};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool, Transaction};
 use tracing::{event, instrument, Level};
 
 use models::{
@@ -16,6 +16,8 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
     let cpu_info: CpuInfo = CpuInfo::current()?;
 
     event!(Level::DEBUG, "Inserting the current CPUs");
+    let trans: Transaction<Sqlite> = conn.begin().await?;
+
     // Update the CPU table by replacing the existing data with updated info
     let mut cpu_insert: QueryBuilder<Sqlite> = QueryBuilder::new("INSERT OR REPLACE INTO CPU ");
 
@@ -67,6 +69,7 @@ pub async fn init_cpu_data(conn: &SqlitePool) -> Result<(), NebulaError> {
         .await?;
     event!(Level::DEBUG, "Finished cleaning up old CPU data");
 
+    trans.commit().await?;
     event!(Level::INFO, "Successfully initialized CPU data");
     Ok(())
 }
@@ -101,6 +104,7 @@ pub async fn update_cpu_data(cur_time: u64, conn: &SqlitePool) -> Result<(), Neb
 
     let d_time: i64 = cur_time as i64 - last_cpu_time;
 
+    let trans: Transaction<Sqlite> = conn.begin().await?;
     // If this is true, we have old data to aggregate from
     if d_time > 0 {
         event!(Level::DEBUG, "Beginning to fetch existing process data");
@@ -175,6 +179,7 @@ pub async fn update_cpu_data(cur_time: u64, conn: &SqlitePool) -> Result<(), Neb
             .push_bind(cpu_usage[core_num]);
     });
     cpu_stat_query.push(";").build().execute(conn).await?;
+    trans.commit().await?;
 
     event!(Level::INFO, "Finished updating CPU usage metrics");
     Ok(())
