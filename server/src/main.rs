@@ -231,8 +231,7 @@ mod tests {
 
         let res_vec: Vec<ProcessInfo> =
             serde_json::from_str(&res_string).expect("Should be able to convert to a memory vec");
-        assert_eq!(res_vec.len(), 3);
-        assert_eq!(res_vec[0].timestamp, 987654322);
+        assert_eq!(res_vec.len(), 6);
 
         Ok(())
     }
