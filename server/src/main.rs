@@ -35,6 +35,7 @@ async fn main() -> Result<(), sqlx::Error> {
 mod tests {
     use std::fs;
     use std::path::PathBuf;
+    use std::io;
 
     use super::*;
     use axum::body::Body;
@@ -46,6 +47,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_index_html() -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
         let app: Router = create_app().await?;
 
         let response: Response = app
@@ -56,7 +62,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         
         let res_bytes: Vec<u8> = response.into_body().collect().await.unwrap().to_bytes().to_vec();
-        let assets_web_path: PathBuf = fs::canonicalize("assets/web/").expect("Assets web should exist");
+        let assets_web_path: PathBuf = fs::canonicalize("../assets/web/").expect("Assets web should exist");
         let file_bytes = fs::read(assets_web_path.join("index.html")).unwrap();
         assert_eq!(res_bytes, file_bytes);
 
@@ -64,7 +70,60 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_system_html() -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app().await?;
+
+        let response: Response = app
+            .oneshot(Request::builder().uri("/web/system").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        
+        let res_bytes: Vec<u8> = response.into_body().collect().await.unwrap().to_bytes().to_vec();
+        let assets_web_path: PathBuf = fs::canonicalize("../assets/web/").expect("Assets web should exist");
+        let file_bytes = fs::read(assets_web_path.join("system.html")).unwrap();
+        assert_eq!(res_bytes, file_bytes);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_process_html() -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app().await?;
+
+        let response: Response = app
+            .oneshot(Request::builder().uri("/web/process").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        
+        let res_bytes: Vec<u8> = response.into_body().collect().await.unwrap().to_bytes().to_vec();
+        let assets_web_path: PathBuf = fs::canonicalize("../assets/web/").expect("Assets web should exist");
+        let file_bytes = fs::read(assets_web_path.join("process.html")).unwrap();
+        assert_eq!(res_bytes, file_bytes);
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_not_found() -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
         let app: Router = create_app().await?;
 
         let response: Response = app
