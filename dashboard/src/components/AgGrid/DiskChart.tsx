@@ -31,7 +31,10 @@ const DiskUsageAgGrid: React.FC<{ data: DiskUsageData }> = ({ data }) => {
   }
 
   return (
-    <div className={`ag-theme-alpine${mode === 'dark' ? '-dark' : ''}`} style={{ height: '300px', width: '750px' }}>
+    <div
+      className={`ag-theme-alpine${mode === "dark" ? "-dark" : ""}`}
+      style={{ height: "300px", width: "750px" }}
+    >
       <AgGridReact
         rowData={data.diskUsage}
         columnDefs={columnDefs}

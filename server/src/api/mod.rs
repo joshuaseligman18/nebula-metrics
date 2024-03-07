@@ -1,6 +1,6 @@
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
-use models::tables::{Memory, Process};
+use models::tables::Memory;
 use sqlx::SqlitePool;
 mod response;
 use response::{CpuInfo, DiskInfo, ProcessInfo};
@@ -49,7 +49,10 @@ async fn get_memory_data(
 
     match res {
         Ok(memory_vec) => Ok(Json(memory_vec)),
-        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, "Error fetching memory data".to_string())),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Error fetching memory data".to_string(),
+        )),
     }
 }
 
@@ -85,7 +88,10 @@ async fn get_all_processes(
 
     match res {
         Ok(process_infos) => Ok(Json(process_infos)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching all processes: {}", e))),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error fetching all processes: {}", e),
+        )),
     }
 }
 
@@ -104,7 +110,7 @@ async fn get_combined_process_info(
         WHERE
             p.PID = ?
         ORDER BY timestamp DESC;
-        "#
+        "#,
     )
     .bind(pid)
     .fetch_all(&state.conn)
@@ -115,19 +121,30 @@ async fn get_combined_process_info(
         Ok(combined_infos) => {
             if combined_infos.is_empty() {
                 let pid_str = pid.to_string(); // Convert Path<u32> to a string
-                Err((StatusCode::NOT_FOUND, format!("Process {} not found", pid_str)))
+                Err((
+                    StatusCode::NOT_FOUND,
+                    format!("Process {} not found", pid_str),
+                ))
             } else {
                 Ok(Json(combined_infos)) // Return the combined process info
             }
-        },
+        }
         Err(err) => {
             let pid_str = pid.to_string(); // Convert Path<u32> to a string
-            eprintln!("Error fetching combined process info for PID {}: {:?}", pid_str, err); // Print error to stderr
-            Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching combined process info for PID {}: {:?}", pid_str, err)))
-        },
+            eprintln!(
+                "Error fetching combined process info for PID {}: {:?}",
+                pid_str, err
+            ); // Print error to stderr
+            Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!(
+                    "Error fetching combined process info for PID {}: {:?}",
+                    pid_str, err
+                ),
+            ))
+        }
     }
 }
-
 
 /// Returns all disk information
 async fn get_disk_info(
@@ -155,7 +172,10 @@ async fn get_disk_info(
 
     match res {
         Ok(disk_info) => Ok(Json(disk_info)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching disk information: {}", e))),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error fetching disk information: {}", e),
+        )),
     }
 }
 
@@ -184,6 +204,9 @@ async fn get_cpu_info(
 
     match res {
         Ok(cpu_info) => Ok(Json(cpu_info)),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Error fetching CPU information: {}", e))),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error fetching CPU information: {}", e),
+        )),
     }
 }

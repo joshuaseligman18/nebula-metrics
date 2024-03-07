@@ -9,18 +9,24 @@ import { useGetProcessData } from "../hooks/useGetProcess";
 
 const ProcessPage: React.FC = () => {
   const { mode } = useMode();
-  const { data: allProcessesData, isLoading:processLoad, isError:processesError } = useAllProcesses(); // Get all processes data
+  const {
+    data: allProcessesData,
+    isLoading: processLoad,
+    isError: processesError,
+  } = useAllProcesses(); // Get all processes data
   const [selectedPid, setSelectedPid] = useState<number | null>(null); // State to store selected PID
   const {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
-    refetch
+    refetch,
   } = useGetProcessData(selectedPid || 1); // Fetch data based on selected PID or default
 
   useEffect(() => {
     if (allProcessesData) {
-      const allPids: number[] = allProcessesData.map((process: any) => process.pid); // Explicitly typing as an array of numbers
+      const allPids: number[] = allProcessesData.map(
+        (process: any) => process.pid,
+      ); // Explicitly typing as an array of numbers
       const uniquePidsSet = new Set(allPids); // Convert to Set to remove duplicates
       const uniquePidsArray = Array.from(uniquePidsSet); // Convert back to array
       setSelectedPid(uniquePidsArray[0]); // Select the first PID by default
@@ -30,10 +36,12 @@ const ProcessPage: React.FC = () => {
 
   useEffect(() => {
     if (processData) {
-      const processedData = processData.map((cpu: { timestamp: number; percent_cpu: number; }) => ({
-        x: new Date(cpu.timestamp * 1000),
-        y: cpu.percent_cpu * 100 // Assuming CPU percentage is in decimal form
-      }));
+      const processedData = processData.map(
+        (cpu: { timestamp: number; percent_cpu: number }) => ({
+          x: new Date(cpu.timestamp * 1000),
+          y: cpu.percent_cpu * 100, // Assuming CPU percentage is in decimal form
+        }),
+      );
       setCpuData(processedData);
     }
   }, [processData]);
@@ -42,11 +50,20 @@ const ProcessPage: React.FC = () => {
 
   useEffect(() => {
     if (processData) {
-      const processedMemoryData = processData.map((memory: { timestamp: number; virtual_memory: number; resident_memory: number; }) => ({
-        time: new Date(memory.timestamp * 1000),
-        ram: (memory.virtual_memory - memory.resident_memory) / memory.virtual_memory * 100,
-        swapped: 0 // Assuming no swap usage data is available
-      }));
+      const processedMemoryData = processData.map(
+        (memory: {
+          timestamp: number;
+          virtual_memory: number;
+          resident_memory: number;
+        }) => ({
+          time: new Date(memory.timestamp * 1000),
+          ram:
+            ((memory.virtual_memory - memory.resident_memory) /
+              memory.virtual_memory) *
+            100,
+          swapped: 0, // Assuming no swap usage data is available
+        }),
+      );
       setMemoryData(processedMemoryData);
     }
   }, [processData]);
@@ -63,7 +80,7 @@ const ProcessPage: React.FC = () => {
       <div style={{ flex: "1 0 15%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
-          {processLoad ? (
+            {processLoad ? (
               <Spinner animation="border" role="status">
                 <span className="sr-only">Loading...</span>
               </Spinner>
@@ -71,10 +88,12 @@ const ProcessPage: React.FC = () => {
               <div>Error fetching CPU data</div>
             ) : (
               <ProcessBar
-              pids={Array.from(new Set(allProcessesData.map((process: any) => process.pid)))} // Pass unique PIDs
-              onSelectPid={setSelectedPid}
-              allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
-            />
+                pids={Array.from(
+                  new Set(allProcessesData.map((process: any) => process.pid)),
+                )} // Pass unique PIDs
+                onSelectPid={setSelectedPid}
+                allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
+              />
             )}
           </div>
         </div>

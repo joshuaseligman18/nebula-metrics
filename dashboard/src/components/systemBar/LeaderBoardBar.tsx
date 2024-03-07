@@ -49,18 +49,18 @@ const LeaderboardBar: React.FC = () => {
     if (cpuData && Array.isArray(cpuData)) {
       // Find the latest timestamp
       const latestTimestamp = Math.max(
-        ...cpuData.map((core) => core.timestamp)
+        ...cpuData.map((core) => core.timestamp),
       );
 
       // Filter out CPU data with the latest timestamp
       const latestData = cpuData.filter(
-        (core) => core.timestamp === latestTimestamp
+        (core) => core.timestamp === latestTimestamp,
       );
 
       // Calculate total usage across all cores
       const totalUsage = latestData.reduce(
         (total, core) => total + core.usage,
-        0
+        0,
       );
 
       // Calculate the total number of cores

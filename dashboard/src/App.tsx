@@ -17,9 +17,7 @@ function App() {
     <div className={`${mode === "dark" ? "dark-mode bg-dark" : "bg-light"}`}>
       <QueryClientProvider client={queryClient}>
         <NavBar mode={mode} />
-        <div
-          className={`${mode === "dark" ? "dark-mode bg-dark" : ""}`}
-        >
+        <div className={`${mode === "dark" ? "dark-mode bg-dark" : ""}`}>
           <Button
             className={`ml-4 mt-1 ${mode === "dark" ? "text-light" : "text-dark"}`}
             onClick={() => setShowModal(true)}

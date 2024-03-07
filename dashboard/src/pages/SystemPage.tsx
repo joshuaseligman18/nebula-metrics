@@ -43,28 +43,29 @@ const SystemPage: React.FC = () => {
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
 
-    useEffect(() => {
-      if (rawCpuData) {
-        const processedData: { x: Date; y: number }[] = [];
-        const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
-  
-        rawCpuData.forEach((cpu: CpuData) => {
-          const { timestamp, usage } = cpu;
-          const date = new Date(timestamp * 1000);
-          const hours = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
-          const amPm = date.getHours() >= 12 ? 'PM' : 'AM';
-          const formattedTime = `${hours === 0 ? 12 : hours}:${date.getMinutes().toString().padStart(2, '0')} ${amPm}`;
-          
-          // Add the formatted timestamp to the Set
-          minuteSet.add(formattedTime);
-          processedData.push({ x: date, y: usage });
-        });
-  
-        setCpuData(processedData);
-        // Convert the Set to an array and set the state
-        setCpuMinuteValues(Array.from(minuteSet));
-      }
-    }, [rawCpuData]);
+  useEffect(() => {
+    if (rawCpuData) {
+      const processedData: { x: Date; y: number }[] = [];
+      const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
+
+      rawCpuData.forEach((cpu: CpuData) => {
+        const { timestamp, usage } = cpu;
+        const date = new Date(timestamp * 1000);
+        const hours =
+          date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+        const amPm = date.getHours() >= 12 ? "PM" : "AM";
+        const formattedTime = `${hours === 0 ? 12 : hours}:${date.getMinutes().toString().padStart(2, "0")} ${amPm}`;
+
+        // Add the formatted timestamp to the Set
+        minuteSet.add(formattedTime);
+        processedData.push({ x: date, y: usage });
+      });
+
+      setCpuData(processedData);
+      // Convert the Set to an array and set the state
+      setCpuMinuteValues(Array.from(minuteSet));
+    }
+  }, [rawCpuData]);
 
   useEffect(() => {
     if (memoryData) {
@@ -152,7 +153,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0
+        0,
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -173,7 +174,7 @@ const SystemPage: React.FC = () => {
     // For example, you can filter based on the selected minute range
     const filteredData = rawData.filter(
       ({ x }) =>
-        new Date().getTime() - x.getTime() < selectedMinuteRange * 60 * 1000
+        new Date().getTime() - x.getTime() < selectedMinuteRange * 60 * 1000,
     );
     // Sort the filtered data if needed
     // Return the processed data
