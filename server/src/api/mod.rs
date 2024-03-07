@@ -17,7 +17,7 @@ struct AppState {
 }
 
 /// Creates the router for the api routes
-pub async fn create_api_router() -> Result<Router, sqlx::Error> {
+pub async fn create_api_router(test_sql_conn: Option<SqlitePool>) -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
         .route("/memory", get(get_memory_data))
         .route("/allProcesses", get(get_all_processes))
@@ -25,7 +25,10 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
         .route("/disks", get(get_disk_info))
         .route("/cpu-info", get(get_cpu_info))
         .with_state(AppState {
-            conn: SqlitePool::connect(DB_FILE).await?,
+            conn: match test_sql_conn {
+                Some(test_pool) => test_pool,
+                None => SqlitePool::connect(DB_FILE).await?,
+            },
         });
 
     Ok(router)

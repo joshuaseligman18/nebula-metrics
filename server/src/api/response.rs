@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 
 /// Struct For Process Info Response
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct ProcessInfo {
     /// The PID of the process
@@ -30,7 +30,7 @@ pub struct ProcessInfo {
 }
 
 /// Struct For disk Info Response
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct DiskInfo {
     /// Name of the device
@@ -48,7 +48,7 @@ pub struct DiskInfo {
 }
 
 /// Struct For disk Info Response
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct CpuInfo {
     /// The core number for the CPU

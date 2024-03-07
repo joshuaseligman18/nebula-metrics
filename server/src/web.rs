@@ -19,7 +19,6 @@ pub fn create_web_router() -> Router {
     };
     let files_dir: PathBuf = fs::canonicalize(files_path_str).expect("Files should exist");
 
-
     Router::new()
         // This will implicitly call / to be index.html
         .nest_service("/", ServeDir::new(&files_dir))
