@@ -41,7 +41,7 @@ mod tests {
     use std::path::PathBuf;
 
     use super::*;
-    use crate::api::response::{ProcessInfo, DiskInfo};
+    use crate::api::response::{ProcessInfo, DiskInfo, CpuInfo};
     use axum::body::Body;
     use axum::extract::Request;
     use axum::http::StatusCode;
@@ -356,6 +356,44 @@ mod tests {
         let res_vec: Vec<DiskInfo> = serde_json::from_str(&res_string)
             .expect("Should be able to convert to a disk info vec");
         assert_eq!(res_vec.len(), 4);
+
+        Ok(())
+    }
+
+    #[sqlx::test(fixtures("apiTest"))]
+    async fn test_api_cpus(pool: SqlitePool) -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app(Some(pool)).await?;
+
+        let response: Response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/api/cpu-info")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let res_string: String = String::from_utf8(
+            response
+                .into_body()
+                .collect()
+                .await
+                .unwrap()
+                .to_bytes()
+                .to_vec(),
+        )
+        .expect("Should be able to convert to a string");
+
+        let res_vec: Vec<CpuInfo> = serde_json::from_str(&res_string)
+            .expect("Should be able to convert to a cpu info vec");
+        assert_eq!(res_vec.len(), 2);
 
         Ok(())
     }
