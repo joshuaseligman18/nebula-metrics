@@ -1,0 +1,13 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-us'
+title = 'Nebula Metrics'
+
+theme = 'hugo-theme-relearn'
+
+[params]
+disableSearch = true
+
+[[params.themeVariant]]
+auto = ['zen-light', 'zen-dark']
+identifier = 'zen-auto'
+

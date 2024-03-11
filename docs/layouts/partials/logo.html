@@ -1,0 +1,9 @@
+<img class="nebula-logo" src="" />
+
+<script type="text/javascript">
+    const theme = window.getComputedStyle(document.documentElement).getPropertyValue('--BROWSER-theme');
+    const logos = document.querySelectorAll('.nebula-logo');
+    for (const logo of logos) {
+        logo.src = `/images/logo-${theme}.png`;
+    }
+</script>
