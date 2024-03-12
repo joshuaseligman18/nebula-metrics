@@ -1,5 +1,6 @@
 +++
 title = 'What is Nebula Metrics?'
+weight = 10
 +++
 
 ## Problem Statement
@@ -27,3 +28,6 @@ Nebula Metrics is a system resource utilization monitor designed to keep track
 of both general system and process-specific metrics on Linux machines. The monitor
 collects all current information about running processes and aggregates them
 to present the end-user with a holistic representation of the resource metrics.
+Some of the statistics Nebula Metrics keeps track of include active and dead
+processes, process CPU and memory utilization, overall CPU and memory usage,
+and disk information and storage.
