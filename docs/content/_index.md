@@ -1,7 +1,5 @@
 +++
 title = 'Nebula Metrics'
-[imageEffects]
-lightbox = false
 +++
 
 ##### A lightweight system resource utilization monitor for remote Linux servers.

@@ -1,6 +1,7 @@
 +++
 title = 'How Nebula Metrics Works'
 weight = 20
+collapsibleMenu = true
 +++
 
 ![Design approach of Nebula Metrics](/images/designApproach.png)
@@ -26,12 +27,12 @@ so Nebula Metrics also runs some basic shell commands to obtain the remaining
 informaition that procfs does not provide.
 
 ## Database
-The database for Nebula Metrics is an SQLite 3 database, which is file-based and
-does not require a remote server to store the data. This is critical for security
-as data are independent for each system, and no machine's data should be stored
-in a common place with another machine's metrics. Instead, all data are stored
-on-device in a single file, which simplifies the architecture and does not
-require an internet connection to run Nebula Metrics.
+The database for Nebula Metrics is an [SQLite 3](https://www.sqlite.org/) database,
+which is file-based and does not require a remote server to store the data. This
+is critical for security as data are independent for each system, and no machine's
+data should be stored in a common place with another machine's metrics. Instead,
+all data are stored on-device in a single file, which simplifies the architecture
+and does not require an internet connection to run Nebula Metrics.
 
 System metrics become outdated and irrelevant after a certain period of time,
 which makes data past a certain age not needed anymore within the database.
@@ -40,6 +41,18 @@ make sure only the most recent data are stored on-device and that the database
 does not completely use up the system's storage.
 
 ## API
+The API is the interface to obtain the important data of the particular system
+running Nebula Metrics. This component is written in Rust using the
+[Axum](https://crates.io/crates/axum) library. The API has read-only access
+to the databse, ensuring that only the monitor can modify the data presented
+to the user. In addition to serving the data, the API also hosts the dashboard
+as static HTML/CSS/JS files for simple and easy access.
 
 ## Dashboard
-
+The dashboard is the primary method of accessing the information provided by
+Nebula Metrics. The website is built using [TypeScript](https://www.typescriptlang.org/)
+and [React.js](https://react.dev/) and then compiled into static HTML/CSS/JS for
+the API to server. All metrics are fetched from the API and displayed with visual
+graphs for easy interpretation of the data. Furthermore, users are able to filter
+the time of the displayed data to focus on a specific period where something may
+have gone wrong within their computer.
