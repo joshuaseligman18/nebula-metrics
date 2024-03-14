@@ -37,6 +37,8 @@ and are automatically included when running `npm install`.*
       speed up Clippy's execution time. ***Do not forget to uncomment the file
       before packaging and committing.***
 * Format your code with Rustfmt and Prettier for consistency.
+* Use log messages to mark important events in the code. Logs can be accessed
+through the `journalctl` tool.
 
 ### After Development
 * Write appropriate tests for your new features and make sure they work as expected.
