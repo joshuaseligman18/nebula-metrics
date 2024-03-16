@@ -1,29 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface SortingBarProps {
   cpuMinuteValues: string[];
-  onMinuteRangeChange: (startMinute: number, endMinute: number) => void;
+  onMinuteRangeChange: (startMinute: string, endMinute: string) => void;
 }
 
 const SortingBar: React.FC<SortingBarProps> = ({
   cpuMinuteValues,
   onMinuteRangeChange,
 }) => {
-  const [startMinute, setStartMinute] = useState<number>(0);
-  const [endMinute, setEndMinute] = useState<number>(0);
+  const [startMinute, setStartMinute] = useState<string>("");
+  const [endMinute, setEndMinute] = useState<string>("");
+  const [endMinuteOptions, setEndMinuteOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!startMinute) {
+      return; // Do not update end minute options if start minute is not selected
+    }
+
+    const startMinuteIndex = cpuMinuteValues.findIndex(
+      (value) => value === startMinute
+    );
+
+    if (startMinuteIndex === -1) {
+      return; // Start minute not found in the list
+    }
+
+    const filteredMinutes = cpuMinuteValues
+      .slice(startMinuteIndex + 1) // Get minutes after the selected start minute
+      .filter((value) => value !== startMinute);
+
+    setEndMinuteOptions(filteredMinutes);
+    setEndMinute(""); // Reset end minute when start minute changes
+  }, [cpuMinuteValues, startMinute]);
 
   const handleStartMinuteChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const minute = parseInt(event.target.value);
+    const minute = event.target.value;
     setStartMinute(minute);
     onMinuteRangeChange(minute, endMinute);
   };
 
   const handleEndMinuteChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const minute = parseInt(event.target.value);
+    const minute = event.target.value;
     setEndMinute(minute);
     onMinuteRangeChange(startMinute, minute);
   };
@@ -37,39 +59,35 @@ const SortingBar: React.FC<SortingBarProps> = ({
         <select
           className="border border-gray-300 rounded-md shadow-sm p-2"
           onChange={handleStartMinuteChange}
+          value={startMinute}
         >
+          <option value="">Select...</option>
           {cpuMinuteValues.map((value, index) => (
-            <option
-              key={index}
-              value={value}
-              selected={startMinute === parseInt(value)}
-            >
+            <option key={index} value={value}>
               {`${value}`}
             </option>
           ))}
         </select>
       </div>
-      <div>
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          Select End Minute
-        </label>
-        <select
-          className="border border-gray-300 rounded-md shadow-sm p-2"
-          onChange={handleEndMinuteChange}
-        >
-          {cpuMinuteValues
-            .filter((value) => parseInt(value) > startMinute)
-            .map((value, index) => (
-              <option
-                key={index}
-                value={value}
-                selected={endMinute === parseInt(value)}
-              >
+      {startMinute && (
+        <div>
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Select End Minute
+          </label>
+          <select
+            className="border border-gray-300 rounded-md shadow-sm p-2"
+            onChange={handleEndMinuteChange}
+            value={endMinute}
+          >
+            <option value="">Select...</option>
+            {endMinuteOptions.map((value, index) => (
+              <option key={index} value={value}>
                 {`${value}`}
               </option>
             ))}
-        </select>
-      </div>
+          </select>
+        </div>
+      )}
     </div>
   );
 };
