@@ -7,6 +7,13 @@ module.exports = {
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   testEnvironment: "jsdom",
   setupFiles: ["<rootDir>/jest.setup.js"],
+  transformIgnorePatterns: [
+    "/node_modules/(?!ag-grid-community)",
+    "\\.css$",
+  ],
+  moduleNameMapper: {
+    "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+  },
   coverageThreshold: {
     global: {
       lines: 60,
