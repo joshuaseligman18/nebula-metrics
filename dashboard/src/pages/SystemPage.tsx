@@ -169,24 +169,63 @@ const SystemPage: React.FC = () => {
     }
   }, [diskData]);
 
-  const processCpuData = (rawData: { x: Date; y: number }[]) => {
-    // Process the raw CPU data here (filtering, sorting, etc.)
-    // For example, you can filter based on the selected minute range
-    const filteredData = rawData.filter(
-      ({ x }) =>
-        new Date().getTime() - x.getTime() < selectedMinuteRange * 60 * 1000,
-    );
-    // Sort the filtered data if needed
-    // Return the processed data
-    return filteredData;
-  };
+  const handleMinuteRangeChange = (startMinute: string | null, endMinute: string | null) => {
+    console.log("start Minute ", startMinute);
+    console.log("end Minute ", endMinute);
+  
+    if (startMinute && endMinute && cpuData.length > 0) {
+      const startMinuteParts = startMinute.split(":");
+      const endMinuteParts = endMinute.split(":");
+      let startHour = parseInt(startMinuteParts[0]);
+      const startMinuteValue = parseInt(startMinuteParts[1]);
+      let endHour = parseInt(endMinuteParts[0]);
+      const endMinuteValue = parseInt(endMinuteParts[1]);
 
-  const handleMinuteRangeChange = (minutes: number) => {
-    setSelectedMinuteRange(minutes);
-    // Process CPU data based on the selected minute range
-    const processedData = processCpuData(rawCpuData);
-    setCpuData(processedData);
-  };
+      // Adjust hours for PM times
+      if (startHour < 12) {
+        startHour += 12;
+      }
+      if (endHour < 12) {
+        endHour += 12;
+      }
+
+      // Get the date from the first CPU data point
+      const firstDataDate = new Date(cpuData[0].x);
+      const year = firstDataDate.getFullYear();
+      const month = firstDataDate.getMonth();
+      const day = firstDataDate.getDate();
+  
+      console.log("year:", year);
+      console.log("month:", month);
+      console.log("day:", day);
+  
+      const startTimestamp = new Date(year, month, day, startHour, startMinuteValue).getTime();
+      const endTimestamp = new Date(year, month, day, endHour, endMinuteValue).getTime();
+  
+      console.log("startTimestamp:", startTimestamp);
+      console.log("endTimestamp:", endTimestamp);
+  
+      if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
+        const filteredCpuData = cpuData.filter(data => {
+          const dataTimestamp = new Date(data.x).getTime();
+          console.log("Data Timestamp:", data.x);
+          console.log("Data Timestamp in milliseconds:", dataTimestamp);
+  
+          return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
+        });
+  
+        console.log("Filtered CPU Data:", filteredCpuData);
+  
+        setCpuData(filteredCpuData);
+      } else {
+        console.error("Invalid startMinute or endMinute values.");
+      }
+    } else {
+      console.error("Invalid startMinute or endMinute values, or no CPU data available.");
+    }
+};
+
+
 
   console.log(cpuData);
 
