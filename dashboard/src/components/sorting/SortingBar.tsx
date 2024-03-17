@@ -3,11 +3,13 @@ import React, { useState, useEffect } from "react";
 interface SortingBarProps {
   cpuMinuteValues: string[];
   onMinuteRangeChange: (startMinute: string | null, endMinute: string | null) => void;
+  resetData: () => void;
 }
 
 const SortingBar: React.FC<SortingBarProps> = ({
   cpuMinuteValues,
   onMinuteRangeChange,
+  resetData
 }) => {
   const [startMinute, setStartMinute] = useState<string | null>(null);
   const [endMinute, setEndMinute] = useState<string | null>(null);
@@ -49,6 +51,8 @@ const SortingBar: React.FC<SortingBarProps> = ({
     onMinuteRangeChange(startMinute, minute);
   };
 
+
+
   return (
     <div className="bg-gray-200 p-4 h-100">
       <div className="mb-4">
@@ -87,6 +91,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
           </select>
         </div>
       )}
+      <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={resetData}>
+        Reset
+      </button>
     </div>
   );
 };

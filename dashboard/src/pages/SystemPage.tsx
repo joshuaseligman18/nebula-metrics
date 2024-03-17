@@ -17,6 +17,10 @@ const SystemPage: React.FC = () => {
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const [originalCpuData, setOriginalCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
+    { time: Date; ram: number; swapped: number }[]
+  >([]);
   const {
     data: rawCpuData,
     isLoading: cpuLoading,
@@ -61,6 +65,7 @@ const SystemPage: React.FC = () => {
       });
 
       setCpuData(processedData);
+      setOriginalCpuData(processedData);
       // Convert the Set to an array and set the state
       setCpuMinuteValues(Array.from(minuteSet));
     }
@@ -83,6 +88,7 @@ const SystemPage: React.FC = () => {
       });
 
       setMemoryUsageData(processedData);
+      setOriginalMemoryUsageData(processedData);
     }
   }, [memoryData]);
 
@@ -194,36 +200,21 @@ const SystemPage: React.FC = () => {
       const month = firstDataDate.getMonth();
       const day = firstDataDate.getDate();
   
-      console.log("year:", year);
-      console.log("month:", month);
-      console.log("day:", day);
-  
       const startTimestamp = new Date(year, month, day, startHour, startMinuteValue).getTime();
       const endTimestamp = new Date(year, month, day, endHour, endMinuteValue).getTime();
-  
-      console.log("startTimestamp:", startTimestamp);
-      console.log("endTimestamp:", endTimestamp);
   
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
         const filteredCpuData = cpuData.filter(data => {
           const dataTimestamp = new Date(data.x).getTime();
-          console.log("CPU Data Timestamp:", data.x);
-          console.log("CPU Data Timestamp in milliseconds:", dataTimestamp);
   
           return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
         });
   
-        console.log("Filtered CPU Data:", filteredCpuData);
-  
         const filteredMemoryData = memoryUsageData.filter(memory => {
           const memoryTimestamp = memory.time.getTime();
-          console.log("Memory Data Timestamp:", memory.time);
-          console.log("Memory Data Timestamp in milliseconds:", memoryTimestamp);
   
           return memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp;
         });
-  
-        console.log("Filtered Memory Data:", filteredMemoryData);
   
         setCpuData(filteredCpuData);
         setMemoryUsageData(filteredMemoryData);
@@ -235,10 +226,15 @@ const SystemPage: React.FC = () => {
     }
 };
 
+const resetData = () => {
+  console.log(originalCpuData);
+  // Reset CPU data
+  setCpuData(originalCpuData);
 
+  // Reset memory usage data
+  setMemoryUsageData(originalMemoryUsageData);
+};
 
-
-  console.log(cpuData);
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
@@ -248,6 +244,7 @@ const SystemPage: React.FC = () => {
             <SortingBar
               cpuMinuteValues={cpuMinuteValues} // Pass CPU minute values here
               onMinuteRangeChange={handleMinuteRangeChange} // Pass event handler here
+              resetData={resetData}
             />
           </div>
         </div>
