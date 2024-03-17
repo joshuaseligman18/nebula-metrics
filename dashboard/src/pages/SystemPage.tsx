@@ -14,7 +14,6 @@ import { Spinner } from "react-bootstrap";
 import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
-  const [selectedMinuteRange, setSelectedMinuteRange] = useState<number>(60);
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
@@ -173,7 +172,7 @@ const SystemPage: React.FC = () => {
     console.log("start Minute ", startMinute);
     console.log("end Minute ", endMinute);
   
-    if (startMinute && endMinute && cpuData.length > 0) {
+    if (startMinute && endMinute && cpuData.length > 0 && memoryUsageData.length > 0) {
       const startMinuteParts = startMinute.split(":");
       const endMinuteParts = endMinute.split(":");
       let startHour = parseInt(startMinuteParts[0]);
@@ -208,22 +207,34 @@ const SystemPage: React.FC = () => {
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
         const filteredCpuData = cpuData.filter(data => {
           const dataTimestamp = new Date(data.x).getTime();
-          console.log("Data Timestamp:", data.x);
-          console.log("Data Timestamp in milliseconds:", dataTimestamp);
+          console.log("CPU Data Timestamp:", data.x);
+          console.log("CPU Data Timestamp in milliseconds:", dataTimestamp);
   
           return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
         });
   
         console.log("Filtered CPU Data:", filteredCpuData);
   
+        const filteredMemoryData = memoryUsageData.filter(memory => {
+          const memoryTimestamp = memory.time.getTime();
+          console.log("Memory Data Timestamp:", memory.time);
+          console.log("Memory Data Timestamp in milliseconds:", memoryTimestamp);
+  
+          return memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp;
+        });
+  
+        console.log("Filtered Memory Data:", filteredMemoryData);
+  
         setCpuData(filteredCpuData);
+        setMemoryUsageData(filteredMemoryData);
       } else {
         console.error("Invalid startMinute or endMinute values.");
       }
     } else {
-      console.error("Invalid startMinute or endMinute values, or no CPU data available.");
+      console.error("Invalid startMinute or endMinute values, or no CPU/memory data available.");
     }
 };
+
 
 
 
