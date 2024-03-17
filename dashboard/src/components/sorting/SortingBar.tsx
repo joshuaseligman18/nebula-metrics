@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from "react";
+import { useMode } from "../../context/ModeContext";
 
 interface SortingBarProps {
   cpuMinuteValues: string[];
-  onMinuteRangeChange: (startMinute: string | null, endMinute: string | null) => void;
+  onMinuteRangeChange: (
+    startMinute: string | null,
+    endMinute: string | null
+  ) => void;
   resetData: () => void;
 }
 
 const SortingBar: React.FC<SortingBarProps> = ({
   cpuMinuteValues,
   onMinuteRangeChange,
-  resetData
+  resetData,
 }) => {
   const [startMinute, setStartMinute] = useState<string | null>(null);
   const [endMinute, setEndMinute] = useState<string | null>(null);
   const [endMinuteOptions, setEndMinuteOptions] = useState<string[]>([]);
+  const { mode } = useMode();
 
   useEffect(() => {
     if (startMinute === null) {
       return; // Do not update end minute options if start minute is not selected
     }
 
-    const startMinuteIndex = cpuMinuteValues.findIndex((value) => value === startMinute);
+    const startMinuteIndex = cpuMinuteValues.findIndex(
+      (value) => value === startMinute
+    );
 
     if (startMinuteIndex === -1) {
       return; // Start minute not found in the list
@@ -40,7 +47,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
     const minute = event.target.value;
     setStartMinute(minute);
   };
-  
+
   const handleEndMinuteChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
@@ -51,12 +58,12 @@ const SortingBar: React.FC<SortingBarProps> = ({
     onMinuteRangeChange(startMinute, minute);
   };
 
-
-
   return (
-    <div className="bg-gray-200 p-4 h-100">
+    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
       <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+        <label
+          className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
+        >
           Select Start Minute
         </label>
         <select
@@ -74,7 +81,9 @@ const SortingBar: React.FC<SortingBarProps> = ({
       </div>
       {startMinute !== null && (
         <div>
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+          <label
+            className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
+          >
             Select End Minute
           </label>
           <select
@@ -91,7 +100,14 @@ const SortingBar: React.FC<SortingBarProps> = ({
           </select>
         </div>
       )}
-      <button className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={resetData}>
+      <button
+        className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
+        onClick={resetData}
+        style={{
+          backgroundColor: mode === "light" ? "#007bff" : "",
+          color: mode === "light" ? "white" : "white",
+        }}
+      >
         Reset
       </button>
     </div>

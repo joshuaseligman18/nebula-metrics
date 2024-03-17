@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useMode } from "../../context/ModeContext";
 
 interface ProcessBarProps {
   pids: number[];
@@ -12,12 +13,13 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   allProcessesData,
 }) => {
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
+  const { mode } = useMode();
 
   useEffect(() => {
     // Auto-select process 1 when the component mounts
     if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === 1,
+        (process: any) => process.pid === 1
       );
       setSelectedProcess(process1);
     }
@@ -27,12 +29,12 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     onSelectPid(pid);
     if (pid !== null) {
       const process = allProcessesData.find(
-        (process: any) => process.pid === pid,
+        (process: any) => process.pid === pid
       );
       setSelectedProcess(process);
     } else {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === 1,
+        (process: any) => process.pid === 1
       );
       setSelectedProcess(process1);
     }
@@ -68,9 +70,11 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   };
 
   return (
-    <div className="bg-gray-200 p-4 h-100">
+    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
       <div>
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+        <label
+          className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
+        >
           Select PID
         </label>
         <select
@@ -89,11 +93,19 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
       </div>
 
       <div>
-        <h3>Selected Process Details:</h3>
+        <h3 style={{ color: mode === "dark" ? "white" : "black" }}>
+          Selected Process Details:
+        </h3>
         <ul>
           {selectedProcess &&
             Object.entries(selectedProcess).map(([key, value]) => (
-              <li key={key} style={{ marginBottom: "8px" }}>
+              <li
+                key={key}
+                style={{
+                  marginBottom: "8px",
+                  color: mode === "dark" ? "white" : "black",
+                }}
+              >
                 <strong>{formatKey(key)}: </strong> {formatValue(key, value)}
               </li>
             ))}
