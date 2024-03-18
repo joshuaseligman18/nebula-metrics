@@ -188,8 +188,6 @@ const SystemPage: React.FC = () => {
     setCpuData(processedData);
   };
 
-  console.log(cpuData);
-
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
       <div style={{ flex: "1 0 10%" }}>
