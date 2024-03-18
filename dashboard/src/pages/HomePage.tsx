@@ -18,7 +18,6 @@ const HomePage: React.FC = () => {
     isLoading: loadingTable,
     isError: errorTable,
   } = useAllProcesses();
-  console.log(processData);
 
   useEffect(() => {
     if (processData && processData.length > 0) {
