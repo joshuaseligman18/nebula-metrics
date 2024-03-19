@@ -38,8 +38,6 @@ const DiskUsageAgGrid: React.FC<{ data: DiskUsageData }> = ({ data }) => {
       <AgGridReact
         rowData={data.diskUsage}
         columnDefs={columnDefs}
-        pagination={true}
-        paginationPageSize={10}
       ></AgGridReact>
     </div>
   );
