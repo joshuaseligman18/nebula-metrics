@@ -70,13 +70,14 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   return (
     <div className="bg-gray-200 p-4 h-100">
       <div>
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+        <label htmlFor="pidSelect" className="block text-gray-700 text-sm font-bold mb-2">
           Select PID
         </label>
         <select
           className="border border-gray-300 rounded-md shadow-sm p-2 mb-2"
           onChange={(e) => handlePidChange(parseInt(e.target.value) || null)}
           value={selectedProcess ? selectedProcess.pid : ""}
+          id="pidSelect"
         >
           <option value="">Select a PID</option>{" "}
           {/* Handle null value explicitly */}

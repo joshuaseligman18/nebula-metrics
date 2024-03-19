@@ -73,8 +73,6 @@ const ProcessPage: React.FC = () => {
     refetch();
   }, [selectedPid, refetch]);
 
-  console.log(processData);
-
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
       <div style={{ flex: "1 0 15%" }}>

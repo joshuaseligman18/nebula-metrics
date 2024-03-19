@@ -5,7 +5,7 @@ import { useGetCpuData } from '../src/hooks/useGetCpuData';
 import { useGetMemoryData } from '../src/hooks/useGetMemoryData';
 import { useGetDiskData } from '../src/hooks/useGetDiskData';
 import SortingBar from '../src/components/sorting/SortingBar';
-import '@testing-library/jest-dom'; // Import Jest DOM matchers
+import '@testing-library/jest-dom'; 
 
 
 jest.mock('../src/hooks/useGetCpuData');
@@ -75,7 +75,7 @@ describe('SortingBar Component Logic', () => {
 
     const { getByLabelText, getByText } = render(
       <SortingBar
-        cpuMinuteValues={['10', '20', '30']} // Example CPU minute values
+        cpuMinuteValues={['10', '20', '30']} 
         onMinuteRangeChange={mockOnMinuteRangeChange}
         resetData={mockResetData}
       />
