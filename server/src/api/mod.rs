@@ -1,11 +1,11 @@
+pub mod response;
+use response::{CpuInfo, DiskInfo, ProcessInfo};
+
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use models::tables::Memory;
 use sqlx::SqlitePool;
-mod response;
-use response::{CpuInfo, DiskInfo, ProcessInfo};
-
-use serde::Serialize;
+use tracing::{event, Level};
 
 /// Absolute path to the database file
 const DB_FILE: &str = "sqlite:///var/nebula/db/nebulaMetrics.db?mode=ro";
@@ -17,15 +17,8 @@ struct AppState {
     conn: SqlitePool,
 }
 
-/// Response structure for API endpoints
-#[derive(Debug, Serialize)]
-struct ApiResponse<T> {
-    data: Option<T>,
-    error_message: Option<String>,
-}
-
 /// Creates the router for the api routes
-pub async fn create_api_router() -> Result<Router, sqlx::Error> {
+pub async fn create_api_router(test_sql_conn: Option<SqlitePool>) -> Result<Router, sqlx::Error> {
     let router: Router = Router::new()
         .route("/memory", get(get_memory_data))
         .route("/allProcesses", get(get_all_processes))
@@ -33,8 +26,12 @@ pub async fn create_api_router() -> Result<Router, sqlx::Error> {
         .route("/disks", get(get_disk_info))
         .route("/cpu-info", get(get_cpu_info))
         .with_state(AppState {
-            conn: SqlitePool::connect(DB_FILE).await?,
+            conn: match test_sql_conn {
+                Some(test_pool) => test_pool,
+                None => SqlitePool::connect(DB_FILE).await?,
+            },
         });
+
     Ok(router)
 }
 
@@ -95,6 +92,7 @@ async fn get_all_processes(
     }
 }
 
+/// Returns the information of the specified process
 async fn get_combined_process_info(
     state: State<AppState>,
     Path(pid): Path<u32>,
@@ -120,26 +118,23 @@ async fn get_combined_process_info(
     match query_result {
         Ok(combined_infos) => {
             if combined_infos.is_empty() {
-                let pid_str = pid.to_string(); // Convert Path<u32> to a string
-                Err((
-                    StatusCode::NOT_FOUND,
-                    format!("Process {} not found", pid_str),
-                ))
+                Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Process {} not found", pid)))
             } else {
-                Ok(Json(combined_infos)) // Return the combined process info
+                Ok(Json(combined_infos))
             }
         }
         Err(err) => {
-            let pid_str = pid.to_string(); // Convert Path<u32> to a string
-            eprintln!(
-                "Error fetching combined process info for PID {}: {:?}",
-                pid_str, err
-            ); // Print error to stderr
+            event!(
+                Level::ERROR,
+                "Error fetching combined process info for PID {}: {}",
+                pid,
+                err
+            );
             Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!(
-                    "Error fetching combined process info for PID {}: {:?}",
-                    pid_str, err
+                    "Error fetching combined process info for PID {}: {}",
+                    pid, err
                 ),
             ))
         }

@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
 /// Struct for the PROCESS table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Process {
     /// The PID of the process
@@ -18,7 +18,7 @@ pub struct Process {
 }
 
 /// Struct for the CPU table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Cpu {
     /// The core number for the CPU
@@ -30,7 +30,7 @@ pub struct Cpu {
 }
 
 /// Struct for the PROCSTAT table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct ProcStat {
     /// PID of the process
@@ -52,7 +52,7 @@ pub struct ProcStat {
 }
 
 /// Struct for the CPUSTAT table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct CpuStat {
     /// Id of the CPU
@@ -64,7 +64,7 @@ pub struct CpuStat {
 }
 
 /// Struct for the MEMORY table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Memory {
     /// Unix epoch timestamp at which the entry was recorded
@@ -80,7 +80,7 @@ pub struct Memory {
 }
 
 /// Struct for the DISK table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct Disk {
     /// Name of the device
@@ -92,7 +92,7 @@ pub struct Disk {
 }
 
 /// Struct for the DISKSTAT table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct DiskStat {
     /// Name of the device
@@ -106,7 +106,7 @@ pub struct DiskStat {
 }
 
 /// Struct for the NETWORKINTERFACE table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct NetworkInterface {
     /// Logical name of the interface
@@ -116,7 +116,7 @@ pub struct NetworkInterface {
 }
 
 /// Struct for the NETWORKSTAT table
-#[derive(Debug, Serialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 #[sqlx(rename_all = "UPPERCASE")]
 pub struct NetworkStat {
     /// Logical name of the interface
