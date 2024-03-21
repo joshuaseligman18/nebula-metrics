@@ -11,6 +11,7 @@ export default defineConfig({
         main: "./index.html",
         system: "./system.html",
         process: "./process.html",
+        404: "./404.html",
       },
     },
   },
