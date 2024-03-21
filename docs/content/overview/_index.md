@@ -4,7 +4,7 @@ weight = 20
 collapsibleMenu = true
 +++
 
-![Design approach of Nebula Metrics](/images/designApproach.png)
+![Design approach of Nebula Metrics](/nebula-metrics/images/designApproach.png)
 
 Nebula Metrics is broken up into 3 main components: monitor, API, and dashboard.
 The platform also uses a database for persistent storage of the colected metrics.

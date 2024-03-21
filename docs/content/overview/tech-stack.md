@@ -2,7 +2,7 @@
 title = 'Tech Stack in Detail'
 +++
 
-![Tech stack of Nebula Metrics](/images/techStack.png)
+![Tech stack of Nebula Metrics](/nebula-metrics/images/techStack.png)
 
 ## Rust
 Rust is a programming language that provides the performance of C without
