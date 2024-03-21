@@ -220,7 +220,7 @@ const SystemPage: React.FC = () => {
         console.error("Invalid startMinute or endMinute values.");
       }
     } else {
-      console.error("Invalid startMinute or endMinute values, or no CPU/memory data available.");
+      
     }
 };
 

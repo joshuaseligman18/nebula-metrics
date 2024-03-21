@@ -69,6 +69,33 @@ describe('SystemPage Component Logic', () => {
 });
 
 describe('SortingBar Component Logic', () => {
+
+  beforeEach(() => {
+    (useGetCpuData as jest.Mock).mockReturnValue({
+      data: mockCpuData,
+      isLoading: false,
+      isError: false,
+    });
+
+    (useGetMemoryData as jest.Mock).mockReturnValue({
+      data: mockMemoryUsageData,
+      isLoading: false,
+      isError: false,
+    });
+  });
+
+  const mockMemoryUsageData = [
+    { time: new Date('2024-03-20T22:00:00'), /* other properties */ },
+    { time: new Date('2024-03-20T22:05:00'), /* other properties */ },
+    // Add more mock data as needed
+  ];
+  
+  const mockCpuData = [
+    { x: new Date('2024-03-20T22:00:00'), /* other properties */ },
+    { x: new Date('2024-03-20T22:05:00'), /* other properties */ },
+    // Add more mock data as needed
+  ];
+
   it('renders SortingBar and interacts with it', async () => {
     const mockOnMinuteRangeChange = jest.fn();
     const mockResetData = jest.fn();
