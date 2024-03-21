@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
@@ -16,8 +16,10 @@ const convertKBToGB = (value: number): string => {
 };
 
 const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
-  // Define initial column definitions using useState
-  const [colDefs] = useState<ColDef<ProcessDataType, any>[]>([
+  const { mode } = useMode(); // Get the mode from your context
+
+  // Memoize the column definitions to avoid unnecessary re-renders
+  const colDefs = useMemo<ColDef<ProcessDataType, any>[]>(() => [
     { field: "pid", headerName: "PID" },
     { field: "exec", headerName: "Executable" },
     { field: "percent_cpu", headerName: "CPU %" },
@@ -38,9 +40,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
       headerName: "Virtual Memory (GB)",
       valueFormatter: (params) => convertKBToGB(params.value),
     },
-  ]);
-
-  const { mode } = useMode(); // Get the mode from your context
+  ], []); // Empty dependency array ensures memoization only occurs once
 
   return (
     <div

@@ -21,6 +21,10 @@ const SystemPage: React.FC = () => {
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
   >([]);
+  const [originalCpuData, setOriginalCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
+    { time: Date; ram: number; swapped: number }[]
+  >([]);
   const {
     data: rawCpuData,
     isLoading: cpuLoading,
@@ -65,6 +69,7 @@ const SystemPage: React.FC = () => {
       });
 
       setCpuData(processedData);
+      setOriginalCpuData(processedData);
       setOriginalCpuData(processedData);
       // Convert the Set to an array and set the state
       setCpuMinuteValues(Array.from(minuteSet));

@@ -46,13 +46,15 @@ const SortingBar: React.FC<SortingBarProps> = ({
   ) => {
     const minute = event.target.value;
     setEndMinute(minute);
+    console.log("start minute ", startMinute);
+    console.log("end minute ", minute);
     onMinuteRangeChange(startMinute, minute);
   };
 
 
 
   return (
-    <div className="bg-gray-200 p-4 h-100">
+    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
       <div className="mb-4">
         <label htmlFor="startMinute" className="block text-gray-700 text-sm font-bold mb-2">
           Select Start Minute
