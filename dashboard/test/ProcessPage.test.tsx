@@ -1,22 +1,32 @@
-import { render, act, fireEvent, screen } from '@testing-library/react';
-import ProcessPage from '../src/pages/ProcessPage';
-import { ModeProvider } from '../src/context/ModeContext';
-import { useAllProcesses } from '../src/hooks/useGetAllProcesses';
-import { useGetProcessData } from '../src/hooks/useGetProcess';
-import '@testing-library/jest-dom'; 
+import { render, act, fireEvent, screen } from "@testing-library/react";
+import ProcessPage from "../src/pages/ProcessPage";
+import { ModeProvider } from "../src/context/ModeContext";
+import { useAllProcesses } from "../src/hooks/useGetAllProcesses";
+import { useGetProcessData } from "../src/hooks/useGetProcess";
+import "@testing-library/jest-dom";
 
-jest.mock('../src/hooks/useGetAllProcesses');
-jest.mock('../src/hooks/useGetProcess');
+jest.mock("../src/hooks/useGetAllProcesses");
+jest.mock("../src/hooks/useGetProcess");
 
-describe('ProcessPage Component Logic', () => {
+describe("ProcessPage Component Logic", () => {
   const mockAllProcessesData = [
-    { pid: 1, name: 'Process 1' },
-    { pid: 2, name: 'Process 2' },
+    { pid: 1, name: "Process 1" },
+    { pid: 2, name: "Process 2" },
   ];
 
   const mockProcessData = [
-    { timestamp: 1, percent_cpu: 10, virtual_memory: 1024, resident_memory: 512 },
-    { timestamp: 2, percent_cpu: 20, virtual_memory: 2048, resident_memory: 1024 },
+    {
+      timestamp: 1,
+      percent_cpu: 10,
+      virtual_memory: 1024,
+      resident_memory: 512,
+    },
+    {
+      timestamp: 2,
+      percent_cpu: 20,
+      virtual_memory: 2048,
+      resident_memory: 1024,
+    },
   ];
 
   beforeEach(() => {
@@ -34,7 +44,7 @@ describe('ProcessPage Component Logic', () => {
     });
   });
 
-  it('renders ProcessPage and fetches data correctly', async () => {
+  it("renders ProcessPage and fetches data correctly", async () => {
     await act(async () => {
       render(
         <ModeProvider>
@@ -44,16 +54,16 @@ describe('ProcessPage Component Logic', () => {
     });
 
     // Verify that the ProcessBar component is rendered
-    expect(screen.getByText('Select PID')).toBeInTheDocument();
+    expect(screen.getByText("Select PID")).toBeInTheDocument();
 
     // Verify that the CPU Line Graph component is rendered
-    expect(screen.getByText('CPU Usage Over Time')).toBeInTheDocument();
+    expect(screen.getByText("CPU Usage Over Time")).toBeInTheDocument();
 
     // Verify that the Memory Line Graph component is rendered
-    expect(screen.getByText('Memory Usage Over Time')).toBeInTheDocument();
+    expect(screen.getByText("Memory Usage Over Time")).toBeInTheDocument();
   });
 
-  it('selects a process and fetches process data', async () => {
+  it("selects a process and fetches process data", async () => {
     await act(async () => {
       render(
         <ModeProvider>
@@ -63,11 +73,11 @@ describe('ProcessPage Component Logic', () => {
     });
 
     // Simulate user selecting a process
-    const selectProcess = screen.getByLabelText('Select PID');
-    fireEvent.change(selectProcess, { target: { value: '2' } });
+    const selectProcess = screen.getByLabelText("Select PID");
+    fireEvent.change(selectProcess, { target: { value: "2" } });
 
     // Verify that the process data is fetched and displayed correctly
-    expect(screen.getByText('CPU Usage Over Time')).toBeInTheDocument();
-    expect(screen.getByText('Memory Usage Over Time')).toBeInTheDocument();
+    expect(screen.getByText("CPU Usage Over Time")).toBeInTheDocument();
+    expect(screen.getByText("Memory Usage Over Time")).toBeInTheDocument();
   });
 });

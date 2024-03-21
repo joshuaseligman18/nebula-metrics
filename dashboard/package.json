@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node_modules/.bin/vite",
     "build": "node_modules/.bin/tsc && node_modules/.bin/vite build",
     "lint": "node_modules/.bin/eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "node_modules/.bin/vite preview",
-    "test": "jest --coverage",
+    "test": "node_modules/.bin/jest --coverage",
     "format": "node_modules/.bin/prettier . --write"
   },
   "dependencies": {

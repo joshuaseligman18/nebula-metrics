@@ -72,8 +72,8 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   return (
     <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
       <div>
-        <label htmlFor="pidSelect" className="block text-gray-700 text-sm font-bold mb-2">
         <label
+          htmlFor="pidSelect"
           className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
         >
           Select PID

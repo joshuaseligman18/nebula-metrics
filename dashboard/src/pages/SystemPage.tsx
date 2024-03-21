@@ -17,11 +17,9 @@ const SystemPage: React.FC = () => {
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
-  const [originalCpuData, setOriginalCpuData] = useState<{ x: Date; y: number }[]>([]);
-  const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
-    { time: Date; ram: number; swapped: number }[]
+  const [originalCpuData, setOriginalCpuData] = useState<
+    { x: Date; y: number }[]
   >([]);
-  const [originalCpuData, setOriginalCpuData] = useState<{ x: Date; y: number }[]>([]);
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
   >([]);
@@ -163,7 +161,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0,
+        0
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -179,9 +177,16 @@ const SystemPage: React.FC = () => {
     }
   }, [diskData]);
 
-  const handleMinuteRangeChange = (startMinute: string | null, endMinute: string | null) => {
-  
-    if (startMinute && endMinute && cpuData.length > 0 && memoryUsageData.length > 0) {
+  const handleMinuteRangeChange = (
+    startMinute: string | null,
+    endMinute: string | null
+  ) => {
+    if (
+      startMinute &&
+      endMinute &&
+      cpuData.length > 0 &&
+      memoryUsageData.length > 0
+    ) {
       const startMinuteParts = startMinute.split(":");
       const endMinuteParts = endMinute.split(":");
       let startHour = parseInt(startMinuteParts[0]);
@@ -202,42 +207,56 @@ const SystemPage: React.FC = () => {
       const year = firstDataDate.getFullYear();
       const month = firstDataDate.getMonth();
       const day = firstDataDate.getDate();
-  
-      const startTimestamp = new Date(year, month, day, startHour, startMinuteValue).getTime();
-      const endTimestamp = new Date(year, month, day, endHour, endMinuteValue).getTime();
-  
+
+      const startTimestamp = new Date(
+        year,
+        month,
+        day,
+        startHour,
+        startMinuteValue
+      ).getTime();
+      const endTimestamp = new Date(
+        year,
+        month,
+        day,
+        endHour,
+        endMinuteValue
+      ).getTime();
+
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
-        const filteredCpuData = cpuData.filter(data => {
+        const filteredCpuData = cpuData.filter((data) => {
           const dataTimestamp = new Date(data.x).getTime();
-  
-          return dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp;
+
+          return (
+            dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp
+          );
         });
-  
-        const filteredMemoryData = memoryUsageData.filter(memory => {
+
+        const filteredMemoryData = memoryUsageData.filter((memory) => {
           const memoryTimestamp = memory.time.getTime();
-  
-          return memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp;
+
+          return (
+            memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp
+          );
         });
-  
+
         setCpuData(filteredCpuData);
         setMemoryUsageData(filteredMemoryData);
       } else {
         console.error("Invalid startMinute or endMinute values.");
       }
     } else {
-      
     }
-};
+  };
 
-const resetData = () => {
-  console.log(originalCpuData);
-  // Reset CPU data
-  setCpuData(originalCpuData);
+  const resetData = () => {
+    console.log(originalCpuData);
+    // Reset CPU data
+    setCpuData(originalCpuData);
 
-  // Reset memory usage data
-  setMemoryUsageData(originalMemoryUsageData);
-};
-
+    // Reset memory usage data
+    setMemoryUsageData(originalMemoryUsageData);
+  };
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
