@@ -19,35 +19,44 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
   const { mode } = useMode(); // Get the mode from your context
 
   // Memoize the column definitions to avoid unnecessary re-renders
-  const colDefs = useMemo<ColDef<ProcessDataType, any>[]>(() => [
-    { field: "pid", headerName: "PID" },
-    { field: "exec", headerName: "Executable" },
-    { field: "percent_cpu", headerName: "CPU %" },
-    {
-      field: "resident_memory",
-      headerName: "Resident Memory (GB)",
-      valueFormatter: (params) => convertKBToGB(params.value),
-    },
-    {
-      field: "shared_memory",
-      headerName: "Shared Memory (GB)",
-      valueFormatter: (params) => convertKBToGB(params.value),
-    },
-    { field: "elapsedTime", headerName: "Elapsed Time" },
-    { field: "total_cpu", headerName: "Total CPU" },
-    {
-      field: "virtual_memory",
-      headerName: "Virtual Memory (GB)",
-      valueFormatter: (params) => convertKBToGB(params.value),
-    },
-  ], []); // Empty dependency array ensures memoization only occurs once
+  const colDefs = useMemo<ColDef<ProcessDataType, any>[]>(
+    () => [
+      { field: "pid", headerName: "PID" },
+      { field: "exec", headerName: "Executable" },
+      { field: "percent_cpu", headerName: "CPU %" },
+      {
+        field: "resident_memory",
+        headerName: "Resident Memory (GB)",
+        valueFormatter: (params) => convertKBToGB(params.value),
+      },
+      {
+        field: "shared_memory",
+        headerName: "Shared Memory (GB)",
+        valueFormatter: (params) => convertKBToGB(params.value),
+      },
+      { field: "elapsedTime", headerName: "Elapsed Time" },
+      { field: "total_cpu", headerName: "Total CPU" },
+      {
+        field: "virtual_memory",
+        headerName: "Virtual Memory (GB)",
+        valueFormatter: (params) => convertKBToGB(params.value),
+      },
+    ],
+    []
+  ); // Empty dependency array ensures memoization only occurs once
 
   return (
     <div
       className={`ag-theme-alpine${mode === "dark" ? "-dark" : ""}`}
       style={{ height: "100%", width: "85%" }}
     >
-      <AgGridReact rowData={data} columnDefs={colDefs} domLayout="autoHeight" />
+      <AgGridReact
+        rowData={data}
+        columnDefs={colDefs}
+        domLayout="autoHeight"
+        pagination={true}
+        paginationPageSize={50}
+      />
     </div>
   );
 };
