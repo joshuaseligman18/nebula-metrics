@@ -7,5 +7,7 @@ export const useAllProcesses = (): UseQueryResult<any, Error> => {
       throw new Error("Failed to fetch all processes");
     }
     return response.json();
+  }, {
+    refetchInterval: 60000, 
   });
 };
