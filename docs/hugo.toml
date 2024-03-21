@@ -1,0 +1,24 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-us'
+title = 'Nebula Metrics'
+
+theme = 'hugo-theme-relearn'
+
+[params]
+disableSearch = true
+disableLandingPageButton = true
+
+[[params.themeVariant]]
+auto = ['zen-light', 'zen-dark']
+identifier = 'zen-auto'
+
+[params.imageEffects]
+lightbox = false
+
+[menu]
+[[menu.shortcuts]]
+identifier = 'ds'
+name = "<i class='fab fa-fw fa-github'></i> GitHub Repository"
+url = 'https://github.com/joshuaseligman18/nebula-metrics'
+weight = 10
+
