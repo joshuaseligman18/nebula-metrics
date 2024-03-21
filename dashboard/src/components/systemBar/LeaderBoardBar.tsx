@@ -241,7 +241,7 @@ const LeaderboardBar: React.FC = () => {
                       GB
                     </p>
                     <p>
-                      <b>Available RAM:</b>{" "}
+                      <b>Used RAM:</b>{" "}
                       {(
                         (latestMemory?.total ?? 0) - (latestMemory?.free ?? 0)
                       ).toFixed(2)}{" "}
@@ -252,7 +252,7 @@ const LeaderboardBar: React.FC = () => {
                       {(latestMemory?.swap_total ?? 0).toFixed(2)} GB
                     </p>
                     <p>
-                      <b>Available SWAPPED:</b>{" "}
+                      <b>Used SWAPPED:</b>{" "}
                       {(
                         (latestMemory?.swap_total ?? 0) -
                         (latestMemory?.swap_free ?? 0)
