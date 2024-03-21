@@ -56,10 +56,10 @@ describe('SystemPage Component Logic', () => {
     });
     // Simulate user interaction by selecting start minute and end minute
     const startMinuteSelect = screen.getByLabelText('Select Start Minute');
-    fireEvent.change(startMinuteSelect, { target: { value: '10' } });
+    fireEvent.change(startMinuteSelect, { target: { value: '10:00 PM' } });
 
     const endMinuteSelect = screen.getByLabelText('Select End Minute');
-    fireEvent.change(endMinuteSelect, { target: { value: '20' } });
+    fireEvent.change(endMinuteSelect, { target: { value: '10:00 PM' } });
 
     // Verify that the data is filtered correctly based on the minute range change
     expect(screen.getByText('CPU Usage Over Time')).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('SortingBar Component Logic', () => {
 
     const { getByLabelText, getByText } = render(
       <SortingBar
-        cpuMinuteValues={['10', '20', '30']} 
+        cpuMinuteValues={['10:00 PM', '10:05 PM', '10:10 PM']} 
         onMinuteRangeChange={mockOnMinuteRangeChange}
         resetData={mockResetData}
       />
@@ -83,18 +83,18 @@ describe('SortingBar Component Logic', () => {
 
     // Simulate user interaction by selecting start minute
     const startMinuteSelect = getByLabelText('Select Start Minute');
-    fireEvent.change(startMinuteSelect, { target: { value: '10' } });
+    fireEvent.change(startMinuteSelect, { target: { value: '10:00 PM' } });
 
     // Simulate user interaction by selecting end minute
     const endMinuteSelect = getByLabelText('Select End Minute');
-    fireEvent.change(endMinuteSelect, { target: { value: '20' } });
+    fireEvent.change(endMinuteSelect, { target: { value: '10:05 PM' } });
 
     // Simulate user clicking the reset button
     const resetButton = getByText('Reset');
     fireEvent.click(resetButton);
 
     // Verify that onMinuteRangeChange and resetData functions are called with correct arguments
-    expect(mockOnMinuteRangeChange).toHaveBeenCalledWith('10', '20');
+    expect(mockOnMinuteRangeChange).toHaveBeenCalledWith('10:00 PM', '10:05 PM');
     expect(mockResetData).toHaveBeenCalled();
   });
 
