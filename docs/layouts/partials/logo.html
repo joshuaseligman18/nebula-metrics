@@ -6,13 +6,13 @@
     const themeLogo = window.getComputedStyle(document.documentElement).getPropertyValue('--BROWSER-theme');
     const logos = document.querySelectorAll('.nebula-logo');
     for (const logo of logos) {
-        logo.src = `/images/logo-${themeLogo}.png`;
+        logo.src = `/nebula-metrics/images/logo-${themeLogo}.png`;
     }
 
     const links = document.querySelectorAll('link');
     for (const link of links) {
         if (link.rel === 'icon') {
-            link.href = `/images/favicon-${themeLogo}.png`;
+            link.href = `/nebula-metrics/images/favicon-${themeLogo}.png`;
         }
     }
 </script>
