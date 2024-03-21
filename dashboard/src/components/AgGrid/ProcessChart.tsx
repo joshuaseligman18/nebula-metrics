@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
+import { useNavigate } from "react-router-dom";
 import { ColDef } from "ag-grid-community";
 import { ProcessDataType } from "../../types/processDataType";
 import { useMode } from "../../context/ModeContext"; // Import your mode context
@@ -17,6 +18,7 @@ const convertKBToGB = (value: number): string => {
 
 const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
   const { mode } = useMode(); // Get the mode from your context
+  const navigate = useNavigate();
 
   // Memoize the column definitions to avoid unnecessary re-renders
   const colDefs = useMemo<ColDef<ProcessDataType, any>[]>(
@@ -45,6 +47,12 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
     []
   ); // Empty dependency array ensures memoization only occurs once
 
+  const handleRowClick = () => {
+    //const rowData = event.data as ProcessDataType;
+    navigate(`/process`);
+  };
+
+
   return (
     <div
       className={`ag-theme-alpine${mode === "dark" ? "-dark" : ""}`}
@@ -56,6 +64,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
         domLayout="autoHeight"
         pagination={true}
         paginationPageSize={50}
+        onRowClicked={handleRowClick} 
       />
     </div>
   );
