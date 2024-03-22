@@ -40,7 +40,9 @@ jobs:
         cd dashboard
         npm install
     - name: Run tests
-      run: npm test
+      run: |
+        cd dashboard
+        npm test
     - name: Upload Results
       uses: actions/upload-artifact@v4
       with:
