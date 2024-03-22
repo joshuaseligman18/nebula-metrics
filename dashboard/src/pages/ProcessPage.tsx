@@ -25,7 +25,7 @@ const ProcessPage: React.FC = () => {
   useEffect(() => {
     if (allProcessesData) {
       const allPids: number[] = allProcessesData.map(
-        (process: any) => process.pid,
+        (process: any) => process.pid
       ); // Explicitly typing as an array of numbers
       const uniquePidsSet = new Set(allPids); // Convert to Set to remove duplicates
       const uniquePidsArray = Array.from(uniquePidsSet); // Convert back to array
@@ -40,7 +40,7 @@ const ProcessPage: React.FC = () => {
         (cpu: { timestamp: number; percent_cpu: number }) => ({
           x: new Date(cpu.timestamp * 1000),
           y: cpu.percent_cpu * 100, // Assuming CPU percentage is in decimal form
-        }),
+        })
       );
       setCpuData(processedData);
     }
@@ -62,7 +62,7 @@ const ProcessPage: React.FC = () => {
               memory.virtual_memory) *
             100,
           swapped: 0, // Assuming no swap usage data is available
-        }),
+        })
       );
       setMemoryData(processedMemoryData);
     }
@@ -72,8 +72,6 @@ const ProcessPage: React.FC = () => {
     // Fetch process data whenever selectedPid changes
     refetch();
   }, [selectedPid, refetch]);
-
-  console.log(processData);
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
@@ -89,7 +87,7 @@ const ProcessPage: React.FC = () => {
             ) : (
               <ProcessBar
                 pids={Array.from(
-                  new Set(allProcessesData.map((process: any) => process.pid)),
+                  new Set(allProcessesData.map((process: any) => process.pid))
                 )} // Pass unique PIDs
                 onSelectPid={setSelectedPid}
                 allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar

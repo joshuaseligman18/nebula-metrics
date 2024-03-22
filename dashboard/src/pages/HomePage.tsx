@@ -10,50 +10,47 @@ import { useMode } from "../context/ModeContext";
 const HomePage: React.FC = () => {
   const { mode } = useMode();
 
-  const [latestProcesses, setLatestProcesses] = useState<
-    Array<ProcessDataType>
-  >([]);
+  const [aliveProcesses, setAliveProcesses] = useState<Array<ProcessDataType>>(
+    []
+  );
+  const [deadProcesses, setDeadProcesses] = useState<Array<ProcessDataType>>(
+    []
+  );
   const {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
   } = useAllProcesses();
-  console.log(processData);
 
   useEffect(() => {
     if (processData && processData.length > 0) {
-      // Create a map to store the latest entries for each unique PID
-      const latestProcessesMap = new Map();
+      const aliveProcessesMap = new Map<string, ProcessDataType>(); // Map for alive processes
+      const deadProcessesMap = new Map<string, ProcessDataType>(); // Map for dead processes
 
-      // Iterate through processData to find the latest entry for each unique PID
-      processData.forEach(
-        (process: { pid: any; timestamp: any; start_time: any }) => {
-          const { pid, timestamp, start_time } = process;
-          if (
-            !latestProcessesMap.has(pid) ||
-            latestProcessesMap.get(pid).timestamp < timestamp
-          ) {
-            const elapsedTimeSeconds = timestamp - start_time;
-            const minutes = (elapsedTimeSeconds / 60).toFixed(0);
-            const seconds = (elapsedTimeSeconds % 600).toFixed(0);
-            const formattedMinutes = String(minutes).padStart(2, "0");
-            const formattedSeconds = String(seconds).padStart(2, "0");
-            const elapsedTime = `${formattedMinutes} min ${formattedSeconds} sec`;
+      processData.forEach((process: ProcessDataType) => {
+        const { pid, timestamp, start_time, is_alive } = process;
+        const elapsedTimeSeconds = timestamp - start_time;
+        const minutes = (elapsedTimeSeconds / 60).toFixed(0);
+        const seconds = (elapsedTimeSeconds % 600).toFixed(0);
+        const formattedMinutes = String(minutes).padStart(2, "0");
+        const formattedSeconds = String(seconds).padStart(2, "0");
+        const elapsedTime = `${formattedMinutes} min ${formattedSeconds} sec`;
 
-            // Add elapsedTime to the process object
-            const processWithElapsedTime = { ...process, elapsedTime };
+        const processWithElapsedTime = { ...process, elapsedTime };
 
-            // Update the map with the process object
-            latestProcessesMap.set(pid, processWithElapsedTime);
-          }
-        },
-      );
+        // Check if the process is alive or dead and add it to the respective maps
+        if (is_alive) {
+          aliveProcessesMap.set(String(pid), processWithElapsedTime); // Add alive process to map
+        } else {
+          deadProcessesMap.set(String(pid), processWithElapsedTime); // Add dead process to map
+        }
+      });
 
-      // Convert the map values to an array to get the latest process data
-      const latestProcesses = Array.from(latestProcessesMap.values());
+      const aliveProcesses = Array.from(aliveProcessesMap.values());
+      const deadProcesses = Array.from(deadProcessesMap.values());
 
-      // Set the state with the latest process data
-      setLatestProcesses(latestProcesses);
+      setAliveProcesses(aliveProcesses); // Set state for alive processes
+      setDeadProcesses(deadProcesses); // Set state for dead processes
     }
   }, [processData]);
 
@@ -66,7 +63,9 @@ const HomePage: React.FC = () => {
         fluid
         className={` ${mode === "dark" ? "bg-dark text-white" : "bg-light text-black"} p-4`}
       >
-        <h1 className="text-2xl font-bold text-center mb-4">Process List</h1>
+        <h1 className="text-2xl font-bold text-center mb-4">
+          Active Process List
+        </h1>
         {loadingTable ? (
           <div className="flex justify-center">
             <Spinner animation="border" variant="primary" />
@@ -75,7 +74,21 @@ const HomePage: React.FC = () => {
           <div className="flex justify-center">Error fetching process data</div>
         ) : (
           <div className="flex justify-center">
-            <ProcessChart data={latestProcesses} />
+            <ProcessChart data={aliveProcesses} />
+          </div>
+        )}
+        <h1 className="text-2xl font-bold text-center mb-4 mt-4">
+          InActive Process List
+        </h1>
+        {loadingTable ? (
+          <div className="flex justify-center">
+            <Spinner animation="border" variant="primary" />
+          </div>
+        ) : errorTable ? (
+          <div className="flex justify-center">Error fetching process data</div>
+        ) : (
+          <div className="flex justify-center">
+            <ProcessChart data={deadProcesses} />
           </div>
         )}
       </Container>
