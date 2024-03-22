@@ -12,7 +12,6 @@ permissions:
 jobs:
   run-rust-tests:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
       with:
@@ -26,4 +25,25 @@ jobs:
       with:
         name: rust-code-coverage
         path: target/llvm-cov/html/
+        if-no-files-found: error
+  run-js-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Install dependenices
+      run: |
+        cd dashboard
+        npm install
+    - name: Run tests
+      run: npm test
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: js-code-coverage
+        path: coverage/
         if-no-files-found: error
