@@ -32,7 +32,6 @@ const LeaderboardBar: React.FC = () => {
     isLoading: cpuLoading,
     isError: cpuError,
   } = useGetCurrentCpuData();
-  console.log(cpuData);
 
   const {
     data: memoryData,

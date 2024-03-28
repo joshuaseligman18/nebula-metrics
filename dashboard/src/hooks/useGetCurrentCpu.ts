@@ -4,7 +4,7 @@ export const useGetCurrentCpuData = (): UseQueryResult<any, Error> => {
   return useQuery(
     "GetCurrentCpuData",
     async () => {
-      const response = await fetch("http://192.168.1.217:4242/api/cpu-info-current");
+      const response = await fetch("http://127.0.0.1:4242/api/cpu-info-current");
       if (!response.ok) {
         throw new Error("Failed to fetch cpu data");
       }
