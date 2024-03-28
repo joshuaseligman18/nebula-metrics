@@ -4,13 +4,16 @@ import App from "./App.tsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import { ModeProvider } from "./context/ModeContext";
+import { ProcessContextProvider } from "./context/PIDcontext.tsx";
 
 const Root: React.FC = () => {
   return (
     <React.StrictMode>
-      <ModeProvider>
-        <App />
-      </ModeProvider>
+      <ProcessContextProvider>
+        <ModeProvider>
+          <App />
+        </ModeProvider>
+      </ProcessContextProvider>
     </React.StrictMode>
   );
 };

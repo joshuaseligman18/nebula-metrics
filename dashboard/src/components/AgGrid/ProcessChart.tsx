@@ -5,7 +5,8 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 import { useNavigate } from "react-router-dom";
 import { ColDef } from "ag-grid-community";
 import { ProcessDataType } from "../../types/processDataType";
-import { useMode } from "../../context/ModeContext"; // Import your mode context
+import { useMode } from "../../context/ModeContext";
+import { useProcessContext } from "../../context/PIDcontext";
 
 interface ProcessChartProps {
   data: ProcessDataType[];
@@ -19,6 +20,7 @@ const convertKBToGB = (value: number): string => {
 const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
   const { mode } = useMode(); // Get the mode from your context
   const navigate = useNavigate();
+  const { setSelectedPID } = useProcessContext();
 
   // Memoize the column definitions to avoid unnecessary re-renders
   const colDefs = useMemo<ColDef<ProcessDataType, any>[]>(
@@ -47,8 +49,9 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
     []
   ); // Empty dependency array ensures memoization only occurs once
 
-  const handleRowClick = () => {
-    //const rowData = event.data as ProcessDataType;
+  const handleRowClick = (event:any) => {
+    const rowData = event.data as ProcessDataType;
+    setSelectedPID(rowData.pid);
     navigate(`/process`);
   };
 

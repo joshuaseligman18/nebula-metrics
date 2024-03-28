@@ -6,21 +6,41 @@ import CpuLineGraph from "../components/graphs/CpuLineGraph";
 import { useMode } from "../context/ModeContext";
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
+import { useProcessContext } from "../context/PIDcontext";
 
 const ProcessPage: React.FC = () => {
+  const { selectedPID } = useProcessContext();
+  console.log(selectedPID);
   const { mode } = useMode();
   const {
     data: allProcessesData,
     isLoading: processLoad,
     isError: processesError,
   } = useAllProcesses(); // Get all processes data
-  const [selectedPid, setSelectedPid] = useState<number | null>(null); // State to store selected PID
+  const [selectedPid, setSelectedPid] = useState<number | null>(() => {
+    if (selectedPID !== null) {
+      return selectedPID;
+    } else {
+      return 1;
+    }
+  });
+  
   const {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
     refetch,
-  } = useGetProcessData(selectedPid || 1); // Fetch data based on selected PID or default
+  } = useGetProcessData(selectedPID || 1); 
+  console.log(processData);
+
+  useEffect(() => {
+    setSelectedPid(selectedPID);
+  }, [selectedPID]);
+
+  useEffect(() => {
+    // Fetch process data whenever selectedPid changes
+    refetch();
+  }, [selectedPid, refetch]);
 
   useEffect(() => {
     if (allProcessesData) {
