@@ -338,7 +338,7 @@ const SystemPage: React.FC = () => {
               </h5>
               {diskLoading ? (
                 <div
-                  className="d-flex justify-content-center align-items-center"
+                  className="d-flex justify-content-center justify-between align-items-center"
                   style={{ height: "100%" }}
                 >
                   <Spinner animation="border" role="status">
@@ -390,10 +390,8 @@ const SystemPage: React.FC = () => {
                   {/* Right side */}
                   <div className="col-md-6">
                     {/* Total Disk Storage */}
-                    <div
-                      className="flex justify-center"
-                      style={{ width: "100%", height: "400px" }}
-                    >
+                    <div className="flex justify-center"
+                     style={{ width: "750px", height: "250px" }}>
                       {formattedDiskData ? (
                         <DiskUsageAgGrid data={formattedDiskData} />
                       ) : (
@@ -410,5 +408,4 @@ const SystemPage: React.FC = () => {
     </div>
   );
 };
-
 export default SystemPage;
