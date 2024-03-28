@@ -7,7 +7,7 @@ export const useGetProcessData = (
     ["GetProcessData", processId],
     async () => {
       const response = await fetch(
-        `http://127.0.0.1:4242/api/process/${processId}`
+        `http://192.168.1.217:4242/api/process/${processId}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch process data");
