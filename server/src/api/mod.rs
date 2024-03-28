@@ -146,7 +146,7 @@ async fn get_combined_process_info(
 }
 
 /// Returns the latest disk information for each device
-async fn get_latest_disk_info(
+async fn get_disk_info(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<DiskInfo>>, (StatusCode, String)> {
     let query = r#"
