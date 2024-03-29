@@ -1,5 +1,6 @@
 +++
 title = 'Contributing to Nebula Metrics'
+weight = 30
 +++
 
 ## Required Tools

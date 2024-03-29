@@ -1,5 +1,6 @@
 +++
 title = 'Installation Instructions'
+weight = 40
 +++
 
 ## Download Nebula Metrics
