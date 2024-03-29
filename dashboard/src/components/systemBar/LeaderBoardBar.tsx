@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import Card from "react-bootstrap/Card";
 import Spinner from "react-bootstrap/Spinner";
 import DonutChart from "../graphs/DonutChart";
-import { useGetCpuData } from "../../hooks/useGetCpuData";
-import { useGetMemoryData } from "../../hooks/useGetMemoryData";
+import { useGetCurrentCpuData } from "../../hooks/useGetCurrentCpu";
+import { useGetCurrentMemoryData } from "../../hooks/useGetCurrentMemory";
 import { useGetDiskData } from "../../hooks/useGetDiskData";
 import { CpuData } from "../../types/cpuDataType";
 import { useMode } from "../../context/ModeContext";
@@ -20,7 +20,7 @@ const LeaderboardBar: React.FC = () => {
   } | null>(null);
 
   const [latestDisk, setLatestDisk] = useState<{
-    avalible: number;
+    available: number;
     used: number;
   } | null>(null);
 
@@ -31,13 +31,13 @@ const LeaderboardBar: React.FC = () => {
     data: cpuData,
     isLoading: cpuLoading,
     isError: cpuError,
-  } = useGetCpuData();
+  } = useGetCurrentCpuData();
 
   const {
     data: memoryData,
     isLoading: memoryLoading,
     isError: memoryError,
-  } = useGetMemoryData();
+  } = useGetCurrentMemoryData();
 
   const {
     data: diskData,
@@ -46,25 +46,12 @@ const LeaderboardBar: React.FC = () => {
   } = useGetDiskData();
 
   useEffect(() => {
-    if (cpuData && Array.isArray(cpuData)) {
-      // Find the latest timestamp
-      const latestTimestamp = Math.max(
-        ...cpuData.map((core) => core.timestamp),
-      );
-
-      // Filter out CPU data with the latest timestamp
-      const latestData = cpuData.filter(
-        (core) => core.timestamp === latestTimestamp,
-      );
-
+    if (cpuData && Array.isArray(cpuData) && cpuData.length > 0) {
       // Calculate total usage across all cores
-      const totalUsage = latestData.reduce(
-        (total, core) => total + core.usage,
-        0,
-      );
+      const totalUsage = cpuData.reduce((total, core) => total + core.usage, 0);
 
       // Calculate the total number of cores
-      const totalCores = latestData.reduce((total, core) => {
+      const totalCores = cpuData.reduce((total, core) => {
         if (!total.includes(core.cpu_core)) {
           total.push(core.cpu_core);
         }
@@ -74,21 +61,22 @@ const LeaderboardBar: React.FC = () => {
       // Update the total system usage
       setTotalSystemUsage((totalUsage * 100) / totalCores); // Convert to percentage
 
-      // Set the latest CPU data for the latest timestamp
-      setLatestCpuData(latestData);
+      // Set the latest CPU data
+      setLatestCpuData(cpuData);
     }
   }, [cpuData]);
 
   useEffect(() => {
     if (memoryData && memoryData.length > 0) {
-      const latestMemoryEntry = memoryData[memoryData.length - 1];
-      const totalInGB = latestMemoryEntry.total / (1024 * 1024);
-      const freeInGB = latestMemoryEntry.free / (1024 * 1024);
-      const swapTotalInGB = latestMemoryEntry.swap_total / (1024 * 1024);
-      const swapFreeInGB = latestMemoryEntry.swap_free / (1024 * 1024);
+      const totalInGB = memoryData[memoryData.length - 1].total / (1024 * 1024);
+      const freeInGB = memoryData[memoryData.length - 1].free / (1024 * 1024);
+      const swapTotalInGB =
+        memoryData[memoryData.length - 1].swap_total / (1024 * 1024);
+      const swapFreeInGB =
+        memoryData[memoryData.length - 1].swap_free / (1024 * 1024);
 
       setLatestMemory({
-        ...latestMemoryEntry,
+        ...memoryData[memoryData.length - 1],
         total: totalInGB,
         free: freeInGB,
         swap_total: swapTotalInGB,
@@ -99,38 +87,23 @@ const LeaderboardBar: React.FC = () => {
 
   useEffect(() => {
     if (diskData && diskData.length > 0) {
-      // Create a map to store the latest entries for each unique disk name
-      const latestEntriesMap = new Map();
-
-      // Iterate through diskData to find the latest entry for each unique disk name
-      diskData.forEach((disk: { device_name: any; timestamp: number }) => {
-        if (!latestEntriesMap.has(disk.device_name)) {
-          latestEntriesMap.set(disk.device_name, disk);
-        } else {
-          const currentLatestEntry = latestEntriesMap.get(disk.device_name);
-          if (currentLatestEntry.timestamp < disk.timestamp) {
-            latestEntriesMap.set(disk.device_name, disk);
-          }
-        }
-      });
-
       // Initialize variables to hold total values
       let totalAvailable = 0;
       let totalUsed = 0;
 
-      // Calculate the sum of values for the latest entries with unique disk names
-      latestEntriesMap.forEach((entry) => {
-        totalAvailable += entry.available;
-        totalUsed += entry.used;
+      // Calculate the sum of available and used space for each disk
+      diskData.forEach((disk: { available: number; used: number }) => {
+        totalAvailable += disk.available;
+        totalUsed += disk.used;
       });
 
       // Convert total values from MB to GB
       const totalAvailableInGB = totalAvailable / 1024;
       const totalUsedInGB = totalUsed / 1024;
 
-      // Create an object representing the sum of values for the latest entries with unique disk names
+      // Create an object representing the sum of values for all disks
       const latestDiskTotal = {
-        avalible: totalAvailableInGB,
+        available: totalAvailableInGB,
         used: totalUsedInGB,
         // You might want to include other properties here if needed
       };
@@ -287,7 +260,7 @@ const LeaderboardBar: React.FC = () => {
                   <div className="w-40 h-40">
                     <DonutChart
                       total={
-                        (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
+                        (latestDisk?.available ?? 0) + (latestDisk?.used ?? 0)
                       }
                       inUse={latestDisk?.used ?? 0}
                       width={150}
@@ -298,7 +271,7 @@ const LeaderboardBar: React.FC = () => {
                     <p>
                       <b>Total:</b>{" "}
                       {(
-                        (latestDisk?.avalible ?? 0) + (latestDisk?.used ?? 0)
+                        (latestDisk?.available ?? 0) + (latestDisk?.used ?? 0)
                       ).toFixed(2)}{" "}
                       GB
                     </p>
@@ -306,8 +279,8 @@ const LeaderboardBar: React.FC = () => {
                       <b>Used:</b> {(latestDisk?.used ?? 0).toFixed(2)} GB
                     </p>
                     <p>
-                      <b>Available:</b> {(latestDisk?.avalible ?? 0).toFixed(2)}{" "}
-                      GB
+                      <b>Available:</b>{" "}
+                      {(latestDisk?.available ?? 0).toFixed(2)} GB
                     </p>
                   </div>
                 </>

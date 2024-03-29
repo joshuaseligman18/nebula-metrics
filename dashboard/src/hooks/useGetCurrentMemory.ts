@@ -1,10 +1,10 @@
 import { useQuery, UseQueryResult } from "react-query";
 
-export const useGetDiskData = (): UseQueryResult<any, Error> => {
+export const useGetCurrentMemoryData = (): UseQueryResult<any, Error> => {
   return useQuery(
-    "GetDiskData",
+    "GetCurrentMemoryData",
     async () => {
-      const response = await fetch("http://127.0.0.1:4242/api/disks");
+      const response = await fetch("http://127.0.0.1:4242/api/memory-current");
       if (!response.ok) {
         throw new Error("Failed to fetch disk data");
       }

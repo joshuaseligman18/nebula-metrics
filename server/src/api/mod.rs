@@ -25,6 +25,8 @@ pub async fn create_api_router(test_sql_conn: Option<SqlitePool>) -> Result<Rout
         .route("/process/:pid", get(get_combined_process_info))
         .route("/disks", get(get_disk_info))
         .route("/cpu-info", get(get_cpu_info))
+        .route("/cpu-info-current", get(get_latest_cpu_info))
+        .route("/memory-current", get(get_latest_memory_data))
         .with_state(AppState {
             conn: match test_sql_conn {
                 Some(test_pool) => test_pool,
@@ -73,10 +75,22 @@ async fn get_all_processes(
             ps.shared_memory
         FROM
             Process p
+        LEFT JOIN (
+            SELECT
+                pid,
+                MAX(timestamp) AS latest_timestamp
+            FROM
+                ProcStat
+            GROUP BY
+                pid
+        ) AS latest_ps
+        ON
+            p.pid = latest_ps.pid
         LEFT JOIN
             ProcStat ps
         ON
-            p.pid = ps.pid
+            latest_ps.pid = ps.pid
+            AND latest_ps.latest_timestamp = ps.timestamp
     "#;
 
     let res = sqlx::query_as::<_, ProcessInfo>(query)
@@ -118,7 +132,10 @@ async fn get_combined_process_info(
     match query_result {
         Ok(combined_infos) => {
             if combined_infos.is_empty() {
-                Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Process {} not found", pid)))
+                Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Process {} not found", pid),
+                ))
             } else {
                 Ok(Json(combined_infos))
             }
@@ -141,7 +158,7 @@ async fn get_combined_process_info(
     }
 }
 
-/// Returns all disk information
+/// Returns the latest disk information for each device
 async fn get_disk_info(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<DiskInfo>>, (StatusCode, String)> {
@@ -155,10 +172,22 @@ async fn get_disk_info(
             ds.available
         FROM
             Disk d
+        INNER JOIN (
+            SELECT
+                device_name,
+                MAX(timestamp) AS latest_timestamp
+            FROM
+                DiskStat
+            GROUP BY
+                device_name
+        ) AS latest_ds
+        ON
+            d.device_name = latest_ds.device_name
         INNER JOIN
             DiskStat ds
         ON
-            d.device_name = ds.device_name
+            latest_ds.device_name = ds.device_name
+            AND latest_ds.latest_timestamp = ds.timestamp
     "#;
 
     let res = sqlx::query_as::<_, DiskInfo>(query)
@@ -169,7 +198,7 @@ async fn get_disk_info(
         Ok(disk_info) => Ok(Json(disk_info)),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error fetching disk information: {}", e),
+            format!("Error fetching latest disk information: {}", e),
         )),
     }
 }
@@ -202,6 +231,82 @@ async fn get_cpu_info(
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Error fetching CPU information: {}", e),
+        )),
+    }
+}
+
+/// Returns the latest CPU information for each core
+async fn get_latest_cpu_info(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<CpuInfo>>, (StatusCode, String)> {
+    let query = r#"
+        SELECT
+            c.cpu_core,
+            c.mhz,
+            c.total_cache,
+            cs.timestamp,
+            cs.usage
+        FROM
+            Cpu c
+        INNER JOIN (
+            SELECT
+                cpu_core,
+                MAX(timestamp) AS latest_timestamp
+            FROM
+                CpuStat
+            GROUP BY
+                cpu_core
+        ) AS latest_cs
+        ON
+            c.cpu_core = latest_cs.cpu_core
+        INNER JOIN
+            CpuStat cs
+        ON
+            latest_cs.cpu_core = cs.cpu_core
+            AND latest_cs.latest_timestamp = cs.timestamp
+    "#;
+
+    let res = sqlx::query_as::<_, CpuInfo>(query)
+        .fetch_all(&state.conn)
+        .await;
+
+    match res {
+        Ok(cpu_info) => Ok(Json(cpu_info)),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error fetching latest CPU information: {}", e),
+        )),
+    }
+}
+
+/// Returns the latest data from the Memory table
+async fn get_latest_memory_data(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Memory>>, (StatusCode, String)> {
+    let query = r#"
+        SELECT
+            m.*
+        FROM
+            Memory m
+        INNER JOIN (
+            SELECT
+                MAX(timestamp) AS latest_timestamp
+            FROM
+                Memory
+        ) AS latest_mem
+        ON
+            m.timestamp = latest_mem.latest_timestamp
+    "#;
+
+    let res = sqlx::query_as::<_, Memory>(query)
+        .fetch_all(&state.conn)
+        .await;
+
+    match res {
+        Ok(memory_vec) => Ok(Json(memory_vec)),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Error fetching latest memory data".to_string(),
         )),
     }
 }

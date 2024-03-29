@@ -12,6 +12,6 @@ export const useGetCpuData = (): UseQueryResult<any, Error> => {
     },
     {
       refetchInterval: 60000,
-    }
+    },
   );
 };

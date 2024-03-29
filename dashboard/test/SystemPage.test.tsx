@@ -50,7 +50,7 @@ describe("SystemPage Component Logic", () => {
       render(
         <ModeProvider>
           <SystemPage />
-        </ModeProvider>
+        </ModeProvider>,
       );
     });
     // Simulate user interaction by selecting start minute and end minute
@@ -104,7 +104,7 @@ describe("SortingBar Component Logic", () => {
           onMinuteRangeChange={mockOnMinuteRangeChange}
           resetData={mockResetData}
         />
-      </ModeProvider>
+      </ModeProvider>,
     );
 
     // Simulate user interaction by selecting start minute
@@ -122,7 +122,7 @@ describe("SortingBar Component Logic", () => {
     // Verify that onMinuteRangeChange and resetData functions are called with correct arguments
     expect(mockOnMinuteRangeChange).toHaveBeenCalledWith(
       "10:00 PM",
-      "10:05 PM"
+      "10:05 PM",
     );
     expect(mockResetData).toHaveBeenCalled();
   });
