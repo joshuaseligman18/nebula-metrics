@@ -47,7 +47,7 @@ through the `journalctl` tool.
 * Document your changes. This includes but is not limited to:
     * Writing comments throughout the code.
     * Usingdoc comments for method signatures.
-    * Updating the OpenAPI specification for all API changes.
+    * Updating the OpenAPI specification located in *docs/static/resources* for all API changes.
     * Documenting any larger feature on the website.
 
 ### Before Feature Merge
