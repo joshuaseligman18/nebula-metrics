@@ -19,7 +19,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     // Auto-select process 1 when the component mounts
     if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === 1
+        (process: any) => process.pid === 1,
       );
       setSelectedProcess(process1);
     }
@@ -29,12 +29,12 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     onSelectPid(pid);
     if (pid !== null) {
       const process = allProcessesData.find(
-        (process: any) => process.pid === pid
+        (process: any) => process.pid === pid,
       );
       setSelectedProcess(process);
     } else {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === 1
+        (process: any) => process.pid === 1,
       );
       setSelectedProcess(process1);
     }

@@ -15,8 +15,14 @@ export interface RenderResultWithData extends RenderResult {
 
 const queryClient = new QueryClient();
 
-export const customRender = (ui: React.ReactElement, options?: any): RenderResultWithData => {
-  const result = render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>, options);
+export const customRender = (
+  ui: React.ReactElement,
+  options?: any,
+): RenderResultWithData => {
+  const result = render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+    options,
+  );
 
   return {
     ...result,

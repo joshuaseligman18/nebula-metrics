@@ -49,7 +49,7 @@ describe("ProcessPage Component Logic", () => {
       render(
         <ModeProvider>
           <ProcessPage />
-        </ModeProvider>
+        </ModeProvider>,
       );
     });
 
@@ -68,7 +68,7 @@ describe("ProcessPage Component Logic", () => {
       render(
         <ModeProvider>
           <ProcessPage />
-        </ModeProvider>
+        </ModeProvider>,
       );
     });
 

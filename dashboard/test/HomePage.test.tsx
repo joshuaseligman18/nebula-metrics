@@ -56,7 +56,7 @@ describe("HomePage Component Logic", () => {
         <ModeProvider>
           <HomePage />
           <LeaderboardBar />
-        </ModeProvider>
+        </ModeProvider>,
       );
     });
 
@@ -69,7 +69,7 @@ describe("HomePage Component Logic", () => {
     // Check if latestProcessesMap has the PID and timestamp conditions are met
     expect(
       !latestProcessesMap.has(pidToCheck) ||
-        latestProcessesMap.get(pidToCheck)?.timestamp < timestampToCheck
+        latestProcessesMap.get(pidToCheck)?.timestamp < timestampToCheck,
     ).toBe(true);
   });
 
@@ -126,7 +126,7 @@ describe("HomePage Component Logic", () => {
       customRender(
         <ModeProvider>
           <LeaderboardBar />
-        </ModeProvider>
+        </ModeProvider>,
       );
     });
 
