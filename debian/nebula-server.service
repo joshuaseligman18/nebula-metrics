@@ -7,4 +7,4 @@ Restart=always
 RestartSec=5s
 
 [Install]
-WantedBy=first-app.service
+WantedBy=nebula-metrics.service

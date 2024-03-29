@@ -12,6 +12,6 @@ export const useGetMemoryData = (): UseQueryResult<any, Error> => {
     },
     {
       refetchInterval: 60000,
-    }
+    },
   );
 };

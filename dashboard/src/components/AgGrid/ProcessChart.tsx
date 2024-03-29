@@ -46,7 +46,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
         valueFormatter: (params) => convertKBToGB(params.value),
       },
     ],
-    []
+    [],
   ); // Empty dependency array ensures memoization only occurs once
 
   const handleRowClick = (event:any) => {
@@ -54,7 +54,6 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
     setSelectedPID(rowData.pid);
     navigate(`/process`);
   };
-
 
   return (
     <div
@@ -67,7 +66,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
         domLayout="autoHeight"
         pagination={true}
         paginationPageSize={50}
-        onRowClicked={handleRowClick} 
+        onRowClicked={handleRowClick}
       />
     </div>
   );

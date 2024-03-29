@@ -5,7 +5,7 @@ interface SortingBarProps {
   cpuMinuteValues: string[];
   onMinuteRangeChange: (
     startMinute: string | null,
-    endMinute: string | null
+    endMinute: string | null,
   ) => void;
   resetData: () => void;
 }
@@ -26,7 +26,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
     }
 
     const startMinuteIndex = cpuMinuteValues.findIndex(
-      (value) => value === startMinute
+      (value) => value === startMinute,
     );
 
     if (startMinuteIndex === -1) {
@@ -42,14 +42,14 @@ const SortingBar: React.FC<SortingBarProps> = ({
   }, [cpuMinuteValues, startMinute]);
 
   const handleStartMinuteChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const minute = event.target.value;
     setStartMinute(minute);
   };
 
   const handleEndMinuteChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     const minute = event.target.value;
     setEndMinute(minute);

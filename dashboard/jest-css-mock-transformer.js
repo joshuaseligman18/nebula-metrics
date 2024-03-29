@@ -1,7 +1,7 @@
-const { createTransformer } = require('ts-jest');
+const { createTransformer } = require("ts-jest");
 
 module.exports = createTransformer({
   process() {
-    return 'module.exports = {};';
+    return "module.exports = {};";
   },
 });

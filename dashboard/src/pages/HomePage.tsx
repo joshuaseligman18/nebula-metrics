@@ -11,10 +11,10 @@ const HomePage: React.FC = () => {
   const { mode } = useMode();
 
   const [aliveProcesses, setAliveProcesses] = useState<Array<ProcessDataType>>(
-    []
+    [],
   );
   const [deadProcesses, setDeadProcesses] = useState<Array<ProcessDataType>>(
-    []
+    [],
   );
   const {
     data: processData,

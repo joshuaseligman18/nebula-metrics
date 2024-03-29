@@ -161,7 +161,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0
+        0,
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -179,7 +179,7 @@ const SystemPage: React.FC = () => {
 
   const handleMinuteRangeChange = (
     startMinute: string | null,
-    endMinute: string | null
+    endMinute: string | null,
   ) => {
     if (
       startMinute &&
@@ -213,14 +213,14 @@ const SystemPage: React.FC = () => {
         month,
         day,
         startHour,
-        startMinuteValue
+        startMinuteValue,
       ).getTime();
       const endTimestamp = new Date(
         year,
         month,
         day,
         endHour,
-        endMinuteValue
+        endMinuteValue,
       ).getTime();
 
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {

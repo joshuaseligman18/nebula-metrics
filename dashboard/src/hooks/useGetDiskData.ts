@@ -12,6 +12,6 @@ export const useGetDiskData = (): UseQueryResult<any, Error> => {
     },
     {
       refetchInterval: 60000,
-    }
+    },
   );
 };
