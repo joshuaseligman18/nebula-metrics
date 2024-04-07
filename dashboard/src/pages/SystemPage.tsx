@@ -161,7 +161,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0,
+        0
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -179,7 +179,7 @@ const SystemPage: React.FC = () => {
 
   const handleMinuteRangeChange = (
     startMinute: string | null,
-    endMinute: string | null,
+    endMinute: string | null
   ) => {
     if (
       startMinute &&
@@ -213,14 +213,14 @@ const SystemPage: React.FC = () => {
         month,
         day,
         startHour,
-        startMinuteValue,
+        startMinuteValue
       ).getTime();
       const endTimestamp = new Date(
         year,
         month,
         day,
         endHour,
-        endMinuteValue,
+        endMinuteValue
       ).getTime();
 
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
@@ -390,13 +390,19 @@ const SystemPage: React.FC = () => {
                   {/* Right side */}
                   <div className="col-md-6">
                     {/* Total Disk Storage */}
-                    <div className="flex justify-center"
-                     style={{ width: "750px", height: "250px" }}>
-                      {formattedDiskData ? (
-                        <DiskUsageAgGrid data={formattedDiskData} />
-                      ) : (
-                        <div>No data available</div>
-                      )}
+                    <div className="flex justify-center">
+                      <div
+                        className="table-responsive"
+                        style={{ maxWidth: "100%", overflowX: "auto" }}
+                      >
+                        {formattedDiskData ? (
+                          <div style={{ width: "750px", minWidth: "100%" }}>
+                            <DiskUsageAgGrid data={formattedDiskData} />
+                          </div>
+                        ) : (
+                          <div>No data available</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
