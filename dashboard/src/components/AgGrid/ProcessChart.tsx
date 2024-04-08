@@ -67,6 +67,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
         pagination={true}
         paginationPageSize={50}
         onRowClicked={handleRowClick}
+        rowClass="cursor-pointer"
       />
     </div>
   );
