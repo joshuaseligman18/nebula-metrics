@@ -6,7 +6,7 @@ interface MemoryLineGraphProps {
   data: { time: Date; ram: number; swapped: number }[];
 }
 
-const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
+const ProcessMemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
@@ -27,19 +27,12 @@ const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
           labels: data.map((d) => d.time),
           datasets: [
             {
-              label: "RAM Usage",
+              label: "Resident Memory Usage",
               data: data.map((d) => ({ x: d.time, y: d.ram })),
               borderColor: "cyan",
               borderWidth: 2,
               fill: false,
-            },
-            {
-              label: "Swapped Usage",
-              data: data.map((d) => ({ x: d.time, y: d.swapped })),
-              borderColor: "orange",
-              borderWidth: 2,
-              fill: false,
-            },
+            }
           ],
         },
         options: {
@@ -103,4 +96,4 @@ const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
   );
 };
 
-export default MemoryLineGraph;
+export default ProcessMemoryLineGraph;
