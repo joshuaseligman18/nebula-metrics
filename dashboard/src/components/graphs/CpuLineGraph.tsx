@@ -71,10 +71,8 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
                 color: "black", // Set y-axis color to black
                 // Ensure Y-axis goes up to 100
               },
-              max: 100,
               ticks: {
                 color: "black", // Set y-axis ticks color to black
-                stepSize: 10, // Set the step size for y-axis ticks
               },
             },
           },

@@ -80,10 +80,8 @@ const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
                 text: "Usage (%)",
                 color: "black", // Set y-axis color to black
               },
-              max: 100,
               ticks: {
                 color: "black", // Set y-axis ticks color to black
-                stepSize: 20, // Set the step size for y-axis ticks
               },
             },
           },
