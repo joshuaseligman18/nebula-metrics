@@ -27,6 +27,8 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     }
   }, [selectedProcess, allProcessesData, selectedPID]);
 
+  console.log(selectedProcess);
+
   const handlePidChange = (pid: number | null) => {
     onSelectPid(pid);
     if (pid !== null) {
@@ -67,6 +69,9 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
         // Format percent_cpu to percentage
         return `${(value * 100).toFixed(2)}%`;
       }
+    }  else if (typeof value === "boolean") {
+      // Format boolean values
+      return value ? "Alive" : "Not Alive";
     }
     return value;
   };
