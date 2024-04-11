@@ -168,7 +168,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0
+        0,
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,

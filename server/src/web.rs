@@ -21,7 +21,13 @@ pub fn create_web_router() -> Router {
 
     Router::new()
         // This will implicitly call / to be index.html
-        .nest_service("/", ServeDir::new(&files_dir))
+        .nest_service(
+            "/",
+            ServeDir::new(&files_dir).not_found_service(ServeFile::new(format!(
+                "{}/404.html",
+                files_dir.to_str().unwrap()
+            ))),
+        )
         .nest_service(
             "/process",
             ServeFile::new(format!("{}/process.html", files_dir.to_str().unwrap())),
@@ -30,4 +36,8 @@ pub fn create_web_router() -> Router {
             "/system",
             ServeFile::new(format!("{}/system.html", files_dir.to_str().unwrap())),
         )
+        .fallback_service(ServeFile::new(format!(
+            "{}/404.html",
+            files_dir.to_str().unwrap()
+        )))
 }

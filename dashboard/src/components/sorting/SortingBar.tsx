@@ -15,7 +15,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const filterForm = useRef<HTMLFormElement>(null);
 
   const handleStartTimeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setStartTime(new Date(event.target.value) || null);
   };
