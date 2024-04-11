@@ -1,10 +1,11 @@
 import { useQuery, UseQueryResult } from "react-query";
 
 export const useAllProcesses = (): UseQueryResult<any, Error> => {
+  const apiBaseUrl: string = import.meta.env.VITE_API_SERVER ? import.meta.env.VITE_API_SERVER : '';
   return useQuery(
     "allProcesses",
     async () => {
-      const response = await fetch("http://127.0.0.1:4242/api/allProcesses");
+      const response = await fetch(`${apiBaseUrl}/api/allProcesses`);
       if (!response.ok) {
         throw new Error("Failed to fetch all processes");
       }

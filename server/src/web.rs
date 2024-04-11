@@ -30,4 +30,8 @@ pub fn create_web_router() -> Router {
             "/system",
             ServeFile::new(format!("{}/system.html", files_dir.to_str().unwrap())),
         )
+        .fallback_service(ServeFile::new(format!(
+            "{}/system.html",
+            files_dir.to_str().unwrap()
+        )))
 }

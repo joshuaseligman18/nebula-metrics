@@ -7,10 +7,7 @@ interface ProcessBarProps {
   allProcessesData: any[]; // Define allProcessesData prop
 }
 
-const ProcessBar: React.FC<ProcessBarProps> = ({
-  pids,
-  allProcessesData,
-}) => {
+const ProcessBar: React.FC<ProcessBarProps> = ({ pids, allProcessesData }) => {
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
   const { mode } = useMode();
   const { selectedPID, setSelectedPID } = useProcessContext();

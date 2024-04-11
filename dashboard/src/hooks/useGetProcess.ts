@@ -3,11 +3,12 @@ import { useQuery, UseQueryResult } from "react-query";
 export const useGetProcessData = (
   processId: number,
 ): UseQueryResult<any, Error> => {
+  const apiBaseUrl: string = import.meta.env.VITE_API_SERVER ? import.meta.env.VITE_API_SERVER : '';
   return useQuery(
     ["GetProcessData", processId],
     async () => {
       const response = await fetch(
-        `http://127.0.0.1:4242/api/process/${processId}`,
+        `${apiBaseUrl}/api/process/${processId}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch process data");
