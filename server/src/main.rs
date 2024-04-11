@@ -154,6 +154,42 @@ mod tests {
     }
 
     #[sqlx::test]
+    async fn test_404_html(pool: SqlitePool) -> Result<(), sqlx::Error> {
+        let _ = tracing_subscriber::fmt()
+            .with_writer(io::stderr)
+            .with_max_level(Level::TRACE)
+            .try_init();
+
+        let app: Router = create_app(Some(pool)).await?;
+
+        let response: Response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/web/hello-world")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+        let res_bytes: Vec<u8> = response
+            .into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes()
+            .to_vec();
+        let assets_web_path: PathBuf =
+            fs::canonicalize("../assets/web/").expect("Assets web should exist");
+        let file_bytes = fs::read(assets_web_path.join("404.html")).unwrap();
+        assert_eq!(res_bytes, file_bytes);
+
+        Ok(())
+    }
+
+    #[sqlx::test]
     async fn test_not_found(pool: SqlitePool) -> Result<(), sqlx::Error> {
         let _ = tracing_subscriber::fmt()
             .with_writer(io::stderr)
