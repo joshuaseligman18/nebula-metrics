@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useMode } from "../../context/ModeContext";
 import { useProcessContext } from "../../context/PIDcontext";
+import SortingBar from "./SortingBar";
 
 interface ProcessBarProps {
   pids: number[];
   allProcessesData: any[]; // Define allProcessesData prop
+  setCurrentFilter: (newFilter: {
+    startTime: Date | null;
+    endTime: Date | null;
+  }) => void;
 }
 
 const ProcessBar: React.FC<ProcessBarProps> = ({
   pids,
   allProcessesData,
+  setCurrentFilter,
 }) => {
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
   const { mode } = useMode();
@@ -19,14 +25,13 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     // Auto-select process 1 when the component mounts
     if (allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
-        (process: any) =>
-          process.pid === (selectedPID !== null ? selectedPID : 1),
+        (process: any) => process.pid === selectedPID,
       );
       setSelectedProcess(process1);
     }
   }, [allProcessesData, selectedPID]);
 
-  const handlePidChange = (pid: number | null) => {
+  const handlePidChange = (pid: number) => {
     setSelectedPID(pid);
     if (pid !== null) {
       const process = allProcessesData.find(
@@ -73,16 +78,6 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     return value;
   };
 
-  useEffect(() => {
-    // Update selectedProcess when allProcessesData changes
-    if (allProcessesData && allProcessesData.length > 0) {
-      const process = allProcessesData.find(
-        (process: any) => process.pid === selectedProcess?.pid,
-      );
-      setSelectedProcess(process);
-    }
-  }, [allProcessesData]);
-
   return (
     <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
       <div>
@@ -95,14 +90,12 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
         <select
           className="border border-gray-300 rounded-md shadow-sm p-2 mb-2 w-15"
           style={{ width: "150px" }}
-          onChange={(e) => handlePidChange(parseInt(e.target.value) || null)}
+          onChange={(e) => handlePidChange(parseInt(e.target.value) || 1)}
           value={selectedProcess ? selectedProcess.pid : ""}
           id="pidSelect"
         >
-          <option value="">Select a PID</option>{" "}
-          {/* Handle null value explicitly */}
           {pids.map((pid) => (
-            <option key={pid} value={pid}>
+            <option key={pid} value={pid} selected={pid === selectedPID}>
               {pid}{" "}
               {
                 allProcessesData.find((process: any) => process.pid === pid)
@@ -132,6 +125,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
             ))}
         </ul>
       </div>
+      <SortingBar setCurrentFilter={setCurrentFilter} />
     </div>
   );
 };
