@@ -7,10 +7,16 @@ import { useMode } from "../context/ModeContext";
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
 import { useProcessContext } from "../context/PIDcontext";
+import { CpuData } from "../types/cpuDataType";
 
 const ProcessPage: React.FC = () => {
-  const { selectedPID, setSelectedPID } = useProcessContext();
+  const { selectedPID } = useProcessContext();
   const { mode } = useMode();
+  const [currentFilter, setCurrentFilter] = useState<{
+    startTime: Date | null;
+    endTime: Date | null;
+  }>({ startTime: null, endTime: null });
+
   const {
     data: allProcessesData,
     isLoading: processLoad,
@@ -25,10 +31,6 @@ const ProcessPage: React.FC = () => {
   } = useGetProcessData(selectedPID || 1);
 
   useEffect(() => {
-    setSelectedPID(selectedPID);
-  }, [selectedPID]);
-
-  useEffect(() => {
     // Fetch process data whenever selectedPID changes
     refetch();
   }, [selectedPID, refetch]);
@@ -37,33 +39,51 @@ const ProcessPage: React.FC = () => {
 
   useEffect(() => {
     if (processData) {
-      const processedData = processData.map(
-        (cpu: { timestamp: number; percent_cpu: number }) => ({
+      const processedData = processData
+        .filter((data: CpuData) => {
+          const timestampDate: Date = new Date(data.timestamp * 1000);
+          let valid: boolean = true;
+          if (currentFilter.startTime) {
+            valid = valid && timestampDate >= currentFilter.startTime;
+          }
+
+          if (currentFilter.endTime) {
+            valid = valid && timestampDate <= currentFilter.endTime;
+          }
+          return valid;
+        })
+        .map((cpu: { timestamp: number; percent_cpu: number }) => ({
           x: new Date(cpu.timestamp * 1000),
           y: cpu.percent_cpu * 100, // Assuming CPU percentage is in decimal form
-        }),
-      );
+        }));
       setCpuData(processedData);
     }
-  }, [processData]);
+  }, [processData, currentFilter]);
 
   const [memoryData, setMemoryData] = useState([]);
 
   useEffect(() => {
     if (processData) {
-      const processedMemoryData = processData.map(
-        (memory: {
-          timestamp: number;
-          virtual_memory: number;
-          resident_memory: number;
-        }) => ({
+      const processedMemoryData = processData
+        .filter((data: CpuData) => {
+          const timestampDate: Date = new Date(data.timestamp * 1000);
+          let valid: boolean = true;
+          if (currentFilter.startTime) {
+            valid = valid && timestampDate >= currentFilter.startTime;
+          }
+
+          if (currentFilter.endTime) {
+            valid = valid && timestampDate <= currentFilter.endTime;
+          }
+          return valid;
+        })
+        .map((memory: { timestamp: number; resident_memory: number }) => ({
           time: new Date(memory.timestamp * 1000),
           ram: memory.resident_memory / 1000,
-        }),
-      );
+        }));
       setMemoryData(processedMemoryData);
     }
-  }, [processData]);
+  }, [processData, currentFilter]);
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
@@ -75,13 +95,14 @@ const ProcessPage: React.FC = () => {
                 <span className="sr-only">Loading...</span>
               </Spinner>
             ) : processesError ? (
-              <div>Error fetching CPU data</div>
+              <div>Error fetching process data</div>
             ) : (
               <ProcessBar
                 pids={Array.from(
                   new Set(allProcessesData.map((process: any) => process.pid)),
                 )} // Pass unique PIDs
                 allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
+                setCurrentFilter={setCurrentFilter}
               />
             )}
           </div>
