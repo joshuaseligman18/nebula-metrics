@@ -215,7 +215,7 @@ const SystemPage: React.FC = () => {
   }, [originalMemoryUsageData, currentFilter]);
 
   return (
-    <div className="container-fluid px-0 mt-4 d-flex" style={{ maxWidth: "100%", overflowX: "hidden" }}>
+    <div className="container-fluid px-0 mt-4 d-flex" style={{ maxWidth: "100%"}}>
       <div style={{ flex: "1 0 10%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
@@ -306,9 +306,9 @@ const SystemPage: React.FC = () => {
               ) : (
                 <div className="row">
                   {/* Left side */}
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     {/* Disk Usage */}
-                    <div className="mr-4">
+                    <div className="mr-4 pr-4">
                       {/* Donut Chart */}
                       <div
                         className="flex justify-center"
@@ -344,15 +344,15 @@ const SystemPage: React.FC = () => {
                     </div>
                   </div>
                   {/* Right side */}
-                  <div className="col-md-6">
+                  <div className="col-md-8">
                     {/* Total Disk Storage */}
                     <div className="flex justify-center">
                       <div
                         className="table-responsive"
-                        style={{ maxWidth: "100%", overflowX: "auto" }}
+                        style={{ minWidth: "100%" }}
                       >
                         {formattedDiskData ? (
-                          <div style={{ width: "750px", minWidth: "100%" }}>
+                          <div style={{ width: "100%", minWidth: "100%" }}>
                             <DiskUsageAgGrid data={formattedDiskData} />
                           </div>
                         ) : (

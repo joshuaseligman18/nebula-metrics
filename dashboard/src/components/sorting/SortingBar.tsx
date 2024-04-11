@@ -68,7 +68,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             onChange={handleEndTimeChange}
           />
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-evenly mr-10">
           <button
             className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
             onClick={filterData}
