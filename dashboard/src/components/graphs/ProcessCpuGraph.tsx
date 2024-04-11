@@ -3,16 +3,10 @@ import Chart from "chart.js/auto";
 import "chartjs-adapter-date-fns";
 
 interface CpuLineGraphProps {
-  data: {
-    cpu_core: string;
-    mhz: number;
-    timestamp: Date;
-    total_cache: number;
-    usage: number;
-  }[];
+  data: { x: Date; y: number }[];
 }
 
-const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
+const ProcessCpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
@@ -23,30 +17,20 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
       chartInstance.current.destroy();
     }
 
-    const cores: Record<string, {mhz:number, cache: number}> = {};
-    data.forEach((cpu) => {
-      if (!Object.keys(cores).includes(cpu.cpu_core)) {
-        cores[cpu.cpu_core] = {mhz:cpu.mhz, cache:cpu.total_cache};
-      }
-    });
-
-    const dataSet = Object.entries(cores).map(([key, value]) => {
-      return {
-        label: `Core ${key} (${value.mhz} MHz | Cache ${value.cache} MB) `,
-        data: data
-          .filter(({ cpu_core }) => cpu_core.toString() === key)
-          .map(({ timestamp, usage }) => ({ x:timestamp, y:usage*100 })),
-        borderWidth: 2,
-        fill: false,
-      };
-    });
-
     const ctx = chartRef.current.getContext("2d");
     if (ctx) {
       chartInstance.current = new Chart(ctx, {
         type: "line",
         data: {
-          datasets: dataSet,
+          datasets: [
+            {
+              label: "CPU Usage",
+              data: data.map(({ x, y }) => ({ x, y })),
+              borderColor: "cyan",
+              borderWidth: 2,
+              fill: false,
+            },
+          ],
         },
         options: {
           elements: {
@@ -117,4 +101,4 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   );
 };
 
-export default CpuLineGraph;
+export default ProcessCpuLineGraph;

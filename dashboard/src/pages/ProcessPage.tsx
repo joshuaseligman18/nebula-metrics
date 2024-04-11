@@ -1,26 +1,44 @@
 import React, { useEffect, useState } from "react";
 import ProcessBar from "../components/sorting/ProcessBar";
 import { Card, Spinner } from "react-bootstrap";
-import MemoryLineGraph from "../components/graphs/MemLineGraph";
-import CpuLineGraph from "../components/graphs/CpuLineGraph";
+import ProcessMemoryLineGraph from "../components/graphs/ProcessMemGraph";
+import ProcessCpuLineGraph from "../components/graphs/ProcessCpuGraph";
 import { useMode } from "../context/ModeContext";
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
+import { useProcessContext } from "../context/PIDcontext";
 
 const ProcessPage: React.FC = () => {
+  const { selectedPID } = useProcessContext();
   const { mode } = useMode();
   const {
     data: allProcessesData,
     isLoading: processLoad,
     isError: processesError,
   } = useAllProcesses(); // Get all processes data
-  const [selectedPid, setSelectedPid] = useState<number | null>(null); // State to store selected PID
+  const [selectedPid, setSelectedPid] = useState<number | null>(() => {
+    if (selectedPID !== null) {
+      return selectedPID;
+    } else {
+      return 1;
+    }
+  });
+  
   const {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
     refetch,
-  } = useGetProcessData(selectedPid || 1); // Fetch data based on selected PID or default
+  } = useGetProcessData(selectedPID || 1); 
+
+  useEffect(() => {
+    setSelectedPid(selectedPID);
+  }, [selectedPID]);
+
+  useEffect(() => {
+    // Fetch process data whenever selectedPid changes
+    refetch();
+  }, [selectedPid, refetch]);
 
   useEffect(() => {
     if (allProcessesData) {
@@ -57,11 +75,7 @@ const ProcessPage: React.FC = () => {
           resident_memory: number;
         }) => ({
           time: new Date(memory.timestamp * 1000),
-          ram:
-            ((memory.virtual_memory - memory.resident_memory) /
-              memory.virtual_memory) *
-            100,
-          swapped: 0, // Assuming no swap usage data is available
+          ram: memory.resident_memory / 1000 
         }),
       );
       setMemoryData(processedMemoryData);
@@ -124,7 +138,7 @@ const ProcessPage: React.FC = () => {
               ) : errorTable ? (
                 <div>Error fetching CPU data</div>
               ) : (
-                <CpuLineGraph data={cpuData} />
+                <ProcessCpuLineGraph data={cpuData} />
               )}
             </Card.Body>
           </Card>
@@ -150,7 +164,7 @@ const ProcessPage: React.FC = () => {
               ) : errorTable ? (
                 <div>Error fetching memory data</div>
               ) : (
-                <MemoryLineGraph data={memoryData} />
+                <ProcessMemoryLineGraph data={memoryData} />
               )}
             </Card.Body>
           </Card>

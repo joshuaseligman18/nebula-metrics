@@ -2,17 +2,11 @@ import React, { useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
 import "chartjs-adapter-date-fns";
 
-interface CpuLineGraphProps {
-  data: {
-    cpu_core: string;
-    mhz: number;
-    timestamp: Date;
-    total_cache: number;
-    usage: number;
-  }[];
+interface MemoryLineGraphProps {
+  data: { time: Date; ram: number; swapped: number }[];
 }
 
-const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
+const ProcessMemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
@@ -23,30 +17,21 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
       chartInstance.current.destroy();
     }
 
-    const cores: Record<string, {mhz:number, cache: number}> = {};
-    data.forEach((cpu) => {
-      if (!Object.keys(cores).includes(cpu.cpu_core)) {
-        cores[cpu.cpu_core] = {mhz:cpu.mhz, cache:cpu.total_cache};
-      }
-    });
-
-    const dataSet = Object.entries(cores).map(([key, value]) => {
-      return {
-        label: `Core ${key} (${value.mhz} MHz | Cache ${value.cache} MB) `,
-        data: data
-          .filter(({ cpu_core }) => cpu_core.toString() === key)
-          .map(({ timestamp, usage }) => ({ x:timestamp, y:usage*100 })),
-        borderWidth: 2,
-        fill: false,
-      };
-    });
-
     const ctx = chartRef.current.getContext("2d");
     if (ctx) {
       chartInstance.current = new Chart(ctx, {
         type: "line",
         data: {
-          datasets: dataSet,
+          labels: data.map((d) => d.time),
+          datasets: [
+            {
+              label: "Resident Memory Usage",
+              data: data.map((d) => ({ x: d.time, y: d.ram })),
+              borderColor: "cyan",
+              borderWidth: 2,
+              fill: false,
+            },
+          ],
         },
         options: {
           elements: {
@@ -61,7 +46,7 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
           plugins: {
             title: {
               display: true,
-              text: "CPU Usage Over Time",
+              text: "Memory Usage Over Time",
               font: {
                 size: 14,
               },
@@ -92,9 +77,8 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
             y: {
               title: {
                 display: true,
-                text: "Usage (%)",
+                text: "Resident Memory Total (MB)",
                 color: "black", // Set y-axis color to black
-                // Ensure Y-axis goes up to 100
               },
               ticks: {
                 color: "black", // Set y-axis ticks color to black
@@ -117,4 +101,4 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   );
 };
 
-export default CpuLineGraph;
+export default ProcessMemoryLineGraph;

@@ -15,7 +15,7 @@ export const useGetProcessData = (
       return response.json();
     },
     {
-      refetchInterval: 60000,
+      refetchInterval: 10000,
     },
   );
 };

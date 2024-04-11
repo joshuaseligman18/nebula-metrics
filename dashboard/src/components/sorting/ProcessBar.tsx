@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useMode } from "../../context/ModeContext";
+import { useProcessContext } from "../../context/PIDcontext";
 
 interface ProcessBarProps {
   pids: number[];
@@ -14,16 +15,17 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
 }) => {
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
   const { mode } = useMode();
+  const { selectedPID } = useProcessContext();
 
   useEffect(() => {
     // Auto-select process 1 when the component mounts
     if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === 1,
+        (process: any) => process.pid === (selectedPID !== null ? selectedPID : 1)
       );
       setSelectedProcess(process1);
     }
-  }, [selectedProcess, allProcessesData]);
+  }, [selectedProcess, allProcessesData, selectedPID]);
 
   const handlePidChange = (pid: number | null) => {
     onSelectPid(pid);
@@ -65,6 +67,9 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
         // Format percent_cpu to percentage
         return `${(value * 100).toFixed(2)}%`;
       }
+    }  else if (typeof value === "boolean") {
+      // Format boolean values
+      return value ? "Alive" : "Not Alive";
     }
     return value;
   };
@@ -79,7 +84,8 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
           Select PID
         </label>
         <select
-          className="border border-gray-300 rounded-md shadow-sm p-2 mb-2"
+          className="border border-gray-300 rounded-md shadow-sm p-2 mb-2 w-15"
+          style={{ width: "150px" }}
           onChange={(e) => handlePidChange(parseInt(e.target.value) || null)}
           value={selectedProcess ? selectedProcess.pid : ""}
           id="pidSelect"
@@ -88,7 +94,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
           {/* Handle null value explicitly */}
           {pids.map((pid) => (
             <option key={pid} value={pid}>
-              {pid}
+               {pid} {allProcessesData.find((process: any) => process.pid === pid)?.exec}
             </option>
           ))}
         </select>

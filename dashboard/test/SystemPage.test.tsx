@@ -13,8 +13,8 @@ jest.mock("../src/hooks/useGetDiskData");
 
 describe("SystemPage Component Logic", () => {
   const mockCpuData = [
-    { cpu_core: 0, timestamp: 1, usage: 10 },
-    { cpu_core: 1, timestamp: 1, usage: 20 },
+    { cpu_core: 0, timestamp: 1, usage: 10, total_cache: 2048, mhz: 2034 },
+    { cpu_core: 1, timestamp: 1, usage: 20, total_cache: 2048, mhz: 2034 },
   ];
 
   const mockMemoryData = [

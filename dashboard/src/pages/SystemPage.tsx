@@ -16,9 +16,23 @@ import SortingBar from "../components/sorting/SortingBar";
 const SystemPage: React.FC = () => {
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
-  const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const [cpuData, setCpuData] = useState<
+    {
+      cpu_core: string;
+      mhz: number;
+      timestamp: Date;
+      total_cache: number;
+      usage: number;
+    }[]
+  >([]);
   const [originalCpuData, setOriginalCpuData] = useState<
-    { x: Date; y: number }[]
+    {
+      cpu_core: string;
+      mhz: number;
+      timestamp: Date;
+      total_cache: number;
+      usage: number;
+    }[]
   >([]);
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
@@ -50,12 +64,11 @@ const SystemPage: React.FC = () => {
 
   useEffect(() => {
     if (rawCpuData) {
-      const processedData: { x: Date; y: number }[] = [];
+      //const processedData: { x: Date; y: number; core: string }[] = [];
       const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
 
-      rawCpuData.forEach((cpu: CpuData) => {
-        const { timestamp, usage } = cpu;
-        const date = new Date(timestamp * 1000);
+      const processedData = rawCpuData.map((cpu: CpuData) => {
+        const date = new Date(cpu.timestamp * 1000);
         const hours =
           date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
         const amPm = date.getHours() >= 12 ? "PM" : "AM";
@@ -63,11 +76,14 @@ const SystemPage: React.FC = () => {
 
         // Add the formatted timestamp to the Set
         minuteSet.add(formattedTime);
-        processedData.push({ x: date, y: usage });
+        return { cpu_core: cpu.cpu_core,
+          mhz: cpu.mhz,
+          timestamp: date,
+          total_cache: cpu.total_cache,
+          usage: cpu.usage};
       });
 
       setCpuData(processedData);
-      setOriginalCpuData(processedData);
       setOriginalCpuData(processedData);
       // Convert the Set to an array and set the state
       setCpuMinuteValues(Array.from(minuteSet));
@@ -161,7 +177,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0,
+        0
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -179,7 +195,7 @@ const SystemPage: React.FC = () => {
 
   const handleMinuteRangeChange = (
     startMinute: string | null,
-    endMinute: string | null,
+    endMinute: string | null
   ) => {
     if (
       startMinute &&
@@ -203,7 +219,7 @@ const SystemPage: React.FC = () => {
       }
 
       // Get the date from the first CPU data point
-      const firstDataDate = new Date(cpuData[0].x);
+      const firstDataDate = new Date(cpuData[0].timestamp);
       const year = firstDataDate.getFullYear();
       const month = firstDataDate.getMonth();
       const day = firstDataDate.getDate();
@@ -213,19 +229,19 @@ const SystemPage: React.FC = () => {
         month,
         day,
         startHour,
-        startMinuteValue,
+        startMinuteValue
       ).getTime();
       const endTimestamp = new Date(
         year,
         month,
         day,
         endHour,
-        endMinuteValue,
+        endMinuteValue
       ).getTime();
 
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
         const filteredCpuData = cpuData.filter((data) => {
-          const dataTimestamp = new Date(data.x).getTime();
+          const dataTimestamp = new Date(data.timestamp).getTime();
 
           return (
             dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp
@@ -250,7 +266,6 @@ const SystemPage: React.FC = () => {
   };
 
   const resetData = () => {
-    console.log(originalCpuData);
     // Reset CPU data
     setCpuData(originalCpuData);
 
@@ -338,7 +353,7 @@ const SystemPage: React.FC = () => {
               </h5>
               {diskLoading ? (
                 <div
-                  className="d-flex justify-content-center align-items-center"
+                  className="d-flex justify-content-center justify-between align-items-center"
                   style={{ height: "100%" }}
                 >
                   <Spinner animation="border" role="status">
@@ -390,15 +405,19 @@ const SystemPage: React.FC = () => {
                   {/* Right side */}
                   <div className="col-md-6">
                     {/* Total Disk Storage */}
-                    <div
-                      className="flex justify-center"
-                      style={{ width: "100%", height: "400px" }}
-                    >
-                      {formattedDiskData ? (
-                        <DiskUsageAgGrid data={formattedDiskData} />
-                      ) : (
-                        <div>No data available</div>
-                      )}
+                    <div className="flex justify-center">
+                      <div
+                        className="table-responsive"
+                        style={{ maxWidth: "100%", overflowX: "auto" }}
+                      >
+                        {formattedDiskData ? (
+                          <div style={{ width: "750px", minWidth: "100%" }}>
+                            <DiskUsageAgGrid data={formattedDiskData} />
+                          </div>
+                        ) : (
+                          <div>No data available</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -410,5 +429,4 @@ const SystemPage: React.FC = () => {
     </div>
   );
 };
-
 export default SystemPage;
