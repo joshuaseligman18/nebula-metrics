@@ -15,8 +15,6 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   const { mode } = useMode();
   const { selectedPID, setSelectedPID } = useProcessContext();
 
-  console.log(allProcessesData);
-
   useEffect(() => {
     // Auto-select process 1 when the component mounts
     if (allProcessesData && allProcessesData.length > 0) {
