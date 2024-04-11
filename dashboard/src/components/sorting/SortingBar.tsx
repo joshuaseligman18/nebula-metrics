@@ -15,7 +15,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const filterForm = useRef<HTMLFormElement>(null);
 
   const handleStartTimeChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (event.target.value) {
       setStartTime(new Date(event.target.value) || null);
@@ -46,9 +46,11 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   };
 
   return (
-    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4`}>
-      <form ref={filterForm}>
-        <div className="mb-4">
+    <div
+      className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 md:flex md:justify-between mr-4`}
+    >
+      <form ref={filterForm} className="md:flex md:flex-col md:gap-4 ">
+        <div className="mb-4" style={{ marginLeft: "-10px" }}>
           <label
             htmlFor="startTime"
             className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
@@ -59,10 +61,11 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             type="datetime-local"
             id="startTime"
             className="border border-gray-300 rounded-md shadow-sm p-2"
+            style={{ width: "185px" }}
             onChange={handleStartTimeChange}
           />
         </div>
-        <div>
+        <div className="mb-4" style={{ marginLeft: "-10px" }}>
           <label
             htmlFor="endTime"
             className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
@@ -73,10 +76,11 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             type="datetime-local"
             id="endTime"
             className="border border-gray-300 rounded-md shadow-sm p-2"
+            style={{ width: "185px" }}
             onChange={handleEndTimeChange}
           />
         </div>
-        <div className="flex justify-between">
+        <div className="flex flex-col md:flex-row md:justify-evenly md:mr-10" style={{ marginLeft: "-10px" }}>
           <button
             className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
             onClick={filterData}
@@ -88,7 +92,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             Filter
           </button>
           <button
-            className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
+            className={`mt-4 ml-2 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
             onClick={resetForm}
             style={{
               backgroundColor: mode === "light" ? "#007bff" : "",
