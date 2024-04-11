@@ -34,6 +34,9 @@ const DonutChart: React.FC<DonutChartProps> = ({
     };
 
     const chartOptions: ChartOptions<"doughnut"> = {
+      animation: {
+        duration: 0,
+      },
       plugins: {
         legend: {
           display: true,

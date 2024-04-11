@@ -10,7 +10,6 @@ import { useProcessContext } from "../context/PIDcontext";
 
 const ProcessPage: React.FC = () => {
   const { selectedPID } = useProcessContext();
-  console.log(selectedPID);
   const { mode } = useMode();
   const {
     data: allProcessesData,
@@ -31,7 +30,6 @@ const ProcessPage: React.FC = () => {
     isError: errorTable,
     refetch,
   } = useGetProcessData(selectedPID || 1); 
-  console.log(processData);
 
   useEffect(() => {
     setSelectedPid(selectedPID);
@@ -77,11 +75,7 @@ const ProcessPage: React.FC = () => {
           resident_memory: number;
         }) => ({
           time: new Date(memory.timestamp * 1000),
-          ram:
-            ((memory.virtual_memory - memory.resident_memory) /
-              memory.virtual_memory) *
-            100,
-          swapped: 0, // Assuming no swap usage data is available
+          ram: memory.resident_memory / 1000 
         }),
       );
       setMemoryData(processedMemoryData);

@@ -10,8 +10,6 @@ const ProcessMemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
-  console.log(data);
-
   useEffect(() => {
     if (!chartRef.current || !data.length) return;
 
@@ -32,10 +30,19 @@ const ProcessMemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
               borderColor: "cyan",
               borderWidth: 2,
               fill: false,
-            }
+            },
           ],
         },
         options: {
+          elements: {
+            point: {
+              radius: 0,
+              hoverRadius: 4,
+            },
+          },
+          animation: {
+            duration: 0,
+          },
           plugins: {
             title: {
               display: true,
@@ -70,7 +77,7 @@ const ProcessMemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
             y: {
               title: {
                 display: true,
-                text: "Usage (%)",
+                text: "Resident Memory Total (MB)",
                 color: "black", // Set y-axis color to black
               },
               ticks: {

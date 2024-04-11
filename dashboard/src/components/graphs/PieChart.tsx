@@ -36,6 +36,9 @@ const DiskUsagePieChart: React.FC<{ data: DiskUsageData }> = ({ data }) => {
           ],
         },
         options: {
+          animation: {
+            duration: 0,
+          },
           plugins: {
             legend: {
               position: "bottom",

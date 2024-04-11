@@ -16,9 +16,11 @@ import SortingBar from "../components/sorting/SortingBar";
 const SystemPage: React.FC = () => {
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
-  const [cpuData, setCpuData] = useState<{ x: Date; y: number }[]>([]);
+  const [cpuData, setCpuData] = useState<
+    { x: Date; y: number; core: string }[]
+  >([]);
   const [originalCpuData, setOriginalCpuData] = useState<
-    { x: Date; y: number }[]
+    { x: Date; y: number; core: string }[]
   >([]);
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
@@ -50,7 +52,7 @@ const SystemPage: React.FC = () => {
 
   useEffect(() => {
     if (rawCpuData) {
-      const processedData: { x: Date; y: number }[] = [];
+      const processedData: { x: Date; y: number; core: string }[] = [];
       const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
 
       rawCpuData.forEach((cpu: CpuData) => {
@@ -63,11 +65,10 @@ const SystemPage: React.FC = () => {
 
         // Add the formatted timestamp to the Set
         minuteSet.add(formattedTime);
-        processedData.push({ x: date, y: usage });
+        processedData.push({ x: date, y: usage, core: cpu.cpu_core });
       });
 
       setCpuData(processedData);
-      setOriginalCpuData(processedData);
       setOriginalCpuData(processedData);
       // Convert the Set to an array and set the state
       setCpuMinuteValues(Array.from(minuteSet));
@@ -250,7 +251,6 @@ const SystemPage: React.FC = () => {
   };
 
   const resetData = () => {
-    console.log(originalCpuData);
     // Reset CPU data
     setCpuData(originalCpuData);
 

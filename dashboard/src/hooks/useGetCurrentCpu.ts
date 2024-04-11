@@ -13,7 +13,7 @@ export const useGetCurrentCpuData = (): UseQueryResult<any, Error> => {
       return response.json();
     },
     {
-      refetchInterval: 60000,
+      refetchInterval: 10000,
     },
   );
 };

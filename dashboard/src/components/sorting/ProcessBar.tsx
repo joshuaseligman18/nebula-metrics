@@ -27,8 +27,6 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     }
   }, [selectedProcess, allProcessesData, selectedPID]);
 
-  console.log(selectedProcess);
-
   const handlePidChange = (pid: number | null) => {
     onSelectPid(pid);
     if (pid !== null) {

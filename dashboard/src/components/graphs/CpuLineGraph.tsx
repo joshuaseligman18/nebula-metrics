@@ -3,7 +3,7 @@ import Chart from "chart.js/auto";
 import "chartjs-adapter-date-fns";
 
 interface CpuLineGraphProps {
-  data: { x: Date; y: number }[];
+  data: { x: Date; y: number; core: string }[];
 }
 
 const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
@@ -17,22 +17,41 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
       chartInstance.current.destroy();
     }
 
+    const cores: string[] = [];
+    data.forEach((cpu) => {
+      if (!cores.includes(cpu.core)) {
+        cores.push(cpu.core);
+      }
+    });
+
+    const dataSet = cores.map((core) => {
+      return {
+        label: "Core " + core,
+        data: data
+          .filter(({ core: dataCore }) => dataCore === core)
+          .map(({ x, y }) => ({ x, y })),
+        borderWidth: 2,
+        fill: false,
+      };
+    });
+
     const ctx = chartRef.current.getContext("2d");
     if (ctx) {
       chartInstance.current = new Chart(ctx, {
         type: "line",
         data: {
-          datasets: [
-            {
-              label: "CPU Usage",
-              data: data.map(({ x, y }) => ({ x, y })),
-              borderColor: "cyan",
-              borderWidth: 2,
-              fill: false,
-            },
-          ],
+          datasets: dataSet,
         },
         options: {
+          elements: {
+            point: {
+              radius: 0,
+              hoverRadius: 4,
+            },
+          },
+          animation: {
+            duration: 0,
+          },
           plugins: {
             title: {
               display: true,

@@ -10,8 +10,6 @@ const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
-  console.log(data);
-
   useEffect(() => {
     if (!chartRef.current || !data.length) return;
 
@@ -43,6 +41,15 @@ const MemoryLineGraph: React.FC<MemoryLineGraphProps> = ({ data }) => {
           ],
         },
         options: {
+          elements: {
+            point: {
+              radius: 0,
+              hoverRadius: 4,
+            },
+          },
+          animation: {
+            duration: 0,
+          },
           plugins: {
             title: {
               display: true,
