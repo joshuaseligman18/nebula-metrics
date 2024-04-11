@@ -53,9 +53,6 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
           responsive: true,
           maintainAspectRatio: false,
           resizeDelay: 0,
-          onResize: (Chart:any , {width:width , height:height})=>{
-            console.log(width , height);
-          } ,
           elements: {
             point: {
               radius: 0,
