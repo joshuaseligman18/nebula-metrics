@@ -14,7 +14,6 @@ import { Spinner } from "react-bootstrap";
 import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
-  const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<
     {
@@ -76,17 +75,17 @@ const SystemPage: React.FC = () => {
 
         // Add the formatted timestamp to the Set
         minuteSet.add(formattedTime);
-        return { cpu_core: cpu.cpu_core,
+        return {
+          cpu_core: cpu.cpu_core,
           mhz: cpu.mhz,
           timestamp: date,
           total_cache: cpu.total_cache,
-          usage: cpu.usage};
+          usage: cpu.usage,
+        };
       });
 
       setCpuData(processedData);
       setOriginalCpuData(processedData);
-      // Convert the Set to an array and set the state
-      setCpuMinuteValues(Array.from(minuteSet));
     }
   }, [rawCpuData]);
 
@@ -177,7 +176,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0
+        0,
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -194,74 +193,25 @@ const SystemPage: React.FC = () => {
   }, [diskData]);
 
   const handleMinuteRangeChange = (
-    startMinute: string | null,
-    endMinute: string | null
+    startTime: Date | null,
+    endTime: Date | null,
   ) => {
     if (
-      startMinute &&
-      endMinute &&
+      startTime &&
+      endTime &&
       cpuData.length > 0 &&
       memoryUsageData.length > 0
     ) {
-      const startMinuteParts = startMinute.split(":");
-      const endMinuteParts = endMinute.split(":");
-      let startHour = parseInt(startMinuteParts[0]);
-      const startMinuteValue = parseInt(startMinuteParts[1]);
-      let endHour = parseInt(endMinuteParts[0]);
-      const endMinuteValue = parseInt(endMinuteParts[1]);
+      const filteredCpuData = cpuData.filter((data) => {
+        return data.timestamp >= startTime && data.timestamp <= endTime;
+      });
 
-      // Adjust hours for PM times
-      if (startHour < 12) {
-        startHour += 12;
-      }
-      if (endHour < 12) {
-        endHour += 12;
-      }
+      const filteredMemoryData = memoryUsageData.filter((memory) => {
+        return memory.time >= startTime && memory.time <= endTime;
+      });
 
-      // Get the date from the first CPU data point
-      const firstDataDate = new Date(cpuData[0].timestamp);
-      const year = firstDataDate.getFullYear();
-      const month = firstDataDate.getMonth();
-      const day = firstDataDate.getDate();
-
-      const startTimestamp = new Date(
-        year,
-        month,
-        day,
-        startHour,
-        startMinuteValue
-      ).getTime();
-      const endTimestamp = new Date(
-        year,
-        month,
-        day,
-        endHour,
-        endMinuteValue
-      ).getTime();
-
-      if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
-        const filteredCpuData = cpuData.filter((data) => {
-          const dataTimestamp = new Date(data.timestamp).getTime();
-
-          return (
-            dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp
-          );
-        });
-
-        const filteredMemoryData = memoryUsageData.filter((memory) => {
-          const memoryTimestamp = memory.time.getTime();
-
-          return (
-            memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp
-          );
-        });
-
-        setCpuData(filteredCpuData);
-        setMemoryUsageData(filteredMemoryData);
-      } else {
-        console.error("Invalid startMinute or endMinute values.");
-      }
-    } else {
+      setCpuData(filteredCpuData);
+      setMemoryUsageData(filteredMemoryData);
     }
   };
 
@@ -279,7 +229,6 @@ const SystemPage: React.FC = () => {
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
             <SortingBar
-              cpuMinuteValues={cpuMinuteValues} // Pass CPU minute values here
               onMinuteRangeChange={handleMinuteRangeChange} // Pass event handler here
               resetData={resetData}
             />

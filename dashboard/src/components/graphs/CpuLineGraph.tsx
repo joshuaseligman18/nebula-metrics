@@ -23,10 +23,10 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
       chartInstance.current.destroy();
     }
 
-    const cores: Record<string, {mhz:number, cache: number}> = {};
+    const cores: Record<string, { mhz: number; cache: number }> = {};
     data.forEach((cpu) => {
       if (!Object.keys(cores).includes(cpu.cpu_core)) {
-        cores[cpu.cpu_core] = {mhz:cpu.mhz, cache:cpu.total_cache};
+        cores[cpu.cpu_core] = { mhz: cpu.mhz, cache: cpu.total_cache };
       }
     });
 
@@ -35,7 +35,7 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
         label: `Core ${key} (${value.mhz} MHz | Cache ${value.cache} MB) `,
         data: data
           .filter(({ cpu_core }) => cpu_core.toString() === key)
-          .map(({ timestamp, usage }) => ({ x:timestamp, y:usage*100 })),
+          .map(({ timestamp, usage }) => ({ x: timestamp, y: usage * 100 })),
         borderWidth: 2,
         fill: false,
       };
