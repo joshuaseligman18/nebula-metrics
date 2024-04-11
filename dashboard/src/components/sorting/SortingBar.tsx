@@ -17,11 +17,19 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const handleStartTimeChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setStartTime(new Date(event.target.value) || null);
+    if (event.target.value) {
+      setStartTime(new Date(event.target.value) || null);
+    } else {
+      setStartTime(null);
+    }
   };
 
   const handleEndTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEndTime(new Date(event.target.value) || null);
+    if (event.target.value) {
+      setEndTime(new Date(event.target.value) || null);
+    } else {
+      setEndTime(null);
+    }
   };
 
   const filterData = (event: React.SyntheticEvent) => {
@@ -38,7 +46,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   };
 
   return (
-    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
+    <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4`}>
       <form ref={filterForm}>
         <div className="mb-4">
           <label

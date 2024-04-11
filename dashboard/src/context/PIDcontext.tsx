@@ -1,29 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface ProcessContextType {
-  selectedPID: number | null;
-  setSelectedPID: (pid: number | null) => void;
+  selectedPID: number;
+  setSelectedPID: (pid: number) => void;
 }
 
 const ProcessContext = createContext<ProcessContextType>({
-  selectedPID: null,
+  selectedPID: 1,
   setSelectedPID: () => {},
 });
 
 export const ProcessContextProvider: React.FC = ({ children }) => {
-  const [selectedPID, setSelectedPIDState] = useState<number | null>(() => {
+  const [selectedPID, setSelectedPIDState] = useState<number>(() => {
     // Initialize selectedPID from local storage, or default to null
-    const storedPID = localStorage.getItem("selectedPID");
-    return storedPID ? parseInt(storedPID) : null;
+    const storedPID = sessionStorage.getItem("selectedPID");
+    return storedPID ? parseInt(storedPID) : 1;
   });
 
   // Update local storage whenever selectedPID changes
   useEffect(() => {
-    if (selectedPID !== null) {
-      localStorage.setItem("selectedPID", selectedPID.toString());
-    } else {
-      localStorage.removeItem("selectedPID");
-    }
+    sessionStorage.setItem("selectedPID", selectedPID.toString());
   }, [selectedPID]);
 
   const setSelectedPID: ProcessContextType["setSelectedPID"] = (pid) => {
