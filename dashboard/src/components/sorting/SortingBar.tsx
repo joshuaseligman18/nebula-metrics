@@ -15,7 +15,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const filterForm = useRef<HTMLFormElement>(null);
 
   const handleStartTimeChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setStartTime(new Date(event.target.value) || null);
   };
@@ -68,26 +68,28 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             onChange={handleEndTimeChange}
           />
         </div>
-        <button
-          className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
-          onClick={filterData}
-          style={{
-            backgroundColor: mode === "light" ? "#007bff" : "",
-            color: mode === "light" ? "white" : "white",
-          }}
-        >
-          Filter
-        </button>
-        <button
-          className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
-          onClick={resetForm}
-          style={{
-            backgroundColor: mode === "light" ? "#007bff" : "",
-            color: mode === "light" ? "white" : "white",
-          }}
-        >
-          Reset
-        </button>
+        <div className="flex justify-between">
+          <button
+            className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
+            onClick={filterData}
+            style={{
+              backgroundColor: mode === "light" ? "#007bff" : "",
+              color: mode === "light" ? "white" : "white",
+            }}
+          >
+            Filter
+          </button>
+          <button
+            className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
+            onClick={resetForm}
+            style={{
+              backgroundColor: mode === "light" ? "#007bff" : "",
+              color: mode === "light" ? "white" : "white",
+            }}
+          >
+            Reset
+          </button>
+        </div>
       </form>
     </div>
   );
