@@ -309,7 +309,7 @@ mod tests {
             )
             .await
             .unwrap();
-        assert_eq!(response.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 
         let res_string: String = String::from_utf8(
             response

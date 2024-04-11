@@ -1,0 +1,274 @@
+---
+openapi: 3.0.0
+servers:
+  - url: /api
+info:
+  title: Nebula Metrics API
+  description: |
+    API for fetching data stored by Nebula Metrics. The API is run through the
+    nebula-server.service Systemd service and has a base URL of 0.0.0.0:4242/api.
+  version: 1.0.0
+tags:
+- name: CPU
+  description: CPU information for the overall system.
+- name: Disk
+  description: Disk information for the overall system.
+- name: Memory
+  description: Memory information for the overall system.
+- name: Process
+  description: Information for both active and dead processes.
+paths:
+  /cpu-info:
+    get:
+      tags:
+      - CPU
+      description: Gets all CPU data in the database.
+      responses:
+        "200":
+          description: Returns an array of CPU data at each stored timestamp.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CpuInfo'
+        "500":
+          description: Error occurred while fetching the data.
+  /cpu-info-current:
+    get:
+      tags:
+      - CPU
+      description: Gets the most recent record in the database for each CPU core.
+      responses:
+        "200":
+          description: Returns an array of CPU data from the latest timestamp.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CpuInfo'
+        "500":
+          description: Error occurred while fetching the data.
+  /disks:
+    get:
+      tags:
+      - Disk
+      description: Gets the most recent record in the database for each disk.
+      responses:
+        "200":
+          description: Returns an array of disk data from the latest timestamp.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiskInfo'
+        "500":
+          description: Error occurred while fetching the data.
+  /memory:
+    get:
+      tags:
+      - Memory
+      description: Gets all memory data in the database.
+      responses:
+        "200":
+          description: Returns an array of memory data at each stored timestamp.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Memory'
+        "500":
+          description: Error occurred while fetching the data.
+  /memory-current:
+    get:
+      tags:
+      - Memory
+      description: Gets the most recent memory record in the database.
+      responses:
+        "200":
+          description: Returns an array of a single memory record from the latest timestamp.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Memory'
+        "500":
+          description: Error occurred while fetching the data.
+  /allProceses:
+    get:
+      tags:
+      - Process
+      description: Gets the most recent record for each process in the database.
+      responses:
+        "200":
+          description: |
+            Returns an array of process records from the latest timestamp
+            or the last record stored for each process.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessInfo'
+        "500":
+          description: Error occurred while fetching the data.
+  /process/{pid}:
+    get:
+      tags:
+      - Process
+      description: Gets all information for a specified process in the database.
+      parameters:
+      - name: pid
+        in: path
+        description: PID of the process to get.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Returns an array of process records for the specified process.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProcessInfo'
+        "422":
+          description: Requested PID does not exist in the database.
+        "500":
+          description: Error occurred while fetching the data.
+components:
+  schemas:
+    CpuInfo:
+      required:
+      - cpu_core
+      - mhz
+      - timestamp
+      - total_cache
+      - usage
+      type: object
+      properties:
+        cpu_core:
+          type: integer
+          description: Identifier of the CPU core.
+        mhz:
+          type: number
+          description: Clock rate of the CPU in MHz.
+        total_cache:
+          type: integer
+          description: Amount of cache in MB.
+        timestamp:
+          type: integer
+          description: Unix epoch timestamp at which the entry was recorded.
+          format: int64
+        usage:
+          type: number
+          description: Percentage of time the CPU was in-use.
+    DiskInfo:
+      required:
+      - available
+      - device_name
+      - fs_type
+      - mount
+      - timestamp
+      - used
+      type: object
+      properties:
+        device_name:
+          type: string
+          description: Name of the device.
+        mount:
+          type: string
+          description: Folder the device is mounted to.
+        fs_type:
+          type: string
+          description: Type of file system used by the disk.
+        timestamp:
+          type: integer
+          description: Unix epoch timestamp at which the entry was recorded.
+          format: int64
+        used:
+          type: integer
+          description: Amount of disk space used in MB.
+        available:
+          type: integer
+          description: Amount of disk space available in MB.
+    Memory:
+      required:
+      - free
+      - swap_free
+      - swap_total
+      - timestamp
+      - total
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          description: Unix epoch timestamp at which the entry was recorded.
+          format: int64
+        total:
+          type: integer
+          description: Total amount of memory in KB.
+        free:
+          type: integer
+          description: Amount of memory that is free in KB.
+        swap_total:
+          type: integer
+          description: Total amount of swap space in KB.
+        swap_free:
+          type: integer
+          description: Amount of swap space that is free in KB.
+    ProcessInfo:
+      required:
+      - exec
+      - is_alive
+      - pid
+      - resident_memory
+      - shared_memory
+      - start_time
+      - timestamp
+      - total_cpu
+      - virtual_memory
+      type: object
+      properties:
+        pid:
+          type: integer
+          description: The PID of the process.
+        exec:
+          type: string
+          description: The name of the executable.
+        timestamp:
+          type: integer
+          description: Unix epoch timestamp at which the entry was recorded.
+          format: int64
+        total_cpu:
+          type: number
+          description: Total CPU time for the process in seconds.
+        percent_cpu:
+          type: number
+          description: Percent of CPU time since the last update.
+        cpu_core:
+          type: integer
+          description: CPU core the process is running on.
+        virtual_memory:
+          type: integer
+          description: Amount of virtual memory for the process in KB.
+        resident_memory:
+          type: integer
+          description: Amount of space the process actively has in memory in KB.
+        shared_memory:
+          type: integer
+          description: Amount of memory the process is sharing with other processes in KB.
+        start_time:
+          type: integer
+          description: Elapsed time since the start in seconds.
+          format: int64
+        is_alive:
+          type: boolean
+          description: Whether or not the process is alive.

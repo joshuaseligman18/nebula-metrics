@@ -133,7 +133,7 @@ async fn get_combined_process_info(
         Ok(combined_infos) => {
             if combined_infos.is_empty() {
                 Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
+                    StatusCode::UNPROCESSABLE_ENTITY,
                     format!("Process {} not found", pid),
                 ))
             } else {

@@ -21,7 +21,7 @@ pub struct ProcessInfo {
     pub virtual_memory: u32,
     /// Amount of space the process actively has in memory in KB
     pub resident_memory: u32,
-    /// Amount of memoryt the process is sharing with other processes in KB
+    /// Amount of memory the process is sharing with other processes in KB
     pub shared_memory: u32,
     /// Elapsed time since start in seconds
     pub start_time: i64,
