@@ -55,14 +55,10 @@ describe("SystemPage Component Logic", () => {
     });
     // Simulate user interaction by selecting start minute and end minute
     const startMinuteSelect = screen.getByLabelText("Select Start Time");
-    fireEvent.change(startMinuteSelect, {
-      target: { value: "2024-03-20T22:00:00" },
-    });
+    fireEvent.change(startMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     const endMinuteSelect = screen.getByLabelText("Select End Time");
-    fireEvent.change(endMinuteSelect, {
-      target: { value: "2024-03-20T22:00:00" },
-    });
+    fireEvent.change(endMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Verify that the data is filtered correctly based on the minute range change
     expect(screen.getByText("CPU Usage Over Time")).toBeInTheDocument();
@@ -102,21 +98,19 @@ describe("SortingBar Component Logic", () => {
 
     const { getByLabelText, getByText } = render(
       <ModeProvider>
-        <SortingBar setCurrentFilter={mockSetCurrentFilter} />
+        <SortingBar
+            setCurrentFilter={mockSetCurrentFilter}
+        />
       </ModeProvider>,
     );
 
     // Simulate user interaction by selecting start minute
     const startMinuteSelect = getByLabelText("Select Start Time");
-    fireEvent.change(startMinuteSelect, {
-      target: { value: "2024-03-20T22:00:00" },
-    });
+    fireEvent.change(startMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Simulate user interaction by selecting end minute
     const endMinuteSelect = getByLabelText("Select End Time");
-    fireEvent.change(endMinuteSelect, {
-      target: { value: "2024-03-20T22:00:00" },
-    });
+    fireEvent.change(endMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Simulate user clicking the reset button
     const resetButton = getByText("Reset");

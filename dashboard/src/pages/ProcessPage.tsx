@@ -9,13 +9,20 @@ import { useGetProcessData } from "../hooks/useGetProcess";
 import { useProcessContext } from "../context/PIDcontext";
 
 const ProcessPage: React.FC = () => {
-  const { selectedPID, setSelectedPID } = useProcessContext();
+  const { selectedPID } = useProcessContext();
   const { mode } = useMode();
   const {
     data: allProcessesData,
     isLoading: processLoad,
     isError: processesError,
   } = useAllProcesses(); // Get all processes data
+  const [selectedPid, setSelectedPid] = useState<number | null>(() => {
+    if (selectedPID !== null) {
+      return selectedPID;
+    } else {
+      return 1;
+    }
+  });
 
   const {
     data: processData,
@@ -25,10 +32,24 @@ const ProcessPage: React.FC = () => {
   } = useGetProcessData(selectedPID || 1);
 
   useEffect(() => {
-    // Fetch process data whenever selectedPID changes
-    refetch();
-  }, [selectedPID, refetch]);
+    setSelectedPid(selectedPID);
+  }, [selectedPID]);
 
+  useEffect(() => {
+    // Fetch process data whenever selectedPid changes
+    refetch();
+  }, [selectedPid, refetch]);
+
+  useEffect(() => {
+    if (allProcessesData) {
+      const allPids: number[] = allProcessesData.map(
+        (process: any) => process.pid,
+      ); // Explicitly typing as an array of numbers
+      const uniquePidsSet = new Set(allPids); // Convert to Set to remove duplicates
+      const uniquePidsArray = Array.from(uniquePidsSet); // Convert back to array
+      setSelectedPid(uniquePidsArray[0]); // Select the first PID by default
+    }
+  }, [allProcessesData]);
   const [cpuData, setCpuData] = useState([]);
 
   useEffect(() => {
@@ -61,6 +82,11 @@ const ProcessPage: React.FC = () => {
     }
   }, [processData]);
 
+  useEffect(() => {
+    // Fetch process data whenever selectedPid changes
+    refetch();
+  }, [selectedPid, refetch]);
+
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
       <div style={{ flex: "1 0 15%" }}>
@@ -77,7 +103,7 @@ const ProcessPage: React.FC = () => {
                 pids={Array.from(
                   new Set(allProcessesData.map((process: any) => process.pid)),
                 )} // Pass unique PIDs
-                onSelectPid={setSelectedPID}
+                onSelectPid={setSelectedPid}
                 allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
               />
             )}

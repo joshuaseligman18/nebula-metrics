@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface ProcessContextType {
   selectedPID: number | null;
-  setSelectedPID: (pid: number | null) => void;
+  setSelectedPID: (pid: number) => void;
 }
 
 const ProcessContext = createContext<ProcessContextType>({
