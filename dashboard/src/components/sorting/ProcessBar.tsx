@@ -17,6 +17,8 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   const { mode } = useMode();
   const { selectedPID } = useProcessContext();
 
+  console.log(allProcessesData);
+
   useEffect(() => {
     // Auto-select process 1 when the component mounts
     if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
@@ -74,6 +76,16 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     }
     return value;
   };
+
+  useEffect(() => {
+    // Update selectedProcess when allProcessesData changes
+    if (allProcessesData && allProcessesData.length > 0) {
+      const process = allProcessesData.find(
+        (process: any) => process.pid === selectedProcess?.pid,
+      );
+      setSelectedProcess(process);
+    }
+  }, [allProcessesData]);
 
   return (
     <div className={`bg-${mode === "dark" ? "dark" : "gray-200"} p-4 h-100`}>
