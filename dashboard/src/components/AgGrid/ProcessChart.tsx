@@ -49,7 +49,7 @@ const ProcessChart: React.FC<ProcessChartProps> = ({ data }) => {
     [],
   ); // Empty dependency array ensures memoization only occurs once
 
-  const handleRowClick = (event:any) => {
+  const handleRowClick = (event: any) => {
     const rowData = event.data as ProcessDataType;
     setSelectedPID(rowData.pid);
     navigate(`/process`);

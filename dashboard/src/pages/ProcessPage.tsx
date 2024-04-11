@@ -23,13 +23,13 @@ const ProcessPage: React.FC = () => {
       return 1;
     }
   });
-  
+
   const {
     data: processData,
     isLoading: loadingTable,
     isError: errorTable,
     refetch,
-  } = useGetProcessData(selectedPID || 1); 
+  } = useGetProcessData(selectedPID || 1);
 
   useEffect(() => {
     setSelectedPid(selectedPID);
@@ -75,7 +75,7 @@ const ProcessPage: React.FC = () => {
           resident_memory: number;
         }) => ({
           time: new Date(memory.timestamp * 1000),
-          ram: memory.resident_memory / 1000 
+          ram: memory.resident_memory / 1000,
         }),
       );
       setMemoryData(processedMemoryData);

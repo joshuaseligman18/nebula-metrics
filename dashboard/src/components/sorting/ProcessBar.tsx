@@ -21,7 +21,8 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
     // Auto-select process 1 when the component mounts
     if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
-        (process: any) => process.pid === (selectedPID !== null ? selectedPID : 1)
+        (process: any) =>
+          process.pid === (selectedPID !== null ? selectedPID : 1),
       );
       setSelectedProcess(process1);
     }
@@ -67,7 +68,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
         // Format percent_cpu to percentage
         return `${(value * 100).toFixed(2)}%`;
       }
-    }  else if (typeof value === "boolean") {
+    } else if (typeof value === "boolean") {
       // Format boolean values
       return value ? "Alive" : "Not Alive";
     }
@@ -94,7 +95,11 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
           {/* Handle null value explicitly */}
           {pids.map((pid) => (
             <option key={pid} value={pid}>
-               {pid} {allProcessesData.find((process: any) => process.pid === pid)?.exec}
+              {pid}{" "}
+              {
+                allProcessesData.find((process: any) => process.pid === pid)
+                  ?.exec
+              }
             </option>
           ))}
         </select>

@@ -14,7 +14,6 @@ import { Spinner } from "react-bootstrap";
 import SortingBar from "../components/sorting/SortingBar";
 
 const SystemPage: React.FC = () => {
-  const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<
     {
@@ -62,31 +61,24 @@ const SystemPage: React.FC = () => {
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
 
+  const [currentFilter, setCurrentFilter] = useState<{
+    startTime: Date | null;
+    endTime: Date | null;
+  }>({ startTime: null, endTime: null });
+
   useEffect(() => {
     if (rawCpuData) {
-      //const processedData: { x: Date; y: number; core: string }[] = [];
-      const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
-
       const processedData = rawCpuData.map((cpu: CpuData) => {
-        const date = new Date(cpu.timestamp * 1000);
-        const hours =
-          date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
-        const amPm = date.getHours() >= 12 ? "PM" : "AM";
-        const formattedTime = `${hours === 0 ? 12 : hours}:${date.getMinutes().toString().padStart(2, "0")} ${amPm}`;
-
-        // Add the formatted timestamp to the Set
-        minuteSet.add(formattedTime);
-        return { cpu_core: cpu.cpu_core,
+        return {
+          cpu_core: cpu.cpu_core,
           mhz: cpu.mhz,
-          timestamp: date,
+          timestamp: new Date(cpu.timestamp * 1000),
           total_cache: cpu.total_cache,
-          usage: cpu.usage};
+          usage: cpu.usage,
+        };
       });
 
-      setCpuData(processedData);
       setOriginalCpuData(processedData);
-      // Convert the Set to an array and set the state
-      setCpuMinuteValues(Array.from(minuteSet));
     }
   }, [rawCpuData]);
 
@@ -106,7 +98,6 @@ const SystemPage: React.FC = () => {
         });
       });
 
-      setMemoryUsageData(processedData);
       setOriginalMemoryUsageData(processedData);
     }
   }, [memoryData]);
@@ -177,7 +168,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0
+        0,
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -193,96 +184,42 @@ const SystemPage: React.FC = () => {
     }
   }, [diskData]);
 
-  const handleMinuteRangeChange = (
-    startMinute: string | null,
-    endMinute: string | null
-  ) => {
-    if (
-      startMinute &&
-      endMinute &&
-      cpuData.length > 0 &&
-      memoryUsageData.length > 0
-    ) {
-      const startMinuteParts = startMinute.split(":");
-      const endMinuteParts = endMinute.split(":");
-      let startHour = parseInt(startMinuteParts[0]);
-      const startMinuteValue = parseInt(startMinuteParts[1]);
-      let endHour = parseInt(endMinuteParts[0]);
-      const endMinuteValue = parseInt(endMinuteParts[1]);
-
-      // Adjust hours for PM times
-      if (startHour < 12) {
-        startHour += 12;
-      }
-      if (endHour < 12) {
-        endHour += 12;
+  useEffect(() => {
+    const filteredCpuData = originalCpuData.filter((data) => {
+      let valid: boolean = true;
+      if (currentFilter.startTime) {
+        valid = valid && data.timestamp >= currentFilter.startTime;
       }
 
-      // Get the date from the first CPU data point
-      const firstDataDate = new Date(cpuData[0].timestamp);
-      const year = firstDataDate.getFullYear();
-      const month = firstDataDate.getMonth();
-      const day = firstDataDate.getDate();
-
-      const startTimestamp = new Date(
-        year,
-        month,
-        day,
-        startHour,
-        startMinuteValue
-      ).getTime();
-      const endTimestamp = new Date(
-        year,
-        month,
-        day,
-        endHour,
-        endMinuteValue
-      ).getTime();
-
-      if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
-        const filteredCpuData = cpuData.filter((data) => {
-          const dataTimestamp = new Date(data.timestamp).getTime();
-
-          return (
-            dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp
-          );
-        });
-
-        const filteredMemoryData = memoryUsageData.filter((memory) => {
-          const memoryTimestamp = memory.time.getTime();
-
-          return (
-            memoryTimestamp >= startTimestamp && memoryTimestamp <= endTimestamp
-          );
-        });
-
-        setCpuData(filteredCpuData);
-        setMemoryUsageData(filteredMemoryData);
-      } else {
-        console.error("Invalid startMinute or endMinute values.");
+      if (currentFilter.endTime) {
+        valid = valid && data.timestamp <= currentFilter.endTime;
       }
-    } else {
-    }
-  };
+      return valid;
+    });
+    setCpuData(filteredCpuData);
+  }, [originalCpuData, currentFilter]);
 
-  const resetData = () => {
-    // Reset CPU data
-    setCpuData(originalCpuData);
+  useEffect(() => {
+    const filteredMemoryData = originalMemoryUsageData.filter((memory) => {
+      let valid: boolean = true;
+      if (currentFilter.startTime) {
+        valid = valid && memory.time >= currentFilter.startTime;
+      }
 
-    // Reset memory usage data
-    setMemoryUsageData(originalMemoryUsageData);
-  };
+      if (currentFilter.endTime) {
+        valid = valid && memory.time <= currentFilter.endTime;
+      }
+      return valid;
+    });
+    setMemoryUsageData(filteredMemoryData);
+  }, [originalMemoryUsageData, currentFilter]);
 
   return (
     <div className="container-fluid px-0 mt-4 d-flex">
       <div style={{ flex: "1 0 10%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
-            <SortingBar
-              cpuMinuteValues={cpuMinuteValues} // Pass CPU minute values here
-              onMinuteRangeChange={handleMinuteRangeChange} // Pass event handler here
-              resetData={resetData}
-            />
+            <SortingBar setCurrentFilter={setCurrentFilter} />
           </div>
         </div>
       </div>
