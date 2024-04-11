@@ -88,7 +88,7 @@ const ProcessPage: React.FC = () => {
   }, [selectedPid, refetch]);
 
   return (
-    <div className="container-fluid px-0 mt-4 d-flex">
+    <div className="container-fluid px-0 mt-4 d-flex" >
       <div style={{ flex: "1 0 15%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
@@ -111,7 +111,7 @@ const ProcessPage: React.FC = () => {
         </div>
       </div>
       <div
-        style={{ flex: "1 0 85%" }}
+        style={{ flex: "1 0 80%" }}
         className={`container-fluid px-0 mt-4 ${
           mode === "dark" ? "dark-mode" : "light-mode"
         }`}

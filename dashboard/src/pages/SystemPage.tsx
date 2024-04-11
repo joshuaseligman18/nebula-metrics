@@ -215,7 +215,7 @@ const SystemPage: React.FC = () => {
   }, [originalMemoryUsageData, currentFilter]);
 
   return (
-    <div className="container-fluid px-0 mt-4 d-flex">
+    <div className="container-fluid px-0 mt-4 d-flex" style={{ maxWidth: "100%", overflowX: "hidden" }}>
       <div style={{ flex: "1 0 10%" }}>
         <div className="d-flex flex-column h-100">
           <div className="flex-grow-1">
@@ -224,14 +224,14 @@ const SystemPage: React.FC = () => {
         </div>
       </div>
       <div
-        style={{ flex: "1 0 90%" }}
+        style={{ flex: "1 0 75%" }}
         className={`container-fluid px-0 mt-4 ${mode === "dark" ? "dark-mode" : "light-mode"}`}
       >
         {/* CPU Section */}
         <div className="col mb-4">
           <Card
             className={`bg-${mode === "dark" ? "secondary" : "light"}`}
-            style={{ height: "450px" }}
+            style={{ height: "100%" }}
           >
             <Card.Body>
               <Card.Title className="text-xl font-semibold mb-4 text-center">
