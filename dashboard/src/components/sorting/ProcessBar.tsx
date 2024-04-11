@@ -20,6 +20,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
   const { mode } = useMode();
   const { selectedPID, setSelectedPID } = useProcessContext();
+  pids = pids.sort((a, b) => a - b);
 
   useEffect(() => {
     // Auto-select process 1 when the component mounts
