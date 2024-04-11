@@ -16,6 +16,7 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
+
   useEffect(() => {
     if (!chartRef.current || !data.length) return;
 
@@ -49,6 +50,12 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
           datasets: dataSet,
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          resizeDelay: 0,
+          onResize: (Chart:any , {width:width , height:height})=>{
+            console.log(width , height);
+          } ,
           elements: {
             point: {
               radius: 0,
@@ -113,7 +120,9 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   }, [data]);
 
   return (
-    <canvas ref={chartRef} style={{ width: "100%", maxHeight: "400px" }} />
+    <div style={{height: "400px"}}>
+      <canvas ref={chartRef} />
+    </div>
   );
 };
 

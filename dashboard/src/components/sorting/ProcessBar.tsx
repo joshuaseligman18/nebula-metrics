@@ -126,7 +126,9 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
             ))}
         </ul>
       </div>
+      <div style={{ marginLeft: "-17px" }}>
       <SortingBar setCurrentFilter={setCurrentFilter} />
+      </div>
     </div>
   );
 };
