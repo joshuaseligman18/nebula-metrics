@@ -4,34 +4,30 @@ import { useProcessContext } from "../../context/PIDcontext";
 
 interface ProcessBarProps {
   pids: number[];
-  onSelectPid: (pid: number | null) => void;
   allProcessesData: any[]; // Define allProcessesData prop
 }
 
 const ProcessBar: React.FC<ProcessBarProps> = ({
   pids,
-  onSelectPid,
   allProcessesData,
 }) => {
   const [selectedProcess, setSelectedProcess] = useState<any | null>(null);
   const { mode } = useMode();
-  const { selectedPID } = useProcessContext();
-
-  console.log(allProcessesData);
+  const { selectedPID, setSelectedPID } = useProcessContext();
 
   useEffect(() => {
     // Auto-select process 1 when the component mounts
-    if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
+    if (allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
         (process: any) =>
           process.pid === (selectedPID !== null ? selectedPID : 1),
       );
       setSelectedProcess(process1);
     }
-  }, [selectedProcess, allProcessesData, selectedPID]);
+  }, [allProcessesData, selectedPID]);
 
   const handlePidChange = (pid: number | null) => {
-    onSelectPid(pid);
+    setSelectedPID(pid);
     if (pid !== null) {
       const process = allProcessesData.find(
         (process: any) => process.pid === pid,
