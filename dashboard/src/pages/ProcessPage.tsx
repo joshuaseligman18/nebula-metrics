@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import ProcessBar from "../components/sorting/ProcessBar";
 import { Card, Spinner } from "react-bootstrap";
 import ProcessMemoryLineGraph from "../components/graphs/ProcessMemGraph";
-import CpuLineGraph from "../components/graphs/CpuLineGraph";
+import ProcessCpuLineGraph from "../components/graphs/ProcessCpuGraph";
 import { useMode } from "../context/ModeContext";
 import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
@@ -138,7 +138,7 @@ const ProcessPage: React.FC = () => {
               ) : errorTable ? (
                 <div>Error fetching CPU data</div>
               ) : (
-                <CpuLineGraph data={cpuData} />
+                <ProcessCpuLineGraph data={cpuData} />
               )}
             </Card.Body>
           </Card>
