@@ -11,19 +11,16 @@ on:
         - major
 
 jobs:
+  test:
+    uses: joshuaseligman18/nebula-metrics/.github/workflows/testing.yml@main
   release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
         ref: main
         token: ${{ secrets.NEBULA_CICD }}
-
-    # TESTS
-    - name: Install cargo-llvm-cov
-      run: cargo install cargo-llvm-cov
-    - name: Run Rust tests
-      run: cargo llvm-cov --html --no-cfg-coverage --all-features
 
     # BUMP VERSION AND BUILD PACKAGE
     - name: Install cargo-edit
