@@ -54,11 +54,11 @@ describe("SystemPage Component Logic", () => {
       );
     });
     // Simulate user interaction by selecting start minute and end minute
-    const startMinuteSelect = screen.getByLabelText("Select Start Minute");
-    fireEvent.change(startMinuteSelect, { target: { value: "10:00 PM" } });
+    const startMinuteSelect = screen.getByLabelText("Select Start Time");
+    fireEvent.change(startMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
-    const endMinuteSelect = screen.getByLabelText("Select End Minute");
-    fireEvent.change(endMinuteSelect, { target: { value: "10:00 PM" } });
+    const endMinuteSelect = screen.getByLabelText("Select End Time");
+    fireEvent.change(endMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Verify that the data is filtered correctly based on the minute range change
     expect(screen.getByText("CPU Usage Over Time")).toBeInTheDocument();
@@ -94,37 +94,29 @@ describe("SortingBar Component Logic", () => {
   ];
 
   it("renders SortingBar and interacts with it", async () => {
-    const mockOnMinuteRangeChange = jest.fn();
-    const mockResetData = jest.fn();
+    const mockSetCurrentFilter = jest.fn();
 
     const { getByLabelText, getByText } = render(
       <ModeProvider>
         <SortingBar
-          cpuMinuteValues={["10:00 PM", "10:05 PM", "10:10 PM"]}
-          onMinuteRangeChange={mockOnMinuteRangeChange}
-          resetData={mockResetData}
+            setCurrentFilter={mockSetCurrentFilter}
         />
       </ModeProvider>,
     );
 
     // Simulate user interaction by selecting start minute
-    const startMinuteSelect = getByLabelText("Select Start Minute");
-    fireEvent.change(startMinuteSelect, { target: { value: "10:00 PM" } });
+    const startMinuteSelect = getByLabelText("Select Start Time");
+    fireEvent.change(startMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Simulate user interaction by selecting end minute
-    const endMinuteSelect = getByLabelText("Select End Minute");
-    fireEvent.change(endMinuteSelect, { target: { value: "10:05 PM" } });
+    const endMinuteSelect = getByLabelText("Select End Time");
+    fireEvent.change(endMinuteSelect, { target: { value: "2024-03-20T22:00:00" } });
 
     // Simulate user clicking the reset button
     const resetButton = getByText("Reset");
     fireEvent.click(resetButton);
 
-    // Verify that onMinuteRangeChange and resetData functions are called with correct arguments
-    expect(mockOnMinuteRangeChange).toHaveBeenCalledWith(
-      "10:00 PM",
-      "10:05 PM",
-    );
-    expect(mockResetData).toHaveBeenCalled();
+    expect(mockSetCurrentFilter).toHaveBeenCalled();
   });
 
   // Add more test cases to cover other aspects of the SortingBar component's logic

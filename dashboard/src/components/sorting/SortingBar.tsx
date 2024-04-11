@@ -2,14 +2,13 @@ import React, { useState, useRef } from "react";
 import { useMode } from "../../context/ModeContext";
 
 interface SortingBarProps {
-  onMinuteRangeChange: (startTime: Date | null, endMinute: Date | null) => void;
-  resetData: () => void;
+  setCurrentFilter: (newFilter: {
+    startTime: Date | null;
+    endTime: Date | null;
+  }) => void;
 }
 
-const SortingBar: React.FC<SortingBarProps> = ({
-  onMinuteRangeChange,
-  resetData,
-}) => {
+const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const { mode } = useMode();
@@ -18,16 +17,16 @@ const SortingBar: React.FC<SortingBarProps> = ({
   const handleStartTimeChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setStartTime(new Date(event.target.value));
+    setStartTime(new Date(event.target.value) || null);
   };
 
   const handleEndTimeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEndTime(new Date(event.target.value));
+    setEndTime(new Date(event.target.value) || null);
   };
 
   const filterData = (event: React.SyntheticEvent) => {
     event.preventDefault();
-    onMinuteRangeChange(startTime, endTime);
+    setCurrentFilter({ startTime, endTime });
   };
 
   const resetForm = (event: React.SyntheticEvent) => {
@@ -35,7 +34,7 @@ const SortingBar: React.FC<SortingBarProps> = ({
     filterForm.current?.reset();
     setStartTime(null);
     setEndTime(null);
-    resetData();
+    setCurrentFilter({ startTime: null, endTime: null });
   };
 
   return (
@@ -55,22 +54,20 @@ const SortingBar: React.FC<SortingBarProps> = ({
             onChange={handleStartTimeChange}
           />
         </div>
-        {startTime !== null && (
-          <div>
-            <label
-              htmlFor="endTime"
-              className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
-            >
-              Select End Time
-            </label>
-            <input
-              type="datetime-local"
-              id="endTime"
-              className="border border-gray-300 rounded-md shadow-sm p-2"
-              onChange={handleEndTimeChange}
-            />
-          </div>
-        )}
+        <div>
+          <label
+            htmlFor="endTime"
+            className={`block text-sm font-bold mb-2 ${mode === "dark" ? "text-white" : "text-gray-700"}`}
+          >
+            Select End Time
+          </label>
+          <input
+            type="datetime-local"
+            id="endTime"
+            className="border border-gray-300 rounded-md shadow-sm p-2"
+            onChange={handleEndTimeChange}
+          />
+        </div>
         <button
           className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
           onClick={filterData}
