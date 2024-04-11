@@ -7,6 +7,7 @@ theme = 'hugo-theme-relearn'
 [params]
 disableSearch = true
 disableLandingPageButton = true
+disableOpenapi = false
 
 [[params.themeVariant]]
 auto = ['zen-light', 'zen-dark']
