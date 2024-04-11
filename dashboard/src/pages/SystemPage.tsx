@@ -168,7 +168,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0,
+        0
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,
@@ -247,9 +247,11 @@ const SystemPage: React.FC = () => {
                   </Spinner>
                 </div>
               ) : cpuError ? (
-                <div>Error fetching CPU data</div>
-              ) : (
+                <div className="text-center">Error fetching CPU data</div>
+              ) : cpuData.length > 0 ? (
                 <CpuLineGraph data={cpuData} />
+              ) : (
+                <div className="text-center">No CPU data available</div>
               )}
             </Card.Body>
           </Card>
@@ -275,8 +277,10 @@ const SystemPage: React.FC = () => {
                 </div>
               ) : memoryError ? (
                 <div>Error fetching memory data</div>
-              ) : (
+              ) : memoryUsageData.length > 0 ? (
                 <MemoryLineGraph data={memoryUsageData} />
+              ) : (
+                <div className="text-center">No Memory data available</div>
               )}
             </Card.Body>
           </Card>
