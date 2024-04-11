@@ -19,14 +19,14 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
 
   useEffect(() => {
     // Auto-select process 1 when the component mounts
-    if (!selectedProcess && allProcessesData && allProcessesData.length > 0) {
+    if (allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
         (process: any) =>
           process.pid === (selectedPID !== null ? selectedPID : 1),
       );
       setSelectedProcess(process1);
     }
-  }, [selectedProcess, allProcessesData, selectedPID]);
+  }, [allProcessesData, selectedPID]);
 
   const handlePidChange = (pid: number | null) => {
     onSelectPid(pid);
