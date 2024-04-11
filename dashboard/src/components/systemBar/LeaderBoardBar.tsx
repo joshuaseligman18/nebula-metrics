@@ -5,7 +5,6 @@ import DonutChart from "../graphs/DonutChart";
 import { useGetCurrentCpuData } from "../../hooks/useGetCurrentCpu";
 import { useGetCurrentMemoryData } from "../../hooks/useGetCurrentMemory";
 import { useGetDiskData } from "../../hooks/useGetDiskData";
-import { CpuData } from "../../types/cpuDataType";
 import { useMode } from "../../context/ModeContext";
 
 const LeaderboardBar: React.FC = () => {
@@ -24,9 +23,6 @@ const LeaderboardBar: React.FC = () => {
     used: number;
   } | null>(null);
 
-  const [latestCpuData, setLatestCpuData] = useState<CpuData[] | null>(null);
-  const [totalSystemUsage, setTotalSystemUsage] = useState<number | null>(null);
-
   const {
     data: cpuData,
     isLoading: cpuLoading,
@@ -44,27 +40,6 @@ const LeaderboardBar: React.FC = () => {
     isLoading: diskLoading,
     isError: diskError,
   } = useGetDiskData();
-
-  useEffect(() => {
-    if (cpuData && Array.isArray(cpuData) && cpuData.length > 0) {
-      // Calculate total usage across all cores
-      const totalUsage = cpuData.reduce((total, core) => total + core.usage, 0);
-
-      // Calculate the total number of cores
-      const totalCores = cpuData.reduce((total, core) => {
-        if (!total.includes(core.cpu_core)) {
-          total.push(core.cpu_core);
-        }
-        return total;
-      }, []).length;
-
-      // Update the total system usage
-      setTotalSystemUsage((totalUsage * 100) / totalCores); // Convert to percentage
-
-      // Set the latest CPU data
-      setLatestCpuData(cpuData);
-    }
-  }, [cpuData]);
 
   useEffect(() => {
     if (memoryData && memoryData.length > 0) {
@@ -128,35 +103,21 @@ const LeaderboardBar: React.FC = () => {
             <Card.Body
               className={`flex flex-col items-center ${mode === "dark" ? "bg-secondary" : "bg-light"}`}
             >
-              <Card.Title>CPU</Card.Title>
+              <Card.Title>CPU Usage</Card.Title>
               {cpuLoading ? (
                 <Spinner animation="border" variant="primary" />
               ) : cpuError ? (
                 <div>Error fetching CPU data</div>
               ) : (
                 <>
-                  <h5>
-                    <b>Usage</b>
-                  </h5>
-                  <div className="w-40 h-40">
-                    <DonutChart
-                      total={100}
-                      inUse={totalSystemUsage ?? 0}
-                      width={150}
-                      height={150}
-                    />
-                  </div>
-                  <div className="text-black text-center mt-2">
-                    <p>
-                      <b>Used:</b>{" "}
-                      {totalSystemUsage !== null
-                        ? totalSystemUsage.toFixed(2)
-                        : "N/A"}{" "}
-                      %
-                    </p>
-                    <p>
-                      <b>Cores:</b> {latestCpuData?.length}
-                    </p>
+                  <div className="flex flex-wrap justify-evenly text-black text-center w-100">
+                    {cpuData.map((cpu: any) => {
+                      return (
+                        <p className="w-50">
+                          Core {cpu.cpu_core}: {(cpu.usage * 100).toFixed(2)}%
+                        </p>
+                      );
+                    })}
                   </div>
                 </>
               )}

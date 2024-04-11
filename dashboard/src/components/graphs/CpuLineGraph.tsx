@@ -3,7 +3,13 @@ import Chart from "chart.js/auto";
 import "chartjs-adapter-date-fns";
 
 interface CpuLineGraphProps {
-  data: { x: Date; y: number; core: string }[];
+  data: {
+    cpu_core: string;
+    mhz: number;
+    timestamp: Date;
+    total_cache: number;
+    usage: number;
+  }[];
 }
 
 const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
@@ -17,23 +23,27 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
       chartInstance.current.destroy();
     }
 
-    const cores: string[] = [];
+    const cores: Record<string, {mhz:number, cache: number}> = {};
     data.forEach((cpu) => {
-      if (!cores.includes(cpu.core)) {
-        cores.push(cpu.core);
+      if (!Object.keys(cores).includes(cpu.cpu_core)) {
+        cores[cpu.cpu_core] = {mhz:cpu.mhz, cache:cpu.total_cache};
       }
     });
 
-    const dataSet = cores.map((core) => {
+    console.log(data);
+    const dataSet = Object.entries(cores).map(([key, value]) => {
+      console.log(key, value);
       return {
-        label: "Core " + core,
+        label: `Core ${key} (${value.mhz} MHz | Cache ${value.cache} MB) `,
         data: data
-          .filter(({ core: dataCore }) => dataCore === core)
-          .map(({ x, y }) => ({ x, y })),
+          .filter(({ cpu_core }) => cpu_core.toString() === key)
+          .map(({ timestamp, usage }) => ({ x:timestamp, y:usage*100 })),
         borderWidth: 2,
         fill: false,
       };
     });
+
+    console.log(dataSet);
 
     const ctx = chartRef.current.getContext("2d");
     if (ctx) {

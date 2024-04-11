@@ -17,10 +17,22 @@ const SystemPage: React.FC = () => {
   const [cpuMinuteValues, setCpuMinuteValues] = useState<string[]>([]); // State for formatted CPU minute values
   const { mode } = useMode();
   const [cpuData, setCpuData] = useState<
-    { x: Date; y: number; core: string }[]
+    {
+      cpu_core: string;
+      mhz: number;
+      timestamp: Date;
+      total_cache: number;
+      usage: number;
+    }[]
   >([]);
   const [originalCpuData, setOriginalCpuData] = useState<
-    { x: Date; y: number; core: string }[]
+    {
+      cpu_core: string;
+      mhz: number;
+      timestamp: Date;
+      total_cache: number;
+      usage: number;
+    }[]
   >([]);
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
@@ -52,12 +64,11 @@ const SystemPage: React.FC = () => {
 
   useEffect(() => {
     if (rawCpuData) {
-      const processedData: { x: Date; y: number; core: string }[] = [];
+      //const processedData: { x: Date; y: number; core: string }[] = [];
       const minuteSet: Set<string> = new Set(); // Use a Set to store unique timestamps
 
-      rawCpuData.forEach((cpu: CpuData) => {
-        const { timestamp, usage } = cpu;
-        const date = new Date(timestamp * 1000);
+      const processedData = rawCpuData.map((cpu: CpuData) => {
+        const date = new Date(cpu.timestamp * 1000);
         const hours =
           date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
         const amPm = date.getHours() >= 12 ? "PM" : "AM";
@@ -65,7 +76,11 @@ const SystemPage: React.FC = () => {
 
         // Add the formatted timestamp to the Set
         minuteSet.add(formattedTime);
-        processedData.push({ x: date, y: usage, core: cpu.cpu_core });
+        return { cpu_core: cpu.cpu_core,
+          mhz: cpu.mhz,
+          timestamp: date,
+          total_cache: cpu.total_cache,
+          usage: cpu.usage};
       });
 
       setCpuData(processedData);
@@ -204,7 +219,7 @@ const SystemPage: React.FC = () => {
       }
 
       // Get the date from the first CPU data point
-      const firstDataDate = new Date(cpuData[0].x);
+      const firstDataDate = new Date(cpuData[0].timestamp);
       const year = firstDataDate.getFullYear();
       const month = firstDataDate.getMonth();
       const day = firstDataDate.getDate();
@@ -226,7 +241,7 @@ const SystemPage: React.FC = () => {
 
       if (!isNaN(startTimestamp) && !isNaN(endTimestamp)) {
         const filteredCpuData = cpuData.filter((data) => {
-          const dataTimestamp = new Date(data.x).getTime();
+          const dataTimestamp = new Date(data.timestamp).getTime();
 
           return (
             dataTimestamp >= startTimestamp && dataTimestamp <= endTimestamp
