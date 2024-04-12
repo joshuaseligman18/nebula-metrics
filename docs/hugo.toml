@@ -18,10 +18,14 @@ lightbox = false
 
 [menu]
 [[menu.shortcuts]]
-identifier = 'ds'
 name = "<i class='fab fa-fw fa-github'></i> GitHub Repository"
 url = 'https://github.com/joshuaseligman18/nebula-metrics'
 weight = 10
+
+[[menu.shortcuts]]
+name = "<i class='fa-fw fas fa-tags'></i> Releases"
+url = "https://github.com/joshuaseligman18/nebula-metrics/releases"
+weight = 20
 
 [module]
 [[module.mounts]]

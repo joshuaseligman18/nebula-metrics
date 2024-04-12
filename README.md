@@ -8,7 +8,8 @@ the information in a user-friendly format.
 
 # Getting Started
 ## Binary downloads
-Pre-compiled binaries with official release versions will come at a later date.
+Official releases containing pre-compiled binaries can be found
+[here](https://github.com/joshuaseligman18/nebula-metrics/releases).
 
 ## Compiling from source
 In order to build Nebula Metrics locally, you will need these dependencies:
