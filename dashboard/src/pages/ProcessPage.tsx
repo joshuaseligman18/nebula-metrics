@@ -98,7 +98,7 @@ const ProcessPage: React.FC = () => {
         ) : (
           <ProcessBar
             pids={Array.from(
-              new Set(allProcessesData.map((process: any) => process.pid))
+              new Set(allProcessesData.map((process: any) => process.pid)),
             )} // Pass unique PIDs
             allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
             setCurrentFilter={setCurrentFilter}
@@ -131,9 +131,11 @@ const ProcessPage: React.FC = () => {
                   </Spinner>
                 </div>
               ) : errorTable ? (
-                <div>Error fetching CPU data</div>
-              ) : (
+                <div className="text-center">Error fetching CPU data</div>
+              ) : cpuData.length > 0 ? (
                 <ProcessCpuLineGraph data={cpuData} />
+              ) : (
+                <div className="text-center">No CPU data available</div>
               )}
             </Card.Body>
           </Card>
@@ -158,9 +160,11 @@ const ProcessPage: React.FC = () => {
                   </Spinner>
                 </div>
               ) : errorTable ? (
-                <div>Error fetching memory data</div>
-              ) : (
+                <div className="text-center">Error fetching memory data</div>
+              ) : memoryData.length > 0 ? (
                 <ProcessMemoryLineGraph data={memoryData} />
+              ) : (
+                <div className="text-center">No memory data available</div>
               )}
             </Card.Body>
           </Card>

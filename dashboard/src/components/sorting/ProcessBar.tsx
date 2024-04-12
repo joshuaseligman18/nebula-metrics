@@ -23,12 +23,16 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
   pids = pids.sort((a, b) => a - b);
 
   useEffect(() => {
-    // Auto-select process 1 when the component mounts
     if (allProcessesData && allProcessesData.length > 0) {
       const process1 = allProcessesData.find(
         (process: any) => process.pid === selectedPID,
       );
-      setSelectedProcess(process1);
+      if (process1) {
+        setSelectedProcess(process1);
+      } else {
+        // Set the pid to 1 if the requested process does not exist
+        setSelectedPID(1);
+      }
     }
   }, [allProcessesData, selectedPID]);
 
@@ -127,7 +131,7 @@ const ProcessBar: React.FC<ProcessBarProps> = ({
         </ul>
       </div>
       <div style={{ marginLeft: "-17px" }}>
-      <SortingBar setCurrentFilter={setCurrentFilter} />
+        <SortingBar setCurrentFilter={setCurrentFilter} />
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
   const filterForm = useRef<HTMLFormElement>(null);
 
   const handleStartTimeChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (event.target.value) {
       setStartTime(new Date(event.target.value) || null);
@@ -80,7 +80,10 @@ const SortingBar: React.FC<SortingBarProps> = ({ setCurrentFilter }) => {
             onChange={handleEndTimeChange}
           />
         </div>
-        <div className="flex flex-col md:flex-row md:justify-evenly md:mr-10" style={{ marginLeft: "-10px" }}>
+        <div
+          className="flex flex-col md:flex-row md:justify-evenly md:mr-10"
+          style={{ marginLeft: "-10px" }}
+        >
           <button
             className={`mt-4 bg-${mode === "dark" ? "blue-500" : "blue-700"} hover:bg-${mode === "dark" ? "blue-700" : "blue-900"} text-white font-bold py-2 px-4 rounded`}
             onClick={filterData}
