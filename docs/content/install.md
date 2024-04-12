@@ -4,11 +4,11 @@ weight = 40
 +++
 
 ## Download Nebula Metrics
-Our end goal is to have published releases of Nebula Metrics available on the
-GitHub repository. However, while the application is still in the early stages
-of development, you must first compile Nebula Metrics locally. See [Contributing
-to Nebula Metrics](contributing) for how to set up your local environment to build
-Nebula Metrics from the source code.
+Official released versions of Nebula Metrics can be found in the GitHub
+repository [here](https://github.com/joshuaseligman18/nebula-metrics/releases).
+If, however, you want to build Nebula Metrics from the source code, see
+[Contributing to Nebula Metrics](contributing) for the details for how to set up
+all of the required dependencies on your local machine.
 
 ## Installation
 Once you have a packaged *.deb* file for Nebula Metrics, it is now time to install.
