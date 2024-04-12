@@ -1,7 +1,9 @@
 import { useQuery, UseQueryResult } from "react-query";
 
 export const useGetCpuData = (): UseQueryResult<any, Error> => {
-  const apiBaseUrl: string = process.env.VITE_API_SERVER ? process.env.VITE_API_SERVER : '';
+  const apiBaseUrl: string = process.env.VITE_API_SERVER
+    ? process.env.VITE_API_SERVER
+    : "";
   return useQuery(
     "GetCpuData",
     async () => {

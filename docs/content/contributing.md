@@ -40,6 +40,10 @@ and are automatically included when running `npm install`.*
 * Format your code with Rustfmt and Prettier for consistency.
 * Use log messages to mark important events in the code. Logs can be accessed
 through the `journalctl` tool.
+* Create a *.env.development.local* file in the *dashboard* directory and create
+a variable called `VITE_API_SERVER` with the value "http://<IP_TO_API>:4242".
+This allows for you to develop on the web without having to constantly rebuild
+and install the entire application on your development VM.
 
 ### After Development
 * Write appropriate tests for your new features and make sure they work as expected.

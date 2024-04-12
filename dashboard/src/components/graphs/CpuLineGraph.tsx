@@ -16,7 +16,6 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart<"line"> | null>(null);
 
-
   useEffect(() => {
     if (!chartRef.current || !data.length) return;
 
@@ -117,7 +116,7 @@ const CpuLineGraph: React.FC<CpuLineGraphProps> = ({ data }) => {
   }, [data]);
 
   return (
-    <div style={{height: "400px"}}>
+    <div style={{ height: "400px" }}>
       <canvas ref={chartRef} />
     </div>
   );
