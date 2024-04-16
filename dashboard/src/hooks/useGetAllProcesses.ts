@@ -1,6 +1,7 @@
 import { useQuery, UseQueryResult } from "react-query";
+import { ProcessDataType } from "../types/processDataType";
 
-export const useAllProcesses = (): UseQueryResult<any, Error> => {
+export const useAllProcesses = (): UseQueryResult<ProcessDataType, Error> => {
   const apiBaseUrl: string = process.env.VITE_API_SERVER
     ? process.env.VITE_API_SERVER
     : "";

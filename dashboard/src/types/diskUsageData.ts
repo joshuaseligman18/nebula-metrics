@@ -8,3 +8,10 @@ export interface DiskUsageData {
     mount: string;
   }[];
 }
+
+export interface latestDiskData {
+  available: number;
+  used: number;
+}[]
+
+

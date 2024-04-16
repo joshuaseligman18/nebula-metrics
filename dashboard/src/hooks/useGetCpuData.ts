@@ -1,6 +1,6 @@
 import { useQuery, UseQueryResult } from "react-query";
-
-export const useGetCpuData = (): UseQueryResult<any, Error> => {
+import { CpuData } from "../types/cpuDataType";
+export const useGetCpuData = (): UseQueryResult<CpuData, Error> => {
   const apiBaseUrl: string = process.env.VITE_API_SERVER
     ? process.env.VITE_API_SERVER
     : "";

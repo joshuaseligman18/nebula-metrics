@@ -8,14 +8,15 @@ import { useAllProcesses } from "../hooks/useGetAllProcesses";
 import { useGetProcessData } from "../hooks/useGetProcess";
 import { useProcessContext } from "../context/PIDcontext";
 import { CpuData } from "../types/cpuDataType";
+import { filterType } from "../types/filterType";
 
 const ProcessPage: React.FC = () => {
   const { selectedPID } = useProcessContext();
   const { mode } = useMode();
-  const [currentFilter, setCurrentFilter] = useState<{
-    startTime: Date | null;
-    endTime: Date | null;
-  }>({ startTime: null, endTime: null });
+  const [currentFilter, setCurrentFilter] = useState<filterType>({
+    startTime: null,
+    endTime: null,
+  });
 
   const {
     data: allProcessesData,
@@ -98,7 +99,7 @@ const ProcessPage: React.FC = () => {
         ) : (
           <ProcessBar
             pids={Array.from(
-              new Set(allProcessesData.map((process: any) => process.pid)),
+              new Set(allProcessesData.map((process: any) => process.pid))
             )} // Pass unique PIDs
             allProcessesData={allProcessesData} // Pass allProcessesData to ProcessBar
             setCurrentFilter={setCurrentFilter}

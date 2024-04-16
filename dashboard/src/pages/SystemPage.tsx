@@ -12,27 +12,14 @@ import DiskUsageAgGrid from "../components/AgGrid/DiskChart";
 import { DiskUsageData } from "../types/diskUsageData";
 import { Spinner } from "react-bootstrap";
 import SortingBar from "../components/sorting/SortingBar";
+import { filterType } from "../types/filterType";
+import { NewCpuData } from "../types/cpuDataType";
+import { NewMemoryUsage } from "../types/memoryType";
 
 const SystemPage: React.FC = () => {
   const { mode } = useMode();
-  const [cpuData, setCpuData] = useState<
-    {
-      cpu_core: string;
-      mhz: number;
-      timestamp: Date;
-      total_cache: number;
-      usage: number;
-    }[]
-  >([]);
-  const [originalCpuData, setOriginalCpuData] = useState<
-    {
-      cpu_core: string;
-      mhz: number;
-      timestamp: Date;
-      total_cache: number;
-      usage: number;
-    }[]
-  >([]);
+  const [cpuData, setCpuData] = useState<NewCpuData[]>([]);
+  const [originalCpuData, setOriginalCpuData] = useState<NewCpuData[]>([]);
   const [originalMemoryUsageData, setOriginalMemoryUsageData] = useState<
     { time: Date; ram: number; swapped: number }[]
   >([]);
@@ -42,17 +29,14 @@ const SystemPage: React.FC = () => {
     isError: cpuError,
   } = useGetCpuData();
   const [memoryUsageData, setMemoryUsageData] = useState<
-    { time: Date; ram: number; swapped: number }[]
+  NewMemoryUsage[]
   >([]);
   const {
     data: memoryData,
     isLoading: memoryLoading,
     isError: memoryError,
   } = useGetMemoryData();
-  const [latestDisk, setLatestDisk] = useState<{
-    avalible: number;
-    used: number;
-  } | null>(null);
+  const [latestDisk, setLatestDisk] = useState<filterType | null>(null);
   const {
     data: diskData,
     isLoading: diskLoading,
@@ -61,10 +45,10 @@ const SystemPage: React.FC = () => {
   const [formattedDiskData, setFormattedDiskData] =
     useState<DiskUsageData | null>(null);
 
-  const [currentFilter, setCurrentFilter] = useState<{
-    startTime: Date | null;
-    endTime: Date | null;
-  }>({ startTime: null, endTime: null });
+  const [currentFilter, setCurrentFilter] = useState<filterType>({
+    startTime: null,
+    endTime: null,
+  });
 
   useEffect(() => {
     if (rawCpuData) {
@@ -168,7 +152,7 @@ const SystemPage: React.FC = () => {
       // Calculate total disk space and format disk usage data
       const totalDiskSpace = Object.values(groupedData).reduce(
         (total, disk) => total + disk.available + disk.used,
-        0,
+        0
       );
       const diskUsage = Object.values(groupedData).map((disk) => ({
         name: disk.device_name,

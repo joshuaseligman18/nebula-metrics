@@ -6,22 +6,15 @@ import { useGetCurrentCpuData } from "../../hooks/useGetCurrentCpu";
 import { useGetCurrentMemoryData } from "../../hooks/useGetCurrentMemory";
 import { useGetDiskData } from "../../hooks/useGetDiskData";
 import { useMode } from "../../context/ModeContext";
+import { MemoryUsage } from "../../types/memoryType";
+import { latestDiskData } from "../../types/diskUsageData";
 
 const LeaderboardBar: React.FC = () => {
   const { mode } = useMode();
 
-  const [latestMemory, setLatestMemory] = useState<{
-    timestamp: number;
-    total: number;
-    free: number;
-    swap_total: number;
-    swap_free: number;
-  } | null>(null);
+  const [latestMemory, setLatestMemory] = useState<MemoryUsage | null>(null);
 
-  const [latestDisk, setLatestDisk] = useState<{
-    available: number;
-    used: number;
-  } | null>(null);
+  const [latestDisk, setLatestDisk] = useState<latestDiskData | null>(null);
 
   const {
     data: cpuData,
